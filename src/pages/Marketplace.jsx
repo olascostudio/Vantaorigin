@@ -181,7 +181,7 @@ export default function Marketplace() {
           </div>
 
           <PortfolioGrid
-            category={category.label}
+            section={category.label}
             filter={category.filters[filter]}
             query={query}
           />

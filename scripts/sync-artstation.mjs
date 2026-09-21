@@ -93,20 +93,75 @@ async function fetchImages() {
   return byHash;
 }
 
-// Categories and artist names come from the post titles, since the studio's
-// posts carry no tags. Tagging on ArtStation would make this exact.
-function categoryFor(title, tags) {
+// Sections and categories come from the post titles, since the studio's posts
+// carry no tags. Tags win when they exist, so tagging on ArtStation makes this
+// exact instead of inferred. Order matters: the most specific rule first.
+const RULES = [
+  { test: /\b3d\b|low.?poly|sculpt|zbrush|blender|maya/, section: "3D Art & Design", categories: [
+    [/character|creature|figure/, "Character Modeling"],
+    [/environment|architecture|scene|world|map/, "Environment Art"],
+    [/sculpt/, "Sculpting"],
+    [/./, "Props & Assets"],
+  ] },
+  { test: /\banim(ation|ated)?\b|\brig(ging)?\b|storyboard/, section: "Animation", categories: [
+    [/3d/, "3D Animation"],
+    [/rig/, "Rigging"],
+    [/storyboard/, "Storyboards"],
+    [/./, "2D Animation"],
+  ] },
+  { test: /motion graphic|title sequence|logo anim|vfx/, section: "Motion Graphics", categories: [
+    [/title/, "Title Sequences"],
+    [/logo/, "Logo Animation"],
+    [/vfx/, "VFX"],
+    [/./, "Social Cuts"],
+  ] },
+  { test: /video edit|trailer|reel\b|colou?r grad/, section: "Video Editing", categories: [
+    [/trailer/, "Trailers"],
+    [/reel|short/, "Shorts & Reels"],
+    [/grad/, "Colour Grading"],
+    [/./, "Long Form"],
+  ] },
+  { test: /brand|identity|graphic design|marketing|flyer|advert|campaign/, section: "Marketing & Promotion", categories: [
+    [/campaign/, "Campaign Art"],
+    [/advert|flyer/, "Ad Creatives"],
+    [/copy/, "Copywriting"],
+    [/./, "Campaign Art"],
+  ] },
+  { test: /token|nft|collectible/, section: "Vanta Tokens & Utilities", categories: [
+    [/utility/, "Utility Design"],
+    [/drop/, "Drops"],
+    [/collectible/, "Collectibles"],
+    [/./, "Token Art"],
+  ] },
+  // default: everything else is 2D work
+  { test: /./, section: "2D Art & Design", categories: [
+    [/cover/, "Book & Comic Cover"],
+    [/comic|panel|strip/, "Comic Page & Panels"],
+    [/poster|promo/, "Posters & Promotional Arts"],
+    [/character/, "Character Design"],
+    [/./, "Illustrations & Concept Art"],
+  ] },
+];
+
+function classify(title, tags) {
   const haystack = `${title} ${(tags || []).join(" ")}`.toLowerCase();
-  if (haystack.includes("cover")) return "Book & Comic Cover";
-  if (haystack.includes("comic") || haystack.includes("panel")) return "Comic Page & Panels";
-  if (haystack.includes("character")) return "Character Design";
-  if (haystack.includes("poster") || haystack.includes("promo")) return "Posters & Promotional Arts";
-  return "Illustrations & Concept Art";
+  const rule = RULES.find((candidate) => candidate.test.test(haystack));
+  const [, category] = rule.categories.find(([pattern]) => pattern.test(haystack));
+  return { section: rule.section, category };
 }
 
+// Titles come in two shapes:
+//   "Cover Art Done By Carlos Idrobo of VantaOrigin Studio"
+//   "3D Assets . Bruno Diaz . Vantaorigin Studio"
 function artistFor(title) {
-  const match = title.match(/done by ([^]+?) of vantaorigin/i);
-  return match ? match[1].trim() : "VantaOrigin Studio";
+  const doneBy = title.match(/done by ([^]+?) of vantaorigin/i);
+  if (doneBy) return doneBy[1].trim();
+
+  const parts = title.split(/\s*\.\s*/).map((part) => part.trim()).filter(Boolean);
+  if (parts.length >= 3 && /vantaorigin/i.test(parts[parts.length - 1])) {
+    return parts[parts.length - 2];
+  }
+  return "VantaOrigin Studio";
 }
 
 async function readExisting() {
@@ -131,11 +186,13 @@ async function main() {
   const projects = raw
     .map((project) => {
       const previous = existing.get(project.hash_id);
+      const { section, category } = classify(project.title, project.tag_list);
       return {
         id: project.hash_id,
         title: project.title,
         artist: artistFor(project.title),
-        category: categoryFor(project.title, project.tag_list),
+        section,
+        category,
         description: (project.description || "").split("\n").filter(Boolean)[0] || "",
         permalink: project.permalink,
         cover: project.cover?.thumb_url || project.cover?.small_square_url || null,

@@ -106,24 +106,26 @@ function Card({ project, onOpen }) {
   );
 }
 
-export default function PortfolioGrid({ category, filter, query }) {
+export default function PortfolioGrid({ section, filter, query }) {
   const [visible, setVisible] = useState(PAGE_SIZE);
   const [open, setOpen] = useState(null);
 
   const projects = useMemo(() => {
     const term = query.trim().toLowerCase();
     return portfolio.projects.filter((project) => {
+      // data synced before sections existed has no section field
+      const matchesSection = !section || !project.section || project.section === section;
       const matchesFilter = !filter || project.category === filter;
       const matchesTerm =
         !term ||
         project.title.toLowerCase().includes(term) ||
         project.artist.toLowerCase().includes(term) ||
         project.description.toLowerCase().includes(term);
-      return matchesFilter && matchesTerm;
+      return matchesSection && matchesFilter && matchesTerm;
     });
-  }, [filter, query]);
+  }, [section, filter, query]);
 
-  useEffect(() => setVisible(PAGE_SIZE), [filter, query, category]);
+  useEffect(() => setVisible(PAGE_SIZE), [filter, query, section]);
 
   if (!projects.length) {
     return (
