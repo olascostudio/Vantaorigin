@@ -9,6 +9,7 @@ import Settings from "./pages/Settings";
 import Community from "./pages/Community";
 import Marketplace from "./pages/Marketplace";
 import MarketplaceHowItWorks from "./pages/MarketplaceHowItWorks";
+import ProjectRequest from "./pages/ProjectRequest";
 import AuthLanding from "./pages/auth/AuthLanding";
 import SignUp from "./pages/auth/SignUp";
 import SignIn from "./pages/auth/SignIn";
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="/character" element={<CharacterView />} />
         <Route path="/marketplace" element={<Marketplace />} />
         <Route path="/marketplace/how-it-works" element={<MarketplaceHowItWorks />} />
+        <Route path="/marketplace/project-request" element={<ProjectRequest />} />
         <Route path="/community" element={<Community />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/settings/:tab" element={<Settings />} />
