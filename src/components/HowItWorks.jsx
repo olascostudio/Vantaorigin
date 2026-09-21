@@ -3,10 +3,30 @@ import journeyCurve from "../assets/landing/how/journey-curve.svg";
 
 // x/y place each step along the curve on the 1376px desktop stage.
 const STEPS = [
-  { title: "Create", text: "Design your own universe, characters, locations and lore.", x: "245px", y: "495.8px" },
-  { title: "Publish", text: "Share your world with other creators.", x: "569px", y: "393.8px" },
-  { title: "Build a Community", text: "Gain followers, discussions and fan contributions.", x: "837px", y: "197.8px" },
-  { title: "Grow Your Legacy", text: "Turn your stories into an expanding universe others can join.", x: "1096px", y: "109.8px" },
+  {
+    title: "Create Your Realm",
+    text: "Set up your personal character hub and make it yours.",
+    x: "245px",
+    y: "495.8px",
+  },
+  {
+    title: "Add Your Characters",
+    text: "Create character profiles with artwork, information, links, and other details.",
+    x: "569px",
+    y: "393.8px",
+  },
+  {
+    title: "Organize Your Characters",
+    text: "Manage your characters and keep your Realm updated as your creative work grows.",
+    x: "837px",
+    y: "197.8px",
+  },
+  {
+    title: "Share Your Link",
+    text: "Get your public Realm link and put it on Instagram, TikTok, X, Discord, or anywhere your audience finds you.",
+    x: "1096px",
+    y: "109.8px",
+  },
 ];
 
 export default function HowItWorks() {
@@ -16,8 +36,8 @@ export default function HowItWorks() {
       className="flex flex-col items-center gap-[3px] overflow-hidden bg-background px-4 pb-[60px] pt-[61px] sm:px-8"
     >
       <SectionHeading
-        title="How VantaOrigin Works"
-        subtitle="Thousands of creators are already building universes filled with heroes, monsters, kingdoms and myths."
+        title="How Your Realm Works"
+        subtitle="Create your Realm, add your characters, keep them organised, and share one link with your audience."
       />
 
       {/* Below lg the steps are a plain timeline; from lg up they sit on the

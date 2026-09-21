@@ -264,13 +264,13 @@ function AnnouncementBadge() {
     <div className="flex items-center gap-2.5 rounded-[10px] bg-surface/20 px-2 py-[5px] backdrop-blur-[30px]">
       <img src={bellRing} alt="" className="h-[16.048px] w-4" />
       <p className="whitespace-nowrap text-center font-ui text-[7px] font-semibold text-white">
-        “Obaalu - The Iron Law” Chapter 3 now live!
+        Create your character hub. Share it anywhere.
       </p>
       <a
         href="#explore"
         className="flex items-center justify-center gap-[5px] rounded-full bg-secondary px-2.5 py-[5px] font-ui text-[7px] font-semibold text-white"
       >
-        Read now
+        Get started
         <img src={chevronRight} alt="" className="h-[3.333px] w-1" />
       </a>
     </div>
@@ -292,14 +292,15 @@ export default function Hero() {
             <div>
               <h1 className="font-display text-primary">
                 <span className="block text-[40px] leading-[1.2] sm:text-[60px] lg:text-[85px] lg:leading-[120px]">
-                  Build <span className="text-white">your own</span>
+                  Create <span className="text-white">Your</span>
                 </span>{" "}
                 <span className="block text-[48px] leading-[1.2] sm:text-[73px] lg:text-[103.68px] lg:leading-[120px]">
-                  <span className="text-white">fantasy</span> universe
+                  <span className="text-white">Character</span> Realm
                 </span>
               </h1>
               <p className="mx-auto mt-1 max-w-[700px] font-body text-base tracking-[-0.1px] text-subtext sm:text-xl">
-                Create kingdoms, characters, stories and grow a community around them.
+                Create a home for your characters, organize their profiles, and share your
+                Realm with one link.
               </p>
             </div>
           </div>
@@ -309,13 +310,13 @@ export default function Hero() {
               to="/auth"
               className="mb-[5px] ml-[5px] bg-secondary px-6 py-4 font-ui text-sm font-bold text-white shadow-block transition-transform hover:-translate-y-0.5"
             >
-              Start Creating
+              Create Your Realm
             </Link>
             <a
               href="#explore"
               className="border-2 border-white px-6 py-4 font-ui text-sm font-bold text-white transition-colors hover:bg-white/10"
             >
-              Explore Worlds
+              Explore Realms
             </a>
           </div>
         </div>

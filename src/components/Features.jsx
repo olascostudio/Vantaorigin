@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import SectionHeading from "./SectionHeading";
 import cardGlow from "../assets/landing/features/card-glow.svg";
 import arrowUpRight from "../assets/landing/features/arrow-up-right.svg";
@@ -22,9 +23,19 @@ import creator17 from "../assets/landing/features/creator-17.webp";
 import creator18 from "../assets/landing/features/creator-18.webp";
 
 const BUILDERS = [
-  { title: "Character Builder", text: "Create unforgettable heroes and villains." },
-  { title: "World Builder", text: "Design kingdoms, cities and maps." },
-  { title: "Story Builder", text: "Write lore, timelines and adventures." },
+  {
+    title: "Character Profiles",
+    text: "Create dedicated profiles for every character in your Realm.",
+  },
+  { title: "Your Realm", text: "Bring your characters together in one customizable public space." },
+  {
+    title: "One Shareable Link",
+    text: "Give your audience one link to discover all your characters and creative work.",
+  },
+  {
+    title: "Easy Character Management",
+    text: "Create, edit, organize, and update your characters whenever you want.",
+  },
 ];
 
 function BuilderCard({ title, text }) {
@@ -145,18 +156,17 @@ function FeaturedCreators() {
     <div className="relative overflow-hidden rounded-3xl bg-plum lg:h-[595px]">
       <div className="relative z-10 flex flex-col items-center gap-8 px-6 pt-16 text-center lg:absolute lg:left-1/2 lg:top-[95.5px] lg:-translate-x-1/2 lg:px-0 lg:pt-0">
         <h3 className="font-display text-[32px] leading-none text-white sm:text-[40px]">
-          Featured Creators
+          Discover Creators
         </h3>
         <p className="max-w-[1000px] font-ui text-lg leading-[1.6] text-neutral-300 sm:text-2xl lg:w-[1000px]">
-          Step beyond the pages and into a living universe shaped by its storytellers. Connect,
-          collaborate, and rise among legends - your journey begins here.
+          Explore Realms built by creators and discover the characters behind their worlds.
         </p>
-        <a
-          href="#join"
+        <Link
+          to="/discover"
           className="flex w-[254px] items-center justify-center overflow-hidden whitespace-nowrap rounded-[44px] border-[3px] border-[#b90754] bg-primary py-[15px] font-pill text-xl font-bold text-white transition-opacity hover:opacity-90"
         >
-          Join Creators
-        </a>
+          Explore Creators
+        </Link>
       </div>
 
       {/* The mosaic is wider than the panel and cropped by it. Below lg it is
@@ -176,10 +186,10 @@ export default function Features() {
       id="features"
       className="flex flex-col items-center gap-[73px] border-t border-surface px-4 py-[62px] sm:px-8 xl:px-14"
     >
-      <SectionHeading title="Everything You Need To Build A Universe" />
+      <SectionHeading title="Everything You Need To Showcase Your Characters" />
 
       <div className="flex w-full max-w-[1328px] flex-col gap-[60px]">
-        <div className="flex flex-wrap justify-center gap-5">
+        <div className="grid grid-cols-1 justify-items-center gap-5 sm:grid-cols-2 xl:grid-cols-4">
           {BUILDERS.map((builder) => (
             <BuilderCard key={builder.title} {...builder} />
           ))}

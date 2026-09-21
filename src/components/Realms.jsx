@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import SectionHeading from "./SectionHeading";
 import obaaluMask from "../assets/landing/realms/obaalu-mask.svg";
 import obaaluIcon from "../assets/landing/realms/obaalu-icon.svg";
@@ -41,16 +42,9 @@ const REALMS = [
   {
     id: "obaalu",
     title: "Obaalu — The Emberforge of Creation",
-    lead: "Born of flame and molten will, Obaalu represents the relentless spirit of creation. ",
-    body: (
-      <>
-        <span className="font-normal">
-          It’s the realm of builders, warriors, and innovators who turn raw passion into tangible
-          power. From its endless furnaces, new ideas are forged into legends
-        </span>
-        .
-      </>
-    ),
+    creator: "Arinola",
+    lead: "A Realm showcasing a creator’s characters, artwork and creative work. ",
+    body: "Every character has its own profile with art, details and links, all kept in one place and shared from a single Realm link.",
     art: <MaskArt src={obaaluMask} />,
     icon: obaaluIcon,
     iconInset: "calc(10% - 0.84px) calc(81.71% + 0.67px) calc(81.67% + 0.67px) calc(10.88% - 0.82px)",
@@ -65,8 +59,9 @@ const REALMS = [
         Flow
       </>
     ),
-    lead: "The realm of dreams and reflection, Iyanu embodies creativity in motion. ",
-    body: "Here, stories ripple like waves - ever-changing, ever-evolving. Its dwellers are poets, healers, and visionaries who shape emotion into art.",
+    creator: "Meyimeyi",
+    lead: "A Realm built around one creator’s cast of characters and the art behind them. ",
+    body: "Character profiles sit side by side with the artwork behind them, so visitors can see the whole cast at a glance.",
     art: <MaskArt src={iyanuMask} />,
     icon: iyanuIcon,
     iconInset: "calc(11.67% - 0.81px) calc(81.95% + 0.67px) calc(80% + 0.63px) calc(10.91% - 0.82px)",
@@ -75,8 +70,9 @@ const REALMS = [
   {
     id: "urukojin",
     title: "Urukojin — The Celestial Drift",
-    lead: "Realm of the unseen and the untamed. Urukojin is freedom incarnate — ",
-    body: "where winds carry voices of old myths and ideas soar without limits. It’s home to explorers, dreamers, and thinkers who chase horizons beyond logic.",
+    creator: "Bruno Diaz",
+    lead: "A Realm collecting a creator’s characters, props and concept work in one place. ",
+    body: "Characters, props and concept pieces stay organised as the creator’s body of work grows.",
     art: <MaskArt src={urukojinMask} />,
     icon: urukojinIcon,
     iconInset: "calc(12.5% - 0.79px) calc(80% + 0.63px) calc(80.95% + 0.65px) calc(10.91% - 0.82px)",
@@ -85,8 +81,9 @@ const REALMS = [
   {
     id: "eganon",
     title: "Eganon — The Core of Eternity",
-    lead: "A realm rooted in endurance and legacy. ",
-    body: "Eganon is where time itself solidifies into eternal stone. Its creators build worlds that outlive their makers — unyielding, wise, and unshakable.",
+    creator: "Yan",
+    lead: "A Realm where a creator keeps every character profile up to date. ",
+    body: "New characters are added as they are made, and the Realm link stays the same wherever it is shared.",
     art: <EganonArt />,
     icon: eganonIcon,
     iconInset: "calc(11.81% - 0.8px) calc(78.18% + 0.59px) calc(79.86% + 0.63px) calc(10.91% - 0.82px)",
@@ -94,7 +91,7 @@ const REALMS = [
   },
 ];
 
-function RealmCard({ title, lead, body, art, icon, iconInset, cardBg }) {
+function RealmCard({ title, creator, lead, body, art, icon, iconInset, cardBg }) {
   return (
     <article
       className={`relative flex min-h-[560px] w-full max-w-[578.947px] flex-col overflow-hidden rounded-[42.105px] border-[1.053px] border-primary px-6 pb-[43px] pt-[180px] sm:h-[631.579px] sm:pl-[44px] sm:pr-[45px] ${cardBg}`}
@@ -111,14 +108,14 @@ function RealmCard({ title, lead, body, art, icon, iconInset, cardBg }) {
       </p>
 
       <div className="relative mt-auto flex items-center justify-between gap-4 pt-6">
-        <a
-          href="#join"
+        <Link
+          to="/character"
           className="rounded-[52.632px] bg-secondary px-[36.842px] py-[18.947px] font-ui text-[21.053px] font-bold text-white transition-opacity hover:opacity-90"
         >
-          Open
-        </a>
+          View Realm
+        </Link>
         <p className="whitespace-nowrap font-ui text-[24.211px] text-white">
-          <span className="font-black">789k</span> <span className="font-medium">members</span>
+          <span className="font-medium">by</span> <span className="font-black">{creator}</span>
         </p>
       </div>
     </article>
@@ -131,7 +128,7 @@ export default function Realms() {
       <div className="mx-auto flex max-w-[1200px] flex-col items-center gap-[65px]">
         <SectionHeading
           title="Create Your Realm"
-          subtitle="Every creator begins somewhere. Each Realm represents a different style of storytelling. Pick one, join its community and start building your own legacy."
+          subtitle="Your Realm is your personal space for your characters. Create it, customize it, add your characters, and share it with your audience."
           subtitleClassName="text-lg tracking-[-0.115px] sm:text-[23px]"
         />
 
@@ -143,10 +140,10 @@ export default function Realms() {
           </div>
 
           <a
-            href="#realms"
+            href="#explore"
             className="rounded-[20px] border-[5px] border-[#d2d2d2] bg-white px-12 py-8 font-ui text-[28px] font-bold text-black transition-colors hover:bg-neutral-100"
           >
-            See More
+            See More Realms
           </a>
         </div>
       </div>

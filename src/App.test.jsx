@@ -14,7 +14,15 @@ describe("App routing", () => {
   it("renders every landing page section in design order at /", () => {
     const { container } = renderAt("/");
     const ids = [...container.querySelectorAll("section[id]")].map((section) => section.id);
-    expect(ids).toEqual(["realms", "explore", "how-it-works", "features", "community"]);
+    expect(ids).toEqual([
+      "realms",
+      "explore",
+      "how-it-works",
+      "characters",
+      "share",
+      "features",
+      "start",
+    ]);
     expect(screen.getByRole("banner")).toBeInTheDocument();
     expect(screen.getByRole("contentinfo")).toBeInTheDocument();
   });

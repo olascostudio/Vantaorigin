@@ -9,15 +9,16 @@ describe("Navbar", () => {
     expect(screen.getByLabelText("VantaOrigin home")).toHaveAttribute("href", "/");
   });
 
-  it("renders all primary nav links", () => {
+  it("navigates around the current product", () => {
     render(<Navbar />, { wrapper: MemoryRouter });
-    ["Discover", "Creators’ Hub", "Marketplace", "Community"].forEach((label) => {
+    ["Explore", "Characters", "Marketplace", "My Realm"].forEach((label) => {
       expect(screen.getByRole("link", { name: label })).toBeInTheDocument();
     });
+    expect(screen.getByRole("link", { name: "My Realm" })).toHaveAttribute("href", "/creators-hub");
   });
 
-  it("renders the Join VantaOrigin CTA", () => {
+  it("renders the Create Your Realm CTA", () => {
     render(<Navbar />, { wrapper: MemoryRouter });
-    expect(screen.getByRole("link", { name: "Join VantaOrigin" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Create Your Realm" })).toHaveAttribute("href", "/auth");
   });
 });

@@ -3,10 +3,10 @@ import logoMark from "../assets/landing/hero/logo-mark.svg";
 import logoWordmark from "../assets/landing/hero/logo-wordmark.svg";
 
 const NAV_LINKS = [
-  { label: "Discover", href: "#explore" },
-  { label: "Creators’ Hub", href: "#features" },
-  { label: "Marketplace", href: "#" },
-  { label: "Community", href: "#community" },
+  { label: "Explore", href: "#explore" },
+  { label: "Characters", href: "#characters" },
+  { label: "Marketplace", to: "/marketplace" },
+  { label: "My Realm", to: "/creators-hub" },
 ];
 
 export default function Navbar() {
@@ -26,11 +26,17 @@ export default function Navbar() {
         </a>
 
         <ul className="hidden items-center gap-[30px] font-ui text-sm text-white lg:flex">
-          {NAV_LINKS.map(({ label, href }) => (
+          {NAV_LINKS.map(({ label, href, to }) => (
             <li key={label}>
-              <a href={href} className="whitespace-nowrap transition-opacity hover:opacity-80">
-                {label}
-              </a>
+              {to ? (
+                <Link to={to} className="whitespace-nowrap transition-opacity hover:opacity-80">
+                  {label}
+                </Link>
+              ) : (
+                <a href={href} className="whitespace-nowrap transition-opacity hover:opacity-80">
+                  {label}
+                </a>
+              )}
             </li>
           ))}
         </ul>
@@ -39,7 +45,7 @@ export default function Navbar() {
           to="/auth"
           className="mb-[5px] ml-[5px] shrink-0 bg-primary px-6 py-4 font-ui text-sm font-semibold text-white shadow-block transition-transform hover:-translate-y-0.5"
         >
-          Join VantaOrigin
+          Create Your Realm
         </Link>
       </div>
     </nav>

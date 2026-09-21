@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import SectionHeading from "./SectionHeading";
 import world1 from "../assets/landing/worlds/world-1.webp";
 import world2Base from "../assets/landing/worlds/world-2-base.jpg";
@@ -10,10 +11,6 @@ import chevronLeft from "../assets/landing/worlds/chevron-left.svg";
 import chevronRight from "../assets/landing/worlds/chevron-right.svg";
 
 const CARD_STEP = 530; // card width + gap
-
-const EXCERPT_LEAD = "From the heart of molten mountains, Obaalu rises — ";
-const EXCERPT_BODY =
-  "the forge-born sovereign of flame and will. His dominion burns with purpose, shaping worlds and warriors alike in the heat of creation...";
 
 // Obaalu artwork: a base render with a matching transparent overlay on top.
 function ObaaluArt() {
@@ -32,11 +29,14 @@ function ObaaluArt() {
   );
 }
 
-const WORLDS = [
+const REALMS = [
   {
     id: "iron-inferno-1",
     color: "#fc590b",
-    title: "Obaalu’s Dominion: The Iron Inferno",
+    title: "Obaalu’s Realm",
+    creator: "Arinola",
+    characters: 12,
+    tags: "Fantasy • Action • Mythology",
     art: (
       <img
         src={world1}
@@ -48,13 +48,19 @@ const WORLDS = [
   {
     id: "iron-inferno-2",
     color: "#f5af32",
-    title: "Obaalu’s Dominion: The Iron Inferno",
+    title: "Emberforge Realm",
+    creator: "Carlos Idrobo",
+    characters: 9,
+    tags: "Fantasy • Concept Art",
     art: <ObaaluArt />,
   },
   {
     id: "iyanu-etere",
     color: "#6687cd",
-    title: "Iyanu-Etere: The Song Beneath the Waves",
+    title: "Iyanu-Etere Realm",
+    creator: "Meyimeyi",
+    characters: 7,
+    tags: "Myth • Illustration",
     art: (
       <>
         <ObaaluArt />
@@ -72,7 +78,10 @@ const WORLDS = [
   {
     id: "iron-inferno-3",
     color: "#96307e",
-    title: "Obaalu’s Dominion: The Iron Inferno",
+    title: "Urukojin Realm",
+    creator: "Bruno Diaz",
+    characters: 14,
+    tags: "3D • Props • Environments",
     titleWidth: "w-[244px]",
     authorColor: "text-[#ccc4c1]",
     art: (
@@ -88,12 +97,12 @@ const WORLDS = [
   },
 ];
 
-function WorldCard({ color, title, art, titleWidth = "w-[300px]", authorColor = "text-accent" }) {
+function RealmCard({ color, title, creator, characters, tags, art, titleWidth = "w-[300px]", authorColor = "text-accent" }) {
   return (
     <article
       className="flex w-[calc(100vw-48px)] max-w-[500px] shrink-0 snap-center flex-col items-center gap-[18px] overflow-hidden rounded-[25px] border-[1.667px] p-4 sm:w-[500px] sm:p-[25px]"
       style={{ borderColor: color, backgroundColor: `${color}0d` }}
-      data-testid="world-card"
+      data-testid="realm-card"
     >
       <div className="relative h-[360px] w-full overflow-hidden rounded-xl bg-[#888787]">{art}</div>
 
@@ -106,22 +115,20 @@ function WorldCard({ color, title, art, titleWidth = "w-[300px]", authorColor = 
               {title}
             </h3>
             <p className={`whitespace-nowrap font-ui text-lg font-medium ${authorColor}`}>
-              By: Arinola
+              By {creator}
             </p>
           </div>
-          <p className="min-h-[76px] font-ui text-base text-neutral-300">
-            <span className="font-bold">{EXCERPT_LEAD}</span>
-            {EXCERPT_BODY}
-          </p>
+          <p className="font-ui text-base font-bold text-white">{characters} Characters</p>
+          <p className="min-h-[46px] font-ui text-base text-neutral-300">{tags}</p>
         </div>
 
-        <a
-          href="#explore"
+        <Link
+          to="/character"
           className="flex items-center gap-[5px] font-ui text-base font-medium text-white underline"
         >
-          Read More
+          View Realm
           <img src={arrowUpRight} alt="" className="size-5" />
-        </a>
+        </Link>
       </div>
     </article>
   );
@@ -157,8 +164,8 @@ export default function CommunityWorlds() {
     <section id="explore" className="flex flex-col items-center gap-[50px] overflow-hidden py-[61px]">
       <div className="px-4">
         <SectionHeading
-          title="Explore Worlds Created By The Community"
-          subtitle="Thousands of creators are already building universes filled with heroes, monsters, kingdoms and myths."
+          title="Explore Creator Realms"
+          subtitle="Discover characters, creative work, and Realms built by creators across VantaOrigin."
         />
       </div>
 
@@ -167,19 +174,19 @@ export default function CommunityWorlds() {
           ref={trackRef}
           className="scrollbar-none flex snap-x snap-mandatory gap-[30px] overflow-x-auto px-6 min-[2090px]:justify-center"
         >
-          {WORLDS.map(({ id, ...world }) => (
-            <WorldCard key={id} {...world} />
+          {REALMS.map(({ id, ...realm }) => (
+            <RealmCard key={id} {...realm} />
           ))}
         </div>
 
         <ArrowButton
-          label="Previous worlds"
+          label="Previous realms"
           icon={chevronLeft}
           onClick={() => scroll(-1)}
           className="left-3 lg:left-[42px]"
         />
         <ArrowButton
-          label="Next worlds"
+          label="Next realms"
           icon={chevronRight}
           onClick={() => scroll(1)}
           className="right-3 lg:right-[41.2px]"
