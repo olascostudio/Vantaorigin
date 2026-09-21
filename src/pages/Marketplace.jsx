@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import Footer from "../components/Footer";
-import { CATEGORIES, SELECTABLE, countFor, extraCategoriesFor, lastSyncedAt } from "../data/marketplace";
+import { ALBUMS, artistsIn } from "../data/marketplace";
 import PortfolioGrid from "../components/marketplace/PortfolioGrid";
 import heroArt from "../assets/auth/banner.webp";
 import stripePink from "../assets/marketplace/stripe-pink.svg";
@@ -57,32 +57,30 @@ function Lockup() {
 
 function Sidebar({ activeId, onSelect }) {
   return (
-    <nav aria-label="Marketplace categories" className="w-full shrink-0 lg:w-[280px]">
+    <nav aria-label="Marketplace categories" className="w-full shrink-0 lg:w-[300px]">
       <p className="px-4 font-ui text-base font-bold text-[#a855f7]">VantaOrigin</p>
 
+      {/* One entry per ArtStation album — add an album there, it appears here. */}
       <ul className="mt-6 flex flex-col gap-1">
-        {CATEGORIES.map((category) => {
-          if (category.children) {
-            return (
-              <li key={category.id}>
-                <p className="px-4 py-3 font-ui text-base font-bold text-white">{category.label}</p>
-                <ul className="flex flex-col gap-1">
-                  {category.children.map((child) => (
-                    <li key={child.id}>
-                      <CategoryButton
-                        category={child}
-                        active={child.id === activeId}
-                        onSelect={onSelect}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </li>
-            );
-          }
+        {ALBUMS.map((album) => {
+          const active = album.id === activeId;
           return (
-            <li key={category.id}>
-              <CategoryButton category={category} active={category.id === activeId} onSelect={onSelect} />
+            <li key={album.id}>
+              <button
+                type="button"
+                onClick={() => onSelect(album.id)}
+                aria-current={active ? "true" : undefined}
+                className={`flex w-full items-center justify-between gap-3 rounded-lg px-4 py-3 text-left font-ui text-base transition-colors ${
+                  active
+                    ? "bg-gradient-to-r from-[#c2185b] to-[#a855f7] font-bold text-white"
+                    : "text-neutral-300 hover:bg-white/5 hover:text-white"
+                }`}
+              >
+                {album.title}
+                <span className={active ? "font-ui text-sm text-white/80" : "font-ui text-sm text-neutral-500"}>
+                  {album.count}
+                </span>
+              </button>
             </li>
           );
         })}
@@ -91,46 +89,19 @@ function Sidebar({ activeId, onSelect }) {
   );
 }
 
-function CategoryButton({ category, active, onSelect }) {
-  const count = countFor(category.label);
-  return (
-    <button
-      type="button"
-      onClick={() => onSelect(category.id)}
-      aria-current={active ? "true" : undefined}
-      className={`flex w-full items-center justify-between gap-3 rounded-lg px-4 py-3 text-left font-ui text-base transition-colors ${
-        active
-          ? "bg-gradient-to-r from-[#c2185b] to-[#a855f7] font-bold text-white"
-          : "text-neutral-300 hover:bg-white/5 hover:text-white"
-      }`}
-    >
-      {category.label}
-      <span className={`font-ui text-sm ${active ? "text-white/80" : "text-neutral-500"}`}>
-        {count}
-      </span>
-    </button>
-  );
-}
-
 export default function Marketplace() {
-  const [activeId, setActiveId] = useState("2d-art-design");
-  const [filter, setFilter] = useState(0);
+  const [activeId, setActiveId] = useState(ALBUMS[0]?.id ?? null);
+  const [artist, setArtist] = useState(null);
   const [query, setQuery] = useState("");
 
-  const base = SELECTABLE.find((item) => item.id === activeId) ?? SELECTABLE[0];
+  const album = ALBUMS.find((item) => item.id === activeId) ?? ALBUMS[0];
 
-  // Chips follow the synced data: anything the sync produced that isn't in the
-  // taxonomy is appended, and empty ones drop to the end.
-  const category = useMemo(() => {
-    const chips = [...base.filters, ...extraCategoriesFor(base.label)].sort(
-      (a, b) => countFor(base.label, b) - countFor(base.label, a)
-    );
-    return { ...base, filters: chips };
-  }, [base]);
+  // Chips are the artists with work in this album, busiest first.
+  const artists = useMemo(() => (album ? artistsIn(album.id) : []), [album]);
 
-  const selectCategory = (id) => {
+  const selectAlbum = (id) => {
     setActiveId(id);
-    setFilter(0);
+    setArtist(null);
   };
 
   return (
@@ -141,12 +112,12 @@ export default function Marketplace() {
 
       <div className="flex flex-col gap-8 px-4 pb-16 lg:flex-row lg:gap-0 lg:px-0">
         <div className="lg:pl-8 xl:pl-12">
-          <Sidebar activeId={activeId} onSelect={selectCategory} />
+          <Sidebar activeId={album?.id} onSelect={selectAlbum} />
         </div>
 
         <section className="min-h-[620px] flex-1 rounded-2xl bg-[#222c40] lg:rounded-none">
           <div className="flex flex-col gap-4 border-b border-white/10 p-5 lg:flex-row lg:items-center lg:gap-8">
-            <h3 className="font-ui text-lg font-bold text-white lg:w-[200px]">{category.label}</h3>
+            <h3 className="font-ui text-lg font-bold text-white lg:w-[220px]">{album?.title}</h3>
 
             <label className="sr-only" htmlFor="marketplace-search">
               Search the marketplace
@@ -175,31 +146,49 @@ export default function Marketplace() {
             </div>
           </div>
 
+          {/* Chips: the artists behind this album's work */}
           <div className="scrollbar-none flex gap-4 overflow-x-auto p-5">
-            {category.filters.map((label, index) => (
+            <button
+              type="button"
+              onClick={() => setArtist(null)}
+              aria-pressed={artist === null}
+              className={`shrink-0 rounded-full px-6 py-3 font-ui text-base transition-colors ${
+                artist === null
+                  ? "bg-gradient-to-r from-[#7b3fe4] to-[#c2185b] font-bold text-white"
+                  : "bg-[#2b3547] text-white hover:bg-[#333f56]"
+              }`}
+            >
+              All artists{" "}
+              <span className={artist === null ? "text-white/80" : "text-neutral-400"}>
+                {album?.count ?? 0}
+              </span>
+            </button>
+
+            {artists.map(({ name, count }) => (
               <button
-                key={label}
+                key={name}
                 type="button"
-                onClick={() => setFilter(index)}
-                aria-pressed={index === filter}
+                onClick={() => setArtist(name)}
+                aria-pressed={artist === name}
                 className={`shrink-0 rounded-full px-6 py-3 font-ui text-base transition-colors ${
-                  index === filter
+                  artist === name
                     ? "bg-gradient-to-r from-[#7b3fe4] to-[#c2185b] font-bold text-white"
                     : "bg-[#2b3547] text-white hover:bg-[#333f56]"
                 }`}
               >
-                {label}{" "}
-                <span className={index === filter ? "text-white/80" : "text-neutral-400"}>
-                  {countFor(category.label, label)}
+                {name}{" "}
+                <span className={artist === name ? "text-white/80" : "text-neutral-400"}>
+                  {count}
                 </span>
               </button>
             ))}
           </div>
 
           <PortfolioGrid
-            section={category.label}
-            filter={category.filters[filter]}
+            albumId={album?.id}
+            artist={artist}
             query={query}
+            albumUrl={album?.url}
           />
         </section>
       </div>

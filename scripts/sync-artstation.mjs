@@ -1,12 +1,18 @@
-// Pulls the studio's ArtStation posts into src/data/portfolio.json.
+// Pulls the studio's ArtStation albums and their work into
+// src/data/portfolio.json, which drives the marketplace portfolio.
 //
-// ArtStation has no official API, so this uses two public endpoints:
-//   - users/{user}/projects.json  the catalogue (paged, 50 at a time)
-//   - {user}.rss                  large images, most recent 50 posts only
-// Both need a browser User-Agent or Cloudflare answers 403.
+// The albums ARE the marketplace categories: add an album on ArtStation and it
+// shows up on the site on the next sync. Nothing here is hardcoded.
 //
-// Images already captured stay in the file, so the archive grows over time
-// even though the RSS window keeps moving.
+// ArtStation has no official API, so this leans on three public endpoints:
+//   users/{user}/quick.json              the album list, with titles and order
+//   users/{user}/projects.json?album_id= the work inside an album (paged)
+//   {user}.rss                           large images, newest 50 posts only
+// All of them need a browser User-Agent, and Cloudflare rejects Node's fetch
+// on the JSON ones, so curl does the fetching.
+//
+// Images captured on an earlier run are kept, so the archive grows even as the
+// RSS window moves on.
 
 import { readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
@@ -25,8 +31,8 @@ const MAX_PAGES = 20;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Cloudflare fingerprints the client: Node's own fetch gets a 403 on the JSON
-// endpoint while curl sails through, so curl does the fetching and fetch() is
-// only a fallback for hosts where curl is missing.
+// endpoints while curl sails through, so curl leads and fetch() is the fallback
+// for machines without it.
 async function get(url, { json = false } = {}) {
   let lastError;
 
@@ -44,7 +50,6 @@ async function get(url, { json = false } = {}) {
       lastError = new Error(`${status} for ${url}`);
     } catch (error) {
       lastError = error;
-      // no curl on this machine — try Node's fetch instead
       if (error.code === "ENOENT") {
         const response = await fetch(url, { headers: { "User-Agent": UA } });
         if (response.ok) return json ? response.json() : response.text();
@@ -57,19 +62,51 @@ async function get(url, { json = false } = {}) {
   throw lastError;
 }
 
-async function fetchProjects() {
+const decode = (text = "") =>
+  text
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .trim();
+
+const slugify = (text) =>
+  decode(text)
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+// The albums the studio has made, in the order they're arranged on ArtStation.
+// "All" is ArtStation's built-in bucket, not a real category.
+async function fetchAlbums() {
+  const profile = await get(`https://www.artstation.com/users/${USER}/quick.json`, { json: true });
+  return (profile.albums_with_community_projects || [])
+    .filter((album) => album.title && album.title.toLowerCase() !== "all")
+    .sort((a, b) => a.position - b.position)
+    .map((album) => ({
+      id: album.id,
+      title: decode(album.title),
+      slug: slugify(album.title),
+      url: `https://www.artstation.com/${USER}/albums/${album.id}`,
+      count: album.total_projects ?? 0,
+    }));
+}
+
+async function fetchAlbumProjects(album) {
   const collected = [];
   let total = Infinity;
 
   for (let page = 1; page <= MAX_PAGES && collected.length < total; page += 1) {
     const data = await get(
-      `https://www.artstation.com/users/${USER}/projects.json?page=${page}`,
+      `https://www.artstation.com/users/${USER}/projects.json?album_id=${album.id}&page=${page}`,
       { json: true }
     );
     total = data.total_count ?? collected.length;
     if (!data.data?.length) break;
     collected.push(...data.data);
-    await sleep(1200); // be a polite visitor
+    await sleep(1000); // be a polite visitor
   }
 
   return collected;
@@ -93,63 +130,6 @@ async function fetchImages() {
   return byHash;
 }
 
-// Sections and categories come from the post titles, since the studio's posts
-// carry no tags. Tags win when they exist, so tagging on ArtStation makes this
-// exact instead of inferred. Order matters: the most specific rule first.
-const RULES = [
-  { test: /\b3d\b|low.?poly|sculpt|zbrush|blender|maya/, section: "3D Art & Design", categories: [
-    [/character|creature|figure/, "Character Modeling"],
-    [/environment|architecture|scene|world|map/, "Environment Art"],
-    [/sculpt/, "Sculpting"],
-    [/./, "Props & Assets"],
-  ] },
-  { test: /\banim(ation|ated)?\b|\brig(ging)?\b|storyboard/, section: "Animation", categories: [
-    [/3d/, "3D Animation"],
-    [/rig/, "Rigging"],
-    [/storyboard/, "Storyboards"],
-    [/./, "2D Animation"],
-  ] },
-  { test: /motion graphic|title sequence|logo anim|vfx/, section: "Motion Graphics", categories: [
-    [/title/, "Title Sequences"],
-    [/logo/, "Logo Animation"],
-    [/vfx/, "VFX"],
-    [/./, "Social Cuts"],
-  ] },
-  { test: /video edit|trailer|reel\b|colou?r grad/, section: "Video Editing", categories: [
-    [/trailer/, "Trailers"],
-    [/reel|short/, "Shorts & Reels"],
-    [/grad/, "Colour Grading"],
-    [/./, "Long Form"],
-  ] },
-  { test: /brand|identity|graphic design|marketing|flyer|advert|campaign/, section: "Marketing & Promotion", categories: [
-    [/campaign/, "Campaign Art"],
-    [/advert|flyer/, "Ad Creatives"],
-    [/copy/, "Copywriting"],
-    [/./, "Campaign Art"],
-  ] },
-  { test: /token|nft|collectible/, section: "Vanta Tokens & Utilities", categories: [
-    [/utility/, "Utility Design"],
-    [/drop/, "Drops"],
-    [/collectible/, "Collectibles"],
-    [/./, "Token Art"],
-  ] },
-  // default: everything else is 2D work
-  { test: /./, section: "2D Art & Design", categories: [
-    [/cover/, "Book & Comic Cover"],
-    [/comic|panel|strip/, "Comic Page & Panels"],
-    [/poster|promo/, "Posters & Promotional Arts"],
-    [/character/, "Character Design"],
-    [/./, "Illustrations & Concept Art"],
-  ] },
-];
-
-function classify(title, tags) {
-  const haystack = `${title} ${(tags || []).join(" ")}`.toLowerCase();
-  const rule = RULES.find((candidate) => candidate.test.test(haystack));
-  const [, category] = rule.categories.find(([pattern]) => pattern.test(haystack));
-  return { section: rule.section, category };
-}
-
 // Titles come in two shapes:
 //   "Cover Art Done By Carlos Idrobo of VantaOrigin Studio"
 //   "3D Assets . Bruno Diaz . Vantaorigin Studio"
@@ -166,8 +146,7 @@ function artistFor(title) {
 
 async function readExisting() {
   try {
-    const raw = await readFile(OUT, "utf8");
-    const parsed = JSON.parse(raw);
+    const parsed = JSON.parse(await readFile(OUT, "utf8"));
     return new Map((parsed.projects || []).map((project) => [project.id, project]));
   } catch {
     return new Map();
@@ -175,46 +154,57 @@ async function readExisting() {
 }
 
 async function main() {
-  const [raw, images, existing] = await Promise.all([
-    fetchProjects(),
+  const [albums, images, existing] = await Promise.all([
+    fetchAlbums(),
     fetchImages().catch(() => new Map()), // RSS is a bonus, not a blocker
     readExisting(),
   ]);
 
-  if (!raw.length) throw new Error("No projects returned — leaving the existing file alone.");
+  if (!albums.length) throw new Error("No albums returned — leaving the existing file alone.");
 
-  const projects = raw
-    .map((project) => {
+  const projects = [];
+  const seen = new Set();
+
+  for (const album of albums) {
+    const raw = await fetchAlbumProjects(album);
+    album.count = raw.length;
+
+    for (const project of raw) {
+      // a piece can sit in more than one album; first album wins as its home
+      if (seen.has(project.hash_id)) continue;
+      seen.add(project.hash_id);
+
       const previous = existing.get(project.hash_id);
-      const { section, category } = classify(project.title, project.tag_list);
-      return {
+      projects.push({
         id: project.hash_id,
-        title: project.title,
+        title: decode(project.title),
         artist: artistFor(project.title),
-        section,
-        category,
-        description: (project.description || "").split("\n").filter(Boolean)[0] || "",
+        albumId: album.id,
+        album: album.title,
+        description: decode((project.description || "").split("\n").filter(Boolean)[0] || ""),
         permalink: project.permalink,
         cover: project.cover?.thumb_url || project.cover?.small_square_url || null,
-        // keep images we captured on an earlier run once RSS moves past them
         images: images.get(project.hash_id) || previous?.images || [],
         publishedAt: project.published_at,
         likes: project.likes_count,
-      };
-    })
-    .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+      });
+    }
+  }
+
+  projects.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
 
   const payload = {
     source: `artstation:${USER}`,
     profile: `https://www.artstation.com/${USER}`,
     syncedAt: new Date().toISOString(),
+    albums,
     totalCount: projects.length,
     projects,
   };
 
   await writeFile(OUT, `${JSON.stringify(payload, null, 2)}\n`);
-  const withImages = projects.filter((project) => project.images.length).length;
-  console.log(`Synced ${projects.length} projects (${withImages} with full images).`);
+  console.log(`Synced ${albums.length} albums, ${projects.length} projects:`);
+  for (const album of albums) console.log(`  ${String(album.count).padStart(3)}  ${album.title}`);
 }
 
 main().catch((error) => {

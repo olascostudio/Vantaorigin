@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import portfolio from "../../data/portfolio.json";
 
 // Cards come from data/portfolio.json, which the ArtStation sync rewrites.
-// Shape per project: { id, title, artist, category, description, permalink,
-// cover, images[], publishedAt, likes }.
+// Shape per project: { id, title, artist, albumId, album, description,
+// permalink, cover, images[], publishedAt, likes }.
 
 const PAGE_SIZE = 12;
 
@@ -99,40 +99,41 @@ function Card({ project, onOpen }) {
         <div className="flex flex-1 flex-col gap-1 p-4">
           <p className="line-clamp-2 font-ui text-base font-bold text-white">{project.title}</p>
           <p className="font-ui text-sm text-accent">By: {project.artist}</p>
-          <p className="mt-auto pt-2 font-ui text-xs text-neutral-400">{project.category}</p>
+          <p className="mt-auto pt-2 font-ui text-xs text-neutral-400">{project.album}</p>
         </div>
       </button>
     </li>
   );
 }
 
-export default function PortfolioGrid({ section, filter, query }) {
+export default function PortfolioGrid({ albumId, artist, query, albumUrl }) {
   const [visible, setVisible] = useState(PAGE_SIZE);
   const [open, setOpen] = useState(null);
 
   const projects = useMemo(() => {
     const term = query.trim().toLowerCase();
     return portfolio.projects.filter((project) => {
-      // data synced before sections existed has no section field
-      const matchesSection = !section || !project.section || project.section === section;
-      const matchesFilter = !filter || project.category === filter;
+      const matchesAlbum = !albumId || project.albumId === albumId;
+      const matchesArtist = !artist || project.artist === artist;
       const matchesTerm =
         !term ||
         project.title.toLowerCase().includes(term) ||
         project.artist.toLowerCase().includes(term) ||
         project.description.toLowerCase().includes(term);
-      return matchesSection && matchesFilter && matchesTerm;
+      return matchesAlbum && matchesArtist && matchesTerm;
     });
-  }, [section, filter, query]);
+  }, [albumId, artist, query]);
 
-  useEffect(() => setVisible(PAGE_SIZE), [filter, query, section]);
+  useEffect(() => setVisible(PAGE_SIZE), [albumId, artist, query]);
 
   if (!projects.length) {
     return (
       <div className="flex min-h-[420px] flex-col items-center justify-center gap-2 px-5 pb-10 text-center">
         <p className="font-ui text-xl font-bold text-white">Nothing here yet</p>
         <p className="font-ui text-base text-neutral-400">
-          {query ? `No work matches “${query}”.` : "New work from ArtStation lands here automatically."}
+          {query
+            ? `No work matches “${query}”.`
+            : "New work added to this album on ArtStation lands here automatically."}
         </p>
       </div>
     );
@@ -160,7 +161,12 @@ export default function PortfolioGrid({ section, filter, query }) {
 
       <p className="mt-8 text-center font-ui text-xs text-neutral-500">
         Synced from{" "}
-        <a href={portfolio.profile} target="_blank" rel="noreferrer" className="underline hover:text-neutral-300">
+        <a
+          href={albumUrl || portfolio.profile}
+          target="_blank"
+          rel="noreferrer"
+          className="underline hover:text-neutral-300"
+        >
           ArtStation
         </a>{" "}
         · {new Date(portfolio.syncedAt).toLocaleString()}
