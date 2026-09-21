@@ -42,11 +42,15 @@ export default function ProjectRequest() {
           you with a vetted creator from the VantaOrigin network.
         </p>
 
+        {/* The form is on Google's domain, so its real height can't be read
+            from here — browsers block cross-origin measurement and Google
+            doesn't broadcast it. Sizing to the viewport instead keeps the page
+            free of dead space on any screen; the form scrolls inside. */}
         <div className="mt-8 overflow-hidden rounded-2xl bg-white">
           <iframe
             src={`${FORM_URL}?embedded=true`}
             title="VantaOrigin Studio project request form"
-            className="h-[1400px] w-full border-0"
+            className="h-[calc(100vh-120px)] max-h-[1400px] min-h-[560px] w-full border-0"
             loading="lazy"
           >
             Loading the request form…

@@ -1,3 +1,5 @@
+import portfolio from "./portfolio.json";
+
 // Marketplace taxonomy and copy. Listings will replace the placeholder panel
 // once the catalogue (and the ArtStation import) is wired up.
 
@@ -89,3 +91,40 @@ export const HOW_IT_WORKS = [
     body: "Once the agreed deliverables are approved, payment is released to the creator and your project is complete.",
   },
 ];
+
+// --- counts from the synced ArtStation data ----------------------------------
+// These recompute whenever the sync rewrites portfolio.json, so the sidebar and
+// chips always show what the studio has actually posted.
+
+const projects = portfolio.projects || [];
+
+export const sectionCounts = projects.reduce((totals, project) => {
+  totals[project.section] = (totals[project.section] || 0) + 1;
+  return totals;
+}, {});
+
+export const categoryCounts = projects.reduce((totals, project) => {
+  const key = `${project.section}|${project.category}`;
+  totals[key] = (totals[key] || 0) + 1;
+  return totals;
+}, {});
+
+export const countFor = (section, category) =>
+  category ? categoryCounts[`${section}|${category}`] || 0 : sectionCounts[section] || 0;
+
+// Categories the sync produced that aren't in the hand-written taxonomy yet,
+// so new kinds of work still show up rather than vanishing.
+export const extraCategoriesFor = (sectionLabel) => {
+  const known = new Set(
+    (SELECTABLE.find((item) => item.label === sectionLabel)?.filters || [])
+  );
+  return [
+    ...new Set(
+      projects
+        .filter((project) => project.section === sectionLabel && !known.has(project.category))
+        .map((project) => project.category)
+    ),
+  ];
+};
+
+export const lastSyncedAt = portfolio.syncedAt;

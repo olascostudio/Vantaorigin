@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import Footer from "../components/Footer";
-import { CATEGORIES, SELECTABLE } from "../data/marketplace";
+import { CATEGORIES, SELECTABLE, countFor, extraCategoriesFor, lastSyncedAt } from "../data/marketplace";
 import PortfolioGrid from "../components/marketplace/PortfolioGrid";
 import heroArt from "../assets/auth/banner.webp";
 import stripePink from "../assets/marketplace/stripe-pink.svg";
@@ -92,18 +92,22 @@ function Sidebar({ activeId, onSelect }) {
 }
 
 function CategoryButton({ category, active, onSelect }) {
+  const count = countFor(category.label);
   return (
     <button
       type="button"
       onClick={() => onSelect(category.id)}
       aria-current={active ? "true" : undefined}
-      className={`block w-full rounded-lg px-4 py-3 text-left font-ui text-base transition-colors ${
+      className={`flex w-full items-center justify-between gap-3 rounded-lg px-4 py-3 text-left font-ui text-base transition-colors ${
         active
           ? "bg-gradient-to-r from-[#c2185b] to-[#a855f7] font-bold text-white"
           : "text-neutral-300 hover:bg-white/5 hover:text-white"
       }`}
     >
       {category.label}
+      <span className={`font-ui text-sm ${active ? "text-white/80" : "text-neutral-500"}`}>
+        {count}
+      </span>
     </button>
   );
 }
@@ -113,7 +117,16 @@ export default function Marketplace() {
   const [filter, setFilter] = useState(0);
   const [query, setQuery] = useState("");
 
-  const category = SELECTABLE.find((item) => item.id === activeId) ?? SELECTABLE[0];
+  const base = SELECTABLE.find((item) => item.id === activeId) ?? SELECTABLE[0];
+
+  // Chips follow the synced data: anything the sync produced that isn't in the
+  // taxonomy is appended, and empty ones drop to the end.
+  const category = useMemo(() => {
+    const chips = [...base.filters, ...extraCategoriesFor(base.label)].sort(
+      (a, b) => countFor(base.label, b) - countFor(base.label, a)
+    );
+    return { ...base, filters: chips };
+  }, [base]);
 
   const selectCategory = (id) => {
     setActiveId(id);
@@ -175,7 +188,10 @@ export default function Marketplace() {
                     : "bg-[#2b3547] text-white hover:bg-[#333f56]"
                 }`}
               >
-                {label}
+                {label}{" "}
+                <span className={index === filter ? "text-white/80" : "text-neutral-400"}>
+                  {countFor(category.label, label)}
+                </span>
               </button>
             ))}
           </div>
