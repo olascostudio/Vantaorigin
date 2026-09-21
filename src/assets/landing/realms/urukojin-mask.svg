@@ -1,0 +1,15 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="578.947" height="631.579" viewBox="0 0 578.947 631.579" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Mask group">
+<mask id="mask0_0_18" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="579" height="632">
+<rect id="Rectangle 1213" width="578.947" height="631.579" rx="30.5263" fill="#FC187B"/>
+</mask>
+<g mask="url(#mask0_0_18)">
+<g id="Vector 4">
+<path d="M0 505.16C172.126 343.882 301.581 547.829 440.439 425.606C339.912 581.821 172.849 376.427 0 505.16Z" fill="#FC187B" fill-opacity="0.3"/>
+<path d="M159.831 396.677C251.679 317.846 342.082 411.141 399.939 356.177C337.019 445.856 279.885 327.972 159.831 396.677Z" fill="#FC187B" fill-opacity="0.3"/>
+<path d="M253.126 650.526C424.528 493.588 582.19 688.133 690.672 572.419C602.44 742.375 440.439 522.517 253.126 650.526Z" fill="#FC187B" fill-opacity="0.3"/>
+<path d="M625.583 340.266C739.562 559.546 382.341 541.562 189.483 505.16C329.305 562.053 624.57 626.515 687.056 429.222C692.119 389.445 677.365 303.961 577.85 280.239C453.457 250.587 450.564 424.159 492.511 447.302C474.575 277.202 573.752 305.07 625.583 340.266Z" fill="#FC187B" fill-opacity="0.3"/>
+</g>
+</g>
+</g>
+</svg>

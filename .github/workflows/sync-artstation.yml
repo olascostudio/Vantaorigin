@@ -1,0 +1,41 @@
+name: Sync ArtStation portfolio
+
+on:
+  schedule:
+    # every 15 minutes; GitHub may run it a few minutes late when busy
+    - cron: "*/15 * * * *"
+  workflow_dispatch: # lets you run it by hand from the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-artstation
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Fetch latest posts
+        run: node scripts/sync-artstation.mjs
+        env:
+          ARTSTATION_USER: vantaoriginstudio
+
+      - name: Commit when something changed
+        run: |
+          if git diff --quiet -- src/data/portfolio.json; then
+            echo "No new work on ArtStation."
+            exit 0
+          fi
+          git config user.name "vantaorigin-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/data/portfolio.json
+          git commit -m "Sync ArtStation portfolio"
+          git push

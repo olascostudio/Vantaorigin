@@ -1,0 +1,17 @@
+node_modules
+dist
+dist-ssr
+*.local
+
+# Figma reference exports — kept locally, not needed to build the site
+design/
+
+.DS_Store
+.env
+.env.*
+!.env.example
+
+*.log
+npm-debug.log*
+.vite
+coverage
