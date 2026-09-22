@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import HighlightModal from "../components/creator/HighlightModal";
@@ -275,29 +275,112 @@ function CategoryModal({ onClose, onCreate }) {
   );
 }
 
-function PostGallery({ images }) {
-  const [index, setIndex] = useState(0);
-  if (!images?.length) return null;
+// Full-screen viewer so cropped grid tiles can be seen whole.
+function Lightbox({ images, start, onClose }) {
+  const [index, setIndex] = useState(start);
+  const step = (delta) => setIndex((i) => (i + delta + images.length) % images.length);
+
+  useEffect(() => {
+    const onKey = (event) => {
+      if (event.key === "Escape") onClose();
+      if (event.key === "ArrowRight") step(1);
+      if (event.key === "ArrowLeft") step(-1);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  });
+
+  const arrow =
+    "absolute top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-2xl text-white hover:bg-black/80";
 
   return (
-    <div className="relative mt-6 aspect-[1291/288] w-full overflow-hidden rounded-xl">
-      <img src={images[index]} alt="" className="size-full object-cover" />
-      <span className="absolute right-4 top-4 rounded-md bg-black/70 px-2 py-1 font-ui text-sm text-white">
-        {index + 1}/{images.length}
-      </span>
-      <div className="absolute inset-x-0 bottom-3 flex justify-center gap-2">
-        {images.map((image, i) => (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Image viewer"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+      onMouseDown={(event) => event.target === event.currentTarget && onClose()}
+    >
+      <img
+        src={images[index]}
+        alt={`Image ${index + 1} of ${images.length}`}
+        className="max-h-full max-w-full rounded-lg object-contain"
+      />
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Close viewer"
+        className="absolute right-4 top-4 flex size-10 items-center justify-center rounded-full bg-black/60 text-2xl text-white hover:bg-black/80"
+      >
+        ×
+      </button>
+      {images.length > 1 && (
+        <>
+          <button type="button" onClick={() => step(-1)} aria-label="Previous image" className={`${arrow} left-4`}>
+            ‹
+          </button>
+          <button type="button" onClick={() => step(1)} aria-label="Next image" className={`${arrow} right-4`}>
+            ›
+          </button>
+          <span className="absolute bottom-5 left-1/2 -translate-x-1/2 rounded-md bg-black/70 px-2 py-1 font-ui text-sm text-white">
+            {index + 1}/{images.length}
+          </span>
+        </>
+      )}
+    </div>
+  );
+}
+
+// X/Facebook-style media grid: 1 image keeps its shape, 2 sit side by side,
+// 3 are one tall + two stacked, 4+ are a 2x2 with "+N" on the last tile.
+function PostGallery({ images }) {
+  const [viewing, setViewing] = useState(null);
+  if (!images?.length) return null;
+
+  const shown = images.slice(0, 4);
+  const extra = images.length - shown.length;
+  const count = shown.length;
+
+  const layout =
+    count === 1
+      ? ""
+      : count === 2
+        ? "grid aspect-[16/9] grid-cols-2 gap-1"
+        : "grid aspect-[16/9] grid-cols-2 grid-rows-2 gap-1";
+
+  return (
+    <>
+      <div className={`mt-6 w-full max-w-[680px] overflow-hidden rounded-2xl border border-white/10 ${layout}`}>
+        {shown.map((image, i) => (
           <button
             key={`${image}-${i}`}
             type="button"
-            aria-label={`Show image ${i + 1}`}
-            aria-current={i === index}
-            onClick={() => setIndex(i)}
-            className={`size-2 rounded-full ${i === index ? "bg-white" : "bg-white/40"}`}
-          />
+            onClick={() => setViewing(i)}
+            aria-label={`Open image ${i + 1} of ${images.length}`}
+            className={`relative block overflow-hidden bg-black/30 ${count === 3 && i === 0 ? "row-span-2" : ""}`}
+          >
+            <img
+              src={image}
+              alt=""
+              className={
+                count === 1
+                  ? "block max-h-[520px] w-full object-cover"
+                  : "size-full object-cover transition-transform duration-300 hover:scale-[1.03]"
+              }
+            />
+            {extra > 0 && i === shown.length - 1 && (
+              <span className="absolute inset-0 flex items-center justify-center bg-black/55 font-ui text-3xl font-bold text-white">
+                +{extra}
+              </span>
+            )}
+          </button>
         ))}
       </div>
-    </div>
+
+      {viewing !== null && (
+        <Lightbox images={images} start={viewing} onClose={() => setViewing(null)} />
+      )}
+    </>
   );
 }
 
