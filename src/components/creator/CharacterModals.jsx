@@ -48,8 +48,8 @@ export function PrivacyModal({ open, onClose, onSave }) {
     <Overlay onClose={onClose} label="Character visibility">
       <div className="rounded-2xl bg-[#2b3547] px-6 py-10 sm:px-14">
         <h2 className="mx-auto max-w-[520px] text-center font-ui text-2xl font-bold leading-snug text-white sm:text-[26px]">
-          Would you like to keep your character private or publish publicly for the community to
-          use?
+          Would you like to keep this character private or publish it publicly so it can appear on
+          the Discovery page?
         </h2>
 
         <div className="mt-10 divide-y divide-white/10 rounded-2xl border border-white/20 px-6">
