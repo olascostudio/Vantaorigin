@@ -3,9 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import { PrivacyModal, SuccessModal } from "../components/creator/CharacterModals";
 import characterCover from "../assets/creator/character-cover.svg";
-import studioCard1 from "../assets/creator/studio-card-1.webp";
-import studioCard2 from "../assets/creator/studio-card-2.webp";
-import studioCard3 from "../assets/creator/studio-card-3.webp";
+import studioTilt1 from "../assets/creator/studio-tilt-1.webp";
+import studioTilt2 from "../assets/creator/studio-tilt-2.webp";
+import studioTilt3 from "../assets/creator/studio-tilt-3.webp";
+
+const STUDIO_CARDS = [studioTilt1, studioTilt2, studioTilt3];
 
 const REALMS = ["Marvel Universe", "My Own World", "The Vantaverse", "Obaalu", "Iyanu", "Urukojin", "Eganon"];
 
@@ -71,41 +73,48 @@ function IdentityStep({ identity, setIdentity, onNext }) {
           />
         </div>
 
+        <div className="mt-8 flex justify-center">
+          <button
+            type="button"
+            onClick={onNext}
+            className="flex items-center gap-3 rounded-full bg-[#2f86e8] px-10 py-3.5 font-ui text-lg font-bold text-white transition-opacity hover:opacity-90"
+          >
+            Let’s Go
+            <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </div>
+
         <hr className="my-8 border-white/10" />
 
         <h2 className="text-center font-ui text-2xl font-bold text-white">
-          Bring your characters to life
+          Bring Your Vision to Life
         </h2>
 
-        <div className="relative mt-6 overflow-hidden rounded-xl bg-gradient-to-r from-[#7b3fe4] to-[#4f46e5] p-6">
-          <div className="max-w-[300px]">
-            <h3 className="font-ui text-xl font-bold text-white">Visit VantaOrigin Studios.</h3>
-            <p className="mt-2 font-ui text-xs leading-relaxed text-white/90">
-              Your character has a specific energy, we get that. Browse our style catalog, pick what
-              fits, and connect directly with Vanta-verified artists who know how to bring it to
-              life. Every contract is bound to deliver, every price is set. No surprises, just
-              results.
+        <Link
+          to="/marketplace"
+          aria-label="Explore creative services in the Marketplace"
+          className="mt-6 block overflow-hidden rounded-xl border border-[#465578] bg-[#252f46] transition-colors hover:border-[#6b8ff5] hover:bg-[#2a3550] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#6b8ff5]"
+        >
+          <div className="px-5 pt-7 sm:px-9 sm:pt-9">
+            <p className="font-ui text-sm leading-relaxed text-neutral-200 sm:text-base">
+              Your character is only the beginning. Explore creative services from Vanta-verified
+              artists and specialists, choose what fits your project, and work directly with the
+              right creator to bring your vision to life.
+            </p>
+            <p className="mt-3 font-ui text-sm font-semibold leading-relaxed text-white sm:text-base">
+              Clear services. Defined deliverables. Verified creators. No guesswork, just creative
+              work built around your vision.
             </p>
           </div>
-          <div aria-hidden="true" className="pointer-events-none absolute -bottom-2 right-4 hidden items-end gap-2 sm:flex">
-            <img src={studioCard1} alt="" className="h-[121px] w-[129px] -rotate-6" />
-            <img src={studioCard2} alt="" className="h-[121px] w-[129px]" />
-            <img src={studioCard3} alt="" className="h-[121px] w-[128px] rotate-6" />
-          </div>
-        </div>
-      </div>
 
-      <div className="mt-10 flex justify-center">
-        <button
-          type="button"
-          onClick={onNext}
-          className="flex items-center gap-3 rounded-full bg-[#2f86e8] px-10 py-3.5 font-ui text-lg font-bold text-white transition-opacity hover:opacity-90"
-        >
-          Let’s Go
-          <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-            <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
+          <div aria-hidden="true" className="mt-8 flex items-end justify-center gap-2 px-3 sm:gap-4 sm:px-8">
+            {STUDIO_CARDS.map((src) => (
+              <img key={src} src={src} alt="" className="block w-[32%] max-w-[190px]" />
+            ))}
+          </div>
+        </Link>
       </div>
     </div>
   );
