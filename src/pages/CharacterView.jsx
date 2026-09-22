@@ -4,8 +4,29 @@ import DashboardNav from "../components/DashboardNav";
 import CharacterCard from "../components/creator/CharacterCard";
 import { loadCharacter } from "../data/character";
 import heroBanner from "../assets/creator/hero-banner.webp";
+import mobileBanner from "../assets/creator/profile-mobile-bg.webp";
 import flameBright from "../assets/creator/flame-bright.svg";
 import flameSoft from "../assets/creator/flame-soft.svg";
+
+// Section label used on phones and tablets, where the page reads top to bottom.
+function SectionPill({ children }) {
+  return (
+    <h2 className="mx-auto w-fit rounded-full bg-white px-5 py-2 font-ui text-sm font-bold text-black shadow-[0_0_24px_rgba(255,255,255,0.25)] lg:hidden">
+      {children}
+    </h2>
+  );
+}
+
+// Two faded cards peeking out behind the content, as in the mobile design.
+function Stacked({ children, className = "" }) {
+  return (
+    <div className={`relative ${className}`}>
+      <div aria-hidden="true" className="absolute inset-0 translate-x-2 translate-y-3 rotate-[3deg] rounded-[26px] border border-white/10 bg-[#222b3c]/50" />
+      <div aria-hidden="true" className="absolute inset-0 -translate-x-2 translate-y-1.5 -rotate-[3deg] rounded-[26px] border border-white/10 bg-[#222b3c]/70" />
+      <div className="relative">{children}</div>
+    </div>
+  );
+}
 
 function Panel({ title, entry, flame, highlight, children }) {
   return (
@@ -45,9 +66,11 @@ function AssetRail({ assets }) {
 
   if (!assets.length) {
     return (
-      <div className="flex h-[160px] items-center justify-center rounded-2xl border border-dashed border-white/15 bg-[#222b3c] font-ui text-base text-neutral-400">
-        No assets yet
-      </div>
+      <Stacked className="mx-auto w-full max-w-[420px] lg:max-w-none">
+        <div className="flex min-h-[220px] items-center justify-center rounded-[26px] border border-white/10 bg-[#222b3c] px-6 py-10 text-center font-ui text-base text-[#6b8ff5]">
+          Nothing to show here yet.
+        </div>
+      </Stacked>
     );
   }
 
@@ -98,13 +121,15 @@ export default function CharacterView({ owner = false }) {
   }, [id]);
 
   const assets = character.assets || [];
+  // Phones show the origin story folded until it's opened.
+  const [storyOpen, setStoryOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#1b2233]">
       <DashboardNav active="Creators’ Hub" />
 
-      <div className="px-3 py-4 sm:px-6 sm:py-6 lg:px-10">
-        <div className="mx-auto w-full max-w-[420px] rounded-[28px] border-2 border-[#eec340]/60 bg-[#1e2637] p-3 shadow-[0_0_40px_rgba(238,195,64,0.12)] sm:max-w-none sm:rounded-2xl sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none">
+      <div className="px-4 py-5 sm:px-6 sm:py-6 lg:px-10">
+        <div className="mx-auto w-full max-w-[640px] lg:max-w-none">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <Link
               to={owner ? "/creators-hub" : "/discover"}
@@ -116,12 +141,12 @@ export default function CharacterView({ owner = false }) {
               Back
             </Link>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               {owner && (
                 <button
                   type="button"
                   onClick={() => navigate(`/creators-hub/character/profile?id=${character.id}`)}
-                  className="flex items-center gap-2 rounded-full bg-[#3ecf6a] px-6 py-2.5 font-ui text-base font-bold text-white hover:opacity-90"
+                  className="flex items-center gap-2 rounded-full bg-[#3ecf6a] px-4 py-2 font-ui text-sm font-bold text-white hover:opacity-90 sm:px-6 sm:py-2.5 sm:text-base"
                 >
                   <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                     <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z" strokeLinecap="round" strokeLinejoin="round" />
@@ -131,7 +156,7 @@ export default function CharacterView({ owner = false }) {
               )}
               <button
                 type="button"
-                className="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#7b3fe4] to-[#a855f7] px-6 py-2.5 font-ui text-base font-bold text-white hover:opacity-90"
+                className="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#7b3fe4] to-[#a855f7] px-4 py-2 font-ui text-sm font-bold text-white hover:opacity-90 sm:px-6 sm:py-2.5 sm:text-base"
               >
                 <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                   <path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7M12 16V3M7 8l5-5 5 5" strokeLinecap="round" strokeLinejoin="round" />
@@ -141,17 +166,89 @@ export default function CharacterView({ owner = false }) {
             </div>
           </div>
 
-          {/* Hero */}
-          <section className="relative mt-5 overflow-hidden rounded-2xl bg-[#222b3c]">
+          {/* ---- Phones & tablets: card, then the story card ---- */}
+          <div className="mt-8 flex flex-col gap-10 lg:hidden">
+            <SectionPill>Characters</SectionPill>
+            <Stacked className="mx-auto">
+              <CharacterCard
+                alias={character.alias}
+                power={character.power}
+                cover={character.cover}
+                showViewMore={owner}
+                onViewMore={() => navigate(`/creators-hub/character/profile?id=${character.id}`)}
+              />
+            </Stacked>
+
+            <section
+              aria-label="Origin story"
+              className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#222b3c]"
+            >
+              <img
+                src={character.banner || mobileBanner}
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 size-full object-cover"
+              />
+              <div aria-hidden="true" className="absolute inset-0 bg-[#1b2233]/70" />
+
+              <div className="relative flex flex-col items-center px-5 pb-12 pt-14 text-center">
+                <img src={flameBright} alt="" aria-hidden="true" className="h-12 w-auto" />
+
+                <h1 className="mt-4 font-ui text-2xl text-white">
+                  {character.alias}
+                  {character.realm && <> — {character.realm}</>}
+                </h1>
+
+                {character.tagline && (
+                  <p className="mt-2 font-ui text-base font-bold text-white">
+                    Tagline — {character.tagline}
+                  </p>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setStoryOpen((open) => !open)}
+                  aria-expanded={storyOpen}
+                  className="mt-5 font-ui text-base font-bold text-[#6b8ff5] hover:underline"
+                >
+                  Origin Backstory
+                </button>
+
+                {storyOpen && (
+                  <p className="mt-3 whitespace-pre-line rounded-lg bg-black/25 px-4 py-3 text-left font-ui text-sm leading-relaxed text-white">
+                    {character.backstory}
+                  </p>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setStoryOpen((open) => !open)}
+                aria-label={storyOpen ? "Collapse origin story" : "Expand origin story"}
+                className="absolute bottom-3 right-3 flex size-9 items-center justify-center rounded-full text-white hover:bg-white/10"
+              >
+                <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  {storyOpen ? (
+                    <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7" strokeLinecap="round" strokeLinejoin="round" />
+                  ) : (
+                    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" strokeLinecap="round" strokeLinejoin="round" />
+                  )}
+                </svg>
+              </button>
+            </section>
+          </div>
+
+          {/* ---- Desktop: card and story side by side ---- */}
+          <section className="relative mt-5 hidden overflow-hidden rounded-2xl bg-[#222b3c] lg:block">
             <img
               src={character.banner || heroBanner}
               alt=""
               aria-hidden="true"
-              className="absolute inset-y-0 right-0 hidden h-full w-[62%] object-cover lg:block"
+              className="absolute inset-y-0 right-0 h-full w-[62%] object-cover"
             />
-            <div className="absolute inset-0 hidden bg-gradient-to-r from-[#222b3c] via-[#222b3c]/95 to-[#222b3c]/10 lg:block" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#222b3c] via-[#222b3c]/95 to-[#222b3c]/10" />
 
-            <div className="relative flex flex-col gap-6 p-4 lg:flex-row lg:p-6">
+            <div className="relative flex flex-row gap-6 p-6">
               <CharacterCard
                 alias={character.alias}
                 power={character.power}
@@ -184,11 +281,15 @@ export default function CharacterView({ owner = false }) {
             </div>
           </section>
 
-          <section aria-label="Assets" className="mt-5">
+          <section aria-label="Assets" className="mt-12 flex flex-col gap-8 lg:mt-5 lg:block">
+            <SectionPill>Assets</SectionPill>
             <AssetRail assets={assets} />
           </section>
 
-          <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-[1.1fr_1fr_1fr]">
+          <div className="mt-12 lg:hidden">
+            <SectionPill>Strength &amp; Weakness</SectionPill>
+          </div>
+          <div className="mt-8 grid grid-cols-1 gap-5 lg:mt-5 lg:grid-cols-[1.1fr_1fr_1fr]">
             <Panel title="Core Ability" entry={character.core} highlight>
               <ul className="relative mt-6 flex flex-col gap-3">
                 {character.core.extras
@@ -211,8 +312,12 @@ export default function CharacterView({ owner = false }) {
           <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-[1fr_2.6fr]">
             <Panel title="Alignment" entry={character.alignment} flame={flameSoft} />
 
+            <div className="mt-7 lg:hidden">
+              <SectionPill>Character Stats</SectionPill>
+            </div>
+
             <section className="overflow-hidden rounded-2xl bg-[#222b3c] p-5">
-              <h2 className="font-ui text-lg font-bold text-[#6b8ff5]">Character Stats</h2>
+              <h2 className="hidden font-ui text-lg font-bold text-[#6b8ff5] lg:block">Character Stats</h2>
 
               <div className="mt-4 overflow-x-auto">
                 <table className="w-full min-w-[420px] border-collapse text-left">

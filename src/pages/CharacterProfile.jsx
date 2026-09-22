@@ -5,6 +5,7 @@ import CharacterCard from "../components/creator/CharacterCard";
 import { loadCharacter, readImage, saveCharacter } from "../data/character";
 import EditableText from "../components/creator/EditableText";
 import heroBanner from "../assets/creator/hero-banner.webp";
+import mobileBanner from "../assets/creator/profile-mobile-bg.webp";
 import flameBright from "../assets/creator/flame-bright.svg";
 import flameSoft from "../assets/creator/flame-soft.svg";
 import sword from "../assets/creator/sword.svg";
@@ -22,6 +23,36 @@ function Chevron({ open }) {
       aria-hidden="true"
     >
       <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+// Section label used on phones and tablets, where the page reads top to bottom.
+function SectionPill({ children }) {
+  return (
+    <h2 className="mx-auto w-fit rounded-full bg-white px-5 py-2 font-ui text-sm font-bold text-black shadow-[0_0_24px_rgba(255,255,255,0.25)] lg:hidden">
+      {children}
+    </h2>
+  );
+}
+
+// Two faded cards peeking out behind the content, as in the mobile design.
+function Stacked({ children, className = "" }) {
+  return (
+    <div className={`relative ${className}`}>
+      <div aria-hidden="true" className="absolute inset-0 translate-x-2 translate-y-3 rotate-[3deg] rounded-[26px] border border-white/10 bg-[#222b3c]/50" />
+      <div aria-hidden="true" className="absolute inset-0 -translate-x-2 translate-y-1.5 -rotate-[3deg] rounded-[26px] border border-white/10 bg-[#222b3c]/70" />
+      <div className="relative">{children}</div>
+    </div>
+  );
+}
+
+function ImageIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <circle cx="9" cy="10" r="1.5" />
+      <path d="M21 16l-5-5-8 8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -107,6 +138,8 @@ export default function CharacterProfile() {
   }, [data.id, navigate]);
   const assetInput = useRef(null);
   const bannerInput = useRef(null);
+  // Phones show the origin story folded until it's opened.
+  const [storyOpen, setStoryOpen] = useState(false);
   // Which extra core ability is expanded; null shows the main ability's description.
   const [openExtra, setOpenExtra] = useState(null);
 
@@ -154,49 +187,51 @@ export default function CharacterProfile() {
     <div className="min-h-screen bg-[#1b2233]">
       <DashboardNav active="Creators’ Hub" />
 
-      {/* On phones the whole profile sits inside a character-card frame. */}
-      <div className="px-3 py-4 sm:px-6 sm:py-6 lg:px-10">
-        <div className="mx-auto w-full max-w-[420px] rounded-[28px] border-2 border-[#eec340]/60 bg-[#1e2637] p-3 shadow-[0_0_40px_rgba(238,195,64,0.12)] sm:max-w-none sm:rounded-2xl sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <p className="font-ui text-xl text-white sm:text-2xl">
+      <div className="px-4 py-5 sm:px-6 sm:py-6 lg:px-10">
+        <div className="mx-auto w-full max-w-[640px] lg:max-w-none">
+          {/* Header: who made it, visibility, and the (coming) challenge */}
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+            <p className="min-w-0 truncate font-ui text-lg text-white sm:text-2xl">
               <span className="italic">Created by:</span>{" "}
               <span className="font-bold">{data.creator}</span>
             </p>
-            <div className="flex flex-wrap items-center justify-end gap-3">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={data.visibility === "public"}
-                  aria-label="Show this character on Discover"
-                  onClick={() =>
-                    setField("visibility")(data.visibility === "public" ? "private" : "public")
-                  }
-                  className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-                    data.visibility === "public" ? "bg-[#3ecf6a]" : "bg-[#3a4358]"
-                  }`}
-                >
-                  <span
-                    className={`absolute top-0.5 size-5 rounded-full bg-white shadow transition-all ${
-                      data.visibility === "public" ? "left-[22px]" : "left-0.5"
+            <div className="flex items-center justify-between gap-4 lg:justify-end">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={data.visibility === "public"}
+                    aria-label="Show this character on Discover"
+                    onClick={() =>
+                      setField("visibility")(data.visibility === "public" ? "private" : "public")
+                    }
+                    className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
+                      data.visibility === "public" ? "bg-[#3ecf6a]" : "bg-[#3a4358]"
                     }`}
-                  />
-                </button>
-                <span className="w-[52px] font-ui text-sm font-bold text-white">
-                  {data.visibility === "public" ? "Public" : "Private"}
+                  >
+                    <span
+                      className={`absolute top-0.5 size-5 rounded-full bg-white shadow transition-all ${
+                        data.visibility === "public" ? "left-[22px]" : "left-0.5"
+                      }`}
+                    />
+                  </button>
+                  <span className="w-[52px] font-ui text-sm font-bold text-white">
+                    {data.visibility === "public" ? "Public" : "Private"}
+                  </span>
+                </div>
+                <span aria-live="polite" className="hidden font-ui text-xs text-neutral-400 sm:inline">
+                  {savedAt ? `Saved ${savedAt.toLocaleTimeString()}` : "Changes save automatically"}
                 </span>
               </div>
-              <span aria-live="polite" className="font-ui text-xs text-neutral-400">
-                {savedAt ? `Saved ${savedAt.toLocaleTimeString()}` : "Changes save automatically"}
-              </span>
-              <div className="flex flex-col items-end gap-1">
-                <span className="rounded-full bg-primary px-3 py-0.5 font-ui text-xs font-bold text-white">
+              <div className="flex shrink-0 items-center gap-2">
+                <span className="rounded-full bg-primary px-2.5 py-0.5 font-ui text-[11px] font-bold text-white">
                   Coming soon
                 </span>
                 <button
                   type="button"
                   disabled
-                  className="cursor-not-allowed rounded-full bg-gradient-to-r from-[#c2185b] to-[#a855f7] px-6 py-2 font-ui text-base font-bold text-white opacity-60"
+                  className="cursor-not-allowed rounded-full bg-gradient-to-r from-[#c2185b] to-[#a855f7] px-5 py-2 font-ui text-sm font-bold text-white opacity-60 sm:text-base"
                 >
                   Challenge
                 </button>
@@ -204,18 +239,146 @@ export default function CharacterProfile() {
             </div>
           </div>
 
-          {/* Hero: card + backstory */}
-          <section className="relative mt-5 overflow-hidden rounded-2xl bg-[#222b3c]">
+          {/* One file picker behind both background buttons */}
+          <input
+            ref={bannerInput}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) readImage(file, 1600).then(setField("banner")).catch(() => {});
+              event.target.value = "";
+            }}
+          />
+
+          {/* ---- Phones & tablets: card, then the story card ---- */}
+          <div className="mt-8 flex flex-col gap-10 lg:hidden">
+            <SectionPill>Characters</SectionPill>
+            <Stacked className="mx-auto">
+              <CharacterCard alias={data.alias} power={data.power} cover={data.cover} showViewMore />
+            </Stacked>
+
+            <section
+              aria-label="Origin story"
+              className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#222b3c]"
+            >
+              <img
+                src={data.banner || mobileBanner}
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 size-full object-cover"
+              />
+              <div aria-hidden="true" className="absolute inset-0 bg-[#1b2233]/70" />
+
+              <div className="absolute right-3 top-3 z-10 flex items-center gap-2">
+                {data.banner && (
+                  <button
+                    type="button"
+                    onClick={() => setField("banner")(null)}
+                    className="rounded-full bg-black/55 px-3 py-1.5 font-ui text-xs font-bold text-white backdrop-blur hover:bg-black/75"
+                  >
+                    Reset
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => bannerInput.current?.click()}
+                  aria-label="Change background"
+                  className="flex items-center gap-1.5 rounded-full bg-black/55 px-3 py-1.5 font-ui text-xs font-bold text-white backdrop-blur hover:bg-black/75"
+                >
+                  <ImageIcon />
+                  <span className="hidden sm:inline">Change background</span>
+                </button>
+              </div>
+
+              <div className="relative flex flex-col items-center px-5 pb-12 pt-14 text-center">
+                <img src={flameBright} alt="" aria-hidden="true" className="h-12 w-auto" />
+
+                <div className="mt-4 flex flex-wrap items-center justify-center">
+                  <EditableText
+                    value={data.alias}
+                    onChange={setField("alias")}
+                    label="character name"
+                    placeholder="Character name"
+                    className="!w-auto !px-2 !py-1 text-center font-ui text-2xl font-medium text-white"
+                    inputClassName="text-center text-xl"
+                  />
+                  <span aria-hidden="true" className="font-ui text-2xl text-white">
+                    —
+                  </span>
+                  <EditableText
+                    value={data.realm}
+                    onChange={setField("realm")}
+                    label="universe"
+                    placeholder="Their universe"
+                    className="!w-auto !px-2 !py-1 text-center font-ui text-2xl font-medium text-white"
+                    inputClassName="text-center text-xl"
+                  />
+                </div>
+
+                <div className="mt-2 flex flex-wrap items-center justify-center">
+                  <span className="font-ui text-base font-bold text-white">Tagline —</span>
+                  <EditableText
+                    value={data.tagline}
+                    onChange={setField("tagline")}
+                    label="tagline"
+                    placeholder="Add a tagline"
+                    className="!w-auto !px-2 !py-1 text-center font-ui text-base font-bold text-white"
+                    inputClassName="text-center text-base"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setStoryOpen((open) => !open)}
+                  aria-expanded={storyOpen}
+                  className="mt-5 font-ui text-base font-bold text-[#6b8ff5] hover:underline"
+                >
+                  Origin Backstory
+                </button>
+
+                {storyOpen && (
+                  <EditableText
+                    value={data.backstory}
+                    onChange={setField("backstory")}
+                    label="origin story"
+                    placeholder="Tell their story"
+                    multiline
+                    className="mt-3 bg-black/25 text-left font-ui text-sm leading-relaxed text-white"
+                    inputClassName="text-sm leading-relaxed"
+                  />
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setStoryOpen((open) => !open)}
+                aria-label={storyOpen ? "Collapse origin story" : "Expand origin story"}
+                className="absolute bottom-3 right-3 flex size-9 items-center justify-center rounded-full text-white hover:bg-white/10"
+              >
+                <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  {storyOpen ? (
+                    <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7" strokeLinecap="round" strokeLinejoin="round" />
+                  ) : (
+                    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" strokeLinecap="round" strokeLinejoin="round" />
+                  )}
+                </svg>
+              </button>
+            </section>
+          </div>
+
+          {/* ---- Desktop: card and story side by side ---- */}
+          <section className="relative mt-5 hidden overflow-hidden rounded-2xl bg-[#222b3c] lg:block">
             <img
               src={data.banner || heroBanner}
               alt=""
               aria-hidden="true"
-              className="absolute inset-y-0 right-0 hidden h-full w-[62%] object-cover lg:block"
+              className="absolute inset-y-0 right-0 h-full w-[62%] object-cover"
             />
-            <div className="absolute inset-0 hidden bg-gradient-to-r from-[#222b3c] via-[#222b3c]/95 to-[#222b3c]/10 lg:block" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#222b3c] via-[#222b3c]/95 to-[#222b3c]/10" />
 
-            {/* The background only shows on wide screens, so the control does too. */}
-            <div className="absolute bottom-3 right-3 z-10 hidden items-center gap-2 lg:flex">
+            <div className="absolute bottom-3 right-3 z-10 flex items-center gap-2">
               {data.banner && (
                 <button
                   type="button"
@@ -230,27 +393,12 @@ export default function CharacterProfile() {
                 onClick={() => bannerInput.current?.click()}
                 className="flex items-center gap-1.5 rounded-full bg-black/55 px-3 py-1.5 font-ui text-xs font-bold text-white backdrop-blur hover:bg-black/75"
               >
-                <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                  <rect x="3" y="5" width="18" height="14" rx="2" />
-                  <circle cx="9" cy="10" r="1.5" />
-                  <path d="M21 16l-5-5-8 8" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <ImageIcon />
                 Change background
               </button>
-              <input
-                ref={bannerInput}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (file) readImage(file, 1600).then(setField("banner")).catch(() => {});
-                  event.target.value = "";
-                }}
-              />
             </div>
 
-            <div className="relative flex flex-col gap-6 p-4 lg:flex-row lg:p-6">
+            <div className="relative flex flex-row gap-6 p-6">
               <CharacterCard alias={data.alias} power={data.power} cover={data.cover} showViewMore />
 
               <div className="min-w-0 flex-1">
@@ -308,9 +456,26 @@ export default function CharacterProfile() {
             </div>
           </section>
 
-          {/* Assets: a scrolling row that always ends with the add tile */}
-          <section aria-label="Assets" className="mt-5">
-            <div className="scrollbar-none flex snap-x gap-5 overflow-x-auto pb-2">
+          {/* Assets: empty state until something is uploaded, then a scrolling row */}
+          <section aria-label="Assets" className="mt-12 flex flex-col gap-8 lg:mt-5 lg:block">
+            <SectionPill>Assets</SectionPill>
+            {data.assets.length === 0 ? (
+              <Stacked className="mx-auto w-full max-w-[420px] lg:max-w-none">
+                <div className="flex min-h-[260px] flex-col items-center justify-center gap-6 rounded-[26px] border border-white/10 bg-[#222b3c] px-6 py-10 text-center">
+                  <p className="max-w-[240px] font-ui text-base text-[#6b8ff5]">
+                    Nothing to show here. Start by uploading your first assets here.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => assetInput.current?.click()}
+                    className="flex items-center gap-2 rounded-full border border-white/70 px-6 py-2.5 font-ui text-base font-bold text-white hover:bg-white/10"
+                  >
+                    <span aria-hidden="true" className="text-lg leading-none">+</span> Upload
+                  </button>
+                </div>
+              </Stacked>
+            ) : null}
+            <div className={`scrollbar-none snap-x gap-5 overflow-x-auto pb-2 ${data.assets.length ? "flex" : "hidden"}`}>
               {data.assets.map((asset, index) => (
                 <div
                   key={asset}
@@ -353,7 +518,10 @@ export default function CharacterProfile() {
           </section>
 
           {/* Abilities */}
-          <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-[1.1fr_1fr_1fr]">
+          <div className="mt-12 lg:hidden">
+            <SectionPill>Strength &amp; Weakness</SectionPill>
+          </div>
+          <div className="mt-8 grid grid-cols-1 gap-5 lg:mt-5 lg:grid-cols-[1.1fr_1fr_1fr]">
             <AbilityPanel
               title="Core Ability"
               value={data.core}
@@ -440,8 +608,12 @@ export default function CharacterProfile() {
               flame={flameSoft}
             />
 
+            <div className="mt-7 lg:hidden">
+              <SectionPill>Character Stats</SectionPill>
+            </div>
+
             <section className="overflow-hidden rounded-2xl bg-[#222b3c] p-5">
-              <h2 className="font-ui text-lg font-bold text-[#6b8ff5]">Character Stats</h2>
+              <h2 className="hidden font-ui text-lg font-bold text-[#6b8ff5] lg:block">Character Stats</h2>
 
               <div className="mt-4 overflow-x-auto">
                 <table className="w-full min-w-[420px] border-collapse text-left">
