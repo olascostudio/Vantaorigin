@@ -15,3 +15,7 @@ design/
 npm-debug.log*
 .vite
 coverage
+
+# backend
+api/node_modules
+api/.env

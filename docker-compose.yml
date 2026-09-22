@@ -1,0 +1,46 @@
+# Everything the backend needs, locally and free: Postgres plus the API.
+# The same two services, with different environment values, are what runs on a
+# VPS later — so "works here" and "works there" mean the same thing.
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: vanta
+      POSTGRES_PASSWORD: vanta
+      POSTGRES_DB: vantaorigin
+    ports:
+      - "5432:5432" # so you can connect with a database tool if you want
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vanta -d vantaorigin"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 8080
+      DATABASE_URL: postgres://vanta:vanta@db:5432/vantaorigin
+      APP_ORIGIN: http://localhost:5173
+      # Local defaults: uploads stay in the process, emails print to the log.
+      # Set these to s3/resend when you're ready for real services.
+      STORAGE_DRIVER: memory
+      EMAIL_DRIVER: console
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./api:/app
+      - /app/node_modules
+    command: sh -c "npm install && npm run dev"
+
+volumes:
+  db-data:
