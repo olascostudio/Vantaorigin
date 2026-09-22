@@ -94,7 +94,7 @@ const REALMS = [
 function RealmCard({ title, creator, lead, body, art, icon, iconInset, cardBg }) {
   return (
     <article
-      className={`relative flex min-h-[560px] w-full max-w-[578.947px] flex-col overflow-hidden rounded-[42.105px] border-[1.053px] border-primary px-6 pb-[43px] pt-[180px] sm:h-[631.579px] sm:pl-[44px] sm:pr-[45px] ${cardBg}`}
+      className={`relative flex min-h-[560px] w-[85vw] max-w-[578.947px] shrink-0 snap-center flex-col lg:w-full overflow-hidden rounded-[42.105px] border-[1.053px] border-primary px-6 pb-[43px] pt-[180px] sm:h-[631.579px] sm:pl-[44px] sm:pr-[45px] ${cardBg}`}
     >
       {art}
       <img src={icon} alt="" className="absolute" style={{ inset: iconInset }} />
@@ -133,7 +133,8 @@ export default function Realms() {
         />
 
         <div className="flex w-full flex-col items-center gap-[60px]">
-          <div className="grid w-full grid-cols-1 justify-items-center gap-[42.105px] lg:grid-cols-2">
+          {/* Swipeable row on phones and tablets, two-up grid on desktop */}
+          <div className="scrollbar-none -mx-4 flex w-[calc(100%+32px)] snap-x snap-mandatory gap-5 overflow-x-auto px-4 sm:-mx-8 sm:w-[calc(100%+64px)] sm:gap-[30px] sm:px-8 lg:mx-0 lg:grid lg:w-full lg:grid-cols-2 lg:justify-items-center lg:gap-[42.105px] lg:overflow-visible lg:px-0">
             {REALMS.map(({ id, ...realm }) => (
               <RealmCard key={id} {...realm} />
             ))}
