@@ -10,7 +10,7 @@ import { config, isProduction } from "./config.js";
 import authRoutes from "./routes/auth.js";
 import characterRoutes from "./routes/characters.js";
 import uploadRoutes from "./routes/uploads.js";
-import { sql } from "./db/client.js";
+import { ping } from "./db/client.js";
 
 export async function buildApp() {
   const app = Fastify({
@@ -39,7 +39,7 @@ export async function buildApp() {
   });
 
   app.get("/health", async () => {
-    await sql`SELECT 1`;
+    await ping();
     return { ok: true, storage: config.STORAGE_DRIVER, email: config.EMAIL_DRIVER };
   });
 

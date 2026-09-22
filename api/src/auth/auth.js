@@ -3,7 +3,7 @@
 // Passwords: argon2id. Sessions: a random token in an httpOnly cookie, stored
 // only as a SHA-256 hash, so a database dump cannot be replayed as a login.
 // Nothing here depends on a provider, so a VPS move changes nothing.
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, randomInt } from "node:crypto";
 import { argon2id, argon2Verify } from "hash-wasm";
 import { and, eq, gt, isNull } from "drizzle-orm";
 import { db } from "../db/client.js";
@@ -53,35 +53,51 @@ export async function destroySession(token) {
   if (token) await db.delete(sessions).where(eq(sessions.tokenHash, sha256(token)));
 }
 
-// One-time links for email verification and password resets.
-export async function issueToken(userId, kind, ttlMinutes = 60) {
-  const token = newToken();
+// One-time 4-digit codes for email verification and password resets, to match
+// the screens. Short codes are only safe with the guards below: 15 minutes,
+// five guesses, one live code per person per purpose, plus the API rate limit.
+const MAX_ATTEMPTS = 5;
+const CODE_TTL_MINUTES = 15;
+
+const codeHash = (userId, kind, code) => sha256(`${userId}:${kind}:${code}`);
+
+export async function issueCode(userId, kind) {
+  const code = String(randomInt(0, 10_000)).padStart(4, "0");
+  // Any earlier code for this purpose stops working.
+  await db.delete(tokens).where(and(eq(tokens.userId, userId), eq(tokens.kind, kind)));
   await db.insert(tokens).values({
     userId,
     kind,
-    tokenHash: sha256(token),
-    expiresAt: new Date(Date.now() + ttlMinutes * 60_000),
+    tokenHash: codeHash(userId, kind, code),
+    expiresAt: new Date(Date.now() + CODE_TTL_MINUTES * 60_000),
   });
-  return token;
+  return code;
 }
 
-export async function consumeToken(token, kind) {
+// Returns "ok", "invalid" or "too_many". Only consumes the code when asked,
+// so a code can be checked on one screen and used on the next.
+export async function checkCode(userId, kind, code, { consume = false } = {}) {
   const [row] = await db
     .select()
     .from(tokens)
-    .where(
-      and(
-        eq(tokens.tokenHash, sha256(token)),
-        eq(tokens.kind, kind),
-        isNull(tokens.usedAt),
-        gt(tokens.expiresAt, new Date())
-      )
-    )
+    .where(and(eq(tokens.userId, userId), eq(tokens.kind, kind), isNull(tokens.usedAt)))
     .limit(1);
 
-  if (!row) return null;
-  await db.update(tokens).set({ usedAt: new Date() }).where(eq(tokens.id, row.id));
-  return row.userId;
+  if (!row || row.expiresAt < new Date()) return "invalid";
+  if (row.attempts >= MAX_ATTEMPTS) return "too_many";
+
+  if (row.tokenHash !== codeHash(userId, kind, String(code))) {
+    await db
+      .update(tokens)
+      .set({ attempts: row.attempts + 1 })
+      .where(eq(tokens.id, row.id));
+    return "invalid";
+  }
+
+  if (consume) {
+    await db.update(tokens).set({ usedAt: new Date() }).where(eq(tokens.id, row.id));
+  }
+  return "ok";
 }
 
 export function setSessionCookie(reply, token, expiresAt) {

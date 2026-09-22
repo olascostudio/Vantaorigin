@@ -4,11 +4,11 @@
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 
-process.env.DATABASE_URL ||= "postgres://vanta:vanta@localhost:5432/vantaorigin";
+process.env.DATABASE_URL ||= "pglite://.pglite-test";
 process.env.NODE_ENV = "test";
 
 const { buildApp } = await import("../src/app.js");
-const { sql } = await import("../src/db/client.js");
+const { endConnection } = await import("../src/db/client.js");
 
 let app;
 before(async () => {
@@ -16,7 +16,7 @@ before(async () => {
 });
 after(async () => {
   await app.close();
-  await sql.end({ timeout: 1 });
+  await endConnection();
 });
 
 test("rejects a password that is too short", async () => {

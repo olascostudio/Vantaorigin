@@ -1,12 +1,38 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { AuthShell, FIELD, GRADIENT, PILL, PasswordField } from "./authUi";
+import { useAuth } from "../../data/AuthContext.jsx";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { resetPassword } = useAuth();
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
   const mismatch = confirmation.length > 0 && confirmation !== password;
+
+  // The email and code come from the screen before; without them there is
+  // nothing to reset.
+  const { email, code } = location.state || {};
+  if (!email || !code) return <Navigate to="/forgot-password" replace />;
+
+  const submit = async (event) => {
+    event.preventDefault();
+    if (mismatch) return;
+
+    setError("");
+    setBusy(true);
+    try {
+      await resetPassword(email, code, password);
+      navigate("/signin", { replace: true });
+    } catch (problem) {
+      setError(problem.message);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <AuthShell>
@@ -17,16 +43,13 @@ export default function ResetPassword() {
         Enter a new password to continue to log in
       </p>
 
-      <form
-        className="mt-[87px] flex flex-col items-center"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (mismatch) return;
-          // Front-end only: no password is actually changed yet.
-          navigate("/signin");
-        }}
-      >
+      <form className="mt-[70px] flex flex-col items-center" onSubmit={submit}>
         <div className="flex w-full max-w-[328px] flex-col gap-[23px]">
+          {error && (
+            <p role="alert" className="text-center font-ui text-base text-[#f2415f]">
+              {error}
+            </p>
+          )}
           <input
             className={FIELD}
             type="password"
@@ -52,8 +75,12 @@ export default function ResetPassword() {
           )}
         </div>
 
-        <button type="submit" className={`${PILL} mt-[90px] h-16 w-full max-w-[328px] ${GRADIENT}`}>
-          Log in
+        <button
+          type="submit"
+          disabled={busy || mismatch}
+          className={`${PILL} mt-[80px] h-16 w-full max-w-[328px] ${GRADIENT} disabled:cursor-not-allowed disabled:opacity-50`}
+        >
+          {busy ? "Saving…" : "Save and log in"}
         </button>
       </form>
     </AuthShell>

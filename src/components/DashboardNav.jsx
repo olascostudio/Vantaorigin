@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import logoMark from "../assets/landing/hero/logo-mark.svg";
 import logoWordmark from "../assets/landing/hero/logo-wordmark.svg";
 import { loadSettings } from "../data/settings";
+import { useAuth } from "../data/AuthContext.jsx";
 
 const LINKS = [
   { label: "Discover", to: "/discover" },
@@ -14,8 +15,12 @@ const LINKS = [
 export default function DashboardNav({ active = "Discover" }) {
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const settings = loadSettings();
-  const initial = (settings.firstName || settings.username || "A").replace("@", "").charAt(0).toUpperCase();
+  const name = user?.firstName || user?.username || settings.firstName || settings.username || "A";
+  const initial = name.replace("@", "").charAt(0).toUpperCase();
+  const avatar = user?.avatarUrl || settings.avatar;
 
   // Close the menu after navigating, and on Escape.
   useEffect(() => setOpen(false), [pathname]);
@@ -56,8 +61,8 @@ export default function DashboardNav({ active = "Discover" }) {
             aria-label="Your profile and settings"
             className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-secondary to-primary ring-2 ring-white"
           >
-            {settings.avatar ? (
-              <img src={settings.avatar} alt="" className="size-full object-cover" />
+            {avatar ? (
+              <img src={avatar} alt="" className="size-full object-cover" />
             ) : (
               <span className="font-ui text-base font-bold text-white">{initial}</span>
             )}
@@ -113,6 +118,21 @@ export default function DashboardNav({ active = "Discover" }) {
                 Settings
               </Link>
             </li>
+            {user && (
+              <li>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setOpen(false);
+                    await signOut();
+                    navigate("/signin");
+                  }}
+                  className="block w-full rounded-lg px-3 py-4 text-left text-[#f2415f] hover:bg-white/5"
+                >
+                  Log out
+                </button>
+              </li>
+            )}
           </ul>
         </nav>
       )}

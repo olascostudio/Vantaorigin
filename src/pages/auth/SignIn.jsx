@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../data/AuthContext.jsx";
 import {
   AuthShell,
   Checkbox,
@@ -10,10 +11,6 @@ import {
   PasswordField,
   SocialButtons,
 } from "./authUi";
-
-// Stand-ins until a backend answers: these values trigger the designed errors.
-const KNOWN_EMAIL = "johnson765@gmail.com";
-const KNOWN_PASSWORD = "vantaorigin";
 
 function ErrorMark() {
   return (
@@ -28,24 +25,32 @@ function ErrorMark() {
 
 export default function SignIn() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { signIn } = useAuth();
   const [remember, setRemember] = useState(true);
   const [account, setAccount] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault();
-    if (account.trim().toLowerCase() !== KNOWN_EMAIL) {
-      setError("account");
-      return;
-    }
-    if (password !== KNOWN_PASSWORD) {
-      setError("password");
-      return;
-    }
     setError(null);
-    // Front-end only: no session is created yet.
-    navigate("/discover");
+    setMessage("");
+    setBusy(true);
+    try {
+      await signIn({ email: account.trim(), password });
+      // back to wherever they were headed before being asked to sign in
+      navigate(location.state?.from || "/creators-hub", { replace: true });
+    } catch (problem) {
+      // The API answers the same way for an unknown email and a wrong
+      // password, so accounts cannot be discovered from this form.
+      setError("password");
+      setMessage(problem.message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -62,18 +67,17 @@ export default function SignIn() {
         <div className="flex w-full max-w-[328px] flex-col gap-[21px]">
           <div>
             <p className="mb-2 h-6 font-ui text-base text-white" role={error ? "alert" : undefined}>
-              {error === "account" && "Email does not exist!"}
-              {error === "password" && "Wrong password"}
+              {message}
             </p>
             <div className="relative">
               <input
                 className={FIELD}
-                type="text"
+                type="email"
                 name="account"
                 value={account}
                 onChange={(event) => setAccount(event.target.value)}
-                placeholder="Email/Phone number"
-                aria-label="Email or phone number"
+                placeholder="Email address"
+                aria-label="Email address"
                 aria-invalid={error === "account"}
                 required
               />
@@ -97,9 +101,20 @@ export default function SignIn() {
           <Checkbox checked={remember} onChange={setRemember} label="Remember me" />
         </div>
 
-        <button type="submit" className={`${PILL} mt-[25px] h-16 w-full max-w-[326px] ${GRADIENT}`}>
-          Log in
+        <button
+          type="submit"
+          disabled={busy}
+          className={`${PILL} mt-[25px] h-16 w-full max-w-[326px] ${GRADIENT} disabled:cursor-not-allowed disabled:opacity-50`}
+        >
+          {busy ? "Logging in…" : "Log in"}
         </button>
+
+        <p className="mt-4 font-ui text-base text-white">
+          New here?{" "}
+          <Link to="/signup" className="font-bold text-primary hover:underline">
+            Create an account
+          </Link>
+        </p>
 
         <div className="mt-[21px]">
           <OrDivider />

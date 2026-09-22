@@ -3,7 +3,7 @@
 import { buildApp } from "./app.js";
 import { config } from "./config.js";
 import { migrate } from "./db/migrate.js";
-import { sql } from "./db/client.js";
+import { endConnection } from "./db/client.js";
 
 const ran = await migrate();
 if (ran.length) console.log(`Applied migrations: ${ran.join(", ")}`);
@@ -13,7 +13,7 @@ const app = await buildApp();
 for (const signal of ["SIGINT", "SIGTERM"]) {
   process.on(signal, async () => {
     await app.close();
-    await sql.end();
+    await endConnection();
     process.exit(0);
   });
 }

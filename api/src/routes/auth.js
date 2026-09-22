@@ -1,18 +1,23 @@
 import { z } from "zod";
+import { config } from "../config.js";
 import { eq } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { users } from "../db/schema.js";
+import { sessions, users } from "../db/schema.js";
 import { mailer } from "../adapters/email.js";
-import { config } from "../config.js";
+// While emails only print to the terminal (local development), the code is
+// also returned so you can finish the flow without an inbox. Never in
+// production, where EMAIL_DRIVER is "resend".
+const devCode = (code) => (config.EMAIL_DRIVER === "console" ? { devCode: code } : {});
+
 import {
   SESSION_COOKIE,
   authenticate,
+  checkCode,
   clearSessionCookie,
-  consumeToken,
   createSession,
   destroySession,
   hashPassword,
-  issueToken,
+  issueCode,
   publicUser,
   setSessionCookie,
   verifyPassword,
@@ -45,16 +50,16 @@ export default async function authRoutes(app) {
       .values({ email, username, passwordHash: await hashPassword(body.password) })
       .returning();
 
-    const token = await issueToken(user.id, "verify_email", 60 * 24);
+    const code = await issueCode(user.id, "verify_email");
     await mailer.send({
       to: email,
-      subject: "Verify your VantaOrigin account",
-      html: `<p>Welcome to VantaOrigin.</p><p><a href="${config.APP_ORIGIN}/signup/verify?token=${token}">Verify your email</a></p>`,
+      subject: "Your VantaOrigin verification code",
+      html: `<p>Welcome to VantaOrigin.</p><p>Your code is <b>${code}</b>. It lasts 15 minutes.</p>`,
     });
 
     const session = await createSession(user.id);
     setSessionCookie(reply, session.token, session.expiresAt);
-    return reply.code(201).send({ user: publicUser(user) });
+    return reply.code(201).send({ user: publicUser(user), ...devCode(code) });
   });
 
   app.post("/auth/signin", async (request, reply) => {
@@ -85,12 +90,29 @@ export default async function authRoutes(app) {
     user: request.user ? publicUser(request.user) : null,
   }));
 
-  app.post("/auth/verify-email", async (request, reply) => {
-    const { token } = z.object({ token: z.string() }).parse(request.body);
-    const userId = await consumeToken(token, "verify_email");
-    if (!userId) return reply.code(400).send({ error: "That link has expired" });
-    await db.update(users).set({ emailVerifiedAt: new Date() }).where(eq(users.id, userId));
+  // The person is signed in straight after signing up, so the code is checked
+  // against their session rather than an email typed in again.
+  app.post("/auth/verify-email", { preHandler: authenticate() }, async (request, reply) => {
+    const { code } = z.object({ code: z.string().length(4) }).parse(request.body);
+    const result = await checkCode(request.user.id, "verify_email", code, { consume: true });
+
+    if (result === "too_many") {
+      return reply.code(429).send({ error: "Too many attempts. Ask for a new code." });
+    }
+    if (result !== "ok") return reply.code(400).send({ error: "That code is wrong or expired" });
+
+    await db.update(users).set({ emailVerifiedAt: new Date() }).where(eq(users.id, request.user.id));
     return { ok: true };
+  });
+
+  app.post("/auth/resend-code", { preHandler: authenticate() }, async (request) => {
+    const code = await issueCode(request.user.id, "verify_email");
+    await mailer.send({
+      to: request.user.email,
+      subject: "Your VantaOrigin verification code",
+      html: `<p>Your code is <b>${code}</b>. It lasts 15 minutes.</p>`,
+    });
+    return { ...devCode(code) , ok: true };
   });
 
   app.post("/auth/forgot-password", async (request) => {
@@ -101,31 +123,65 @@ export default async function authRoutes(app) {
       .where(eq(users.email, email.toLowerCase()))
       .limit(1);
 
+    let sentCode = null;
     if (user) {
-      const token = await issueToken(user.id, "reset_password", 60);
+      const code = await issueCode(user.id, "reset_password");
+      sentCode = code;
       await mailer.send({
         to: user.email,
-        subject: "Reset your VantaOrigin password",
-        html: `<p><a href="${config.APP_ORIGIN}/forgot-password/reset?token=${token}">Choose a new password</a></p><p>This link lasts one hour.</p>`,
+        subject: "Your VantaOrigin reset code",
+        html: `<p>Your password reset code is <b>${code}</b>. It lasts 15 minutes.</p>`,
       });
     }
     // Always the same reply, so the form cannot reveal who has an account.
+    return { ok: true, ...(sentCode ? devCode(sentCode) : {}) };
+  });
+
+  // Step one of a reset: is this code right? Checked but not used up, so the
+  // next screen can set the new password.
+  app.post("/auth/check-reset-code", async (request, reply) => {
+    const { email, code } = z
+      .object({ email: z.string().email(), code: z.string().length(4) })
+      .parse(request.body);
+
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email.toLowerCase()))
+      .limit(1);
+
+    const result = user ? await checkCode(user.id, "reset_password", code) : "invalid";
+    if (result === "too_many") {
+      return reply.code(429).send({ error: "Too many attempts. Ask for a new code." });
+    }
+    if (result !== "ok") return reply.code(400).send({ error: "That code is wrong or expired" });
     return { ok: true };
   });
 
+  // Step two: the code is used up here.
   app.post("/auth/reset-password", async (request, reply) => {
-    const { token, password } = z
-      .object({ token: z.string(), password: z.string().min(8) })
+    const { email, code, password } = z
+      .object({ email: z.string().email(), code: z.string().length(4), password: z.string().min(8) })
       .parse(request.body);
 
-    const userId = await consumeToken(token, "reset_password");
-    if (!userId) return reply.code(400).send({ error: "That link has expired" });
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email.toLowerCase()))
+      .limit(1);
+
+    const result = user
+      ? await checkCode(user.id, "reset_password", code, { consume: true })
+      : "invalid";
+    if (result !== "ok") return reply.code(400).send({ error: "That code is wrong or expired" });
 
     await db
       .update(users)
       .set({ passwordHash: await hashPassword(password), updatedAt: new Date() })
-      .where(eq(users.id, userId));
+      .where(eq(users.id, user.id));
 
+    // Signing out everywhere is the point of a reset.
+    await db.delete(sessions).where(eq(sessions.userId, user.id));
     return { ok: true };
   });
 

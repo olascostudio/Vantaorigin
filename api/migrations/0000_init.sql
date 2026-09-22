@@ -1,8 +1,6 @@
 -- VantaOrigin initial schema. Standard PostgreSQL only, so this file restores
 -- on any Postgres: a laptop, managed hosting or a VPS.
 
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
-
 CREATE TABLE IF NOT EXISTS users (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   email text NOT NULL,

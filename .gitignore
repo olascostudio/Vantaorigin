@@ -19,3 +19,6 @@ coverage
 # backend
 api/node_modules
 api/.env
+
+api/.pglite*
+.pglite*
