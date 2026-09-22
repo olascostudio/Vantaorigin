@@ -109,7 +109,7 @@ function ProfileHeader() {
         </div>
       </div>
 
-      <div className="relative flex flex-col items-center px-6 pt-6 lg:pt-0">
+      <div className="relative flex flex-col items-center px-6 pt-12 sm:pt-6 lg:pt-0">
         <img
           src={settings.avatar || profilePic}
           alt={fullName || "Your avatar"}
@@ -149,17 +149,18 @@ function ProfileHeader() {
           </Link>
         )}
 
-        <div className="relative order-first mb-6 self-start pt-2 lg:absolute lg:left-12 lg:top-4 lg:order-none lg:mb-0">
-          <span className="absolute -top-0.5 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-primary px-3 py-0.5 font-ui text-xs font-bold text-white shadow-md">
+        {/* Floats in the corner so the avatar never lands on top of it */}
+        <div className="absolute left-3 top-2 z-10 pt-2 lg:left-12 lg:top-4">
+          <span className="absolute -top-0.5 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-primary px-2 py-0.5 font-ui text-[10px] font-bold text-white shadow-md lg:px-3 lg:text-xs">
             Coming soon
           </span>
           <button
             type="button"
             disabled
-            className="flex items-center gap-2 rounded-full bg-[#28303f] px-5 py-3 font-ui text-lg font-bold text-white opacity-90"
+            className="flex items-center gap-1.5 rounded-full bg-[#28303f] px-3 py-1.5 font-ui text-xs font-bold text-white opacity-90 lg:gap-2 lg:px-5 lg:py-2.5 lg:text-lg"
           >
             Creator Studio
-            <span aria-hidden="true" className="text-xs">▾</span>
+            <span aria-hidden="true" className="text-[10px] lg:text-xs">▾</span>
           </button>
         </div>
       </div>
@@ -494,7 +495,11 @@ export default function CreatorHub() {
           </button>
         </div>
 
-        <div className="flex gap-8 border-b border-white/10" role="tablist" aria-label="Creator sections">
+        <div
+          className="scrollbar-none flex gap-6 overflow-x-auto border-b border-white/10 sm:gap-8"
+          role="tablist"
+          aria-label="Creator sections"
+        >
           {TABS.map((name) => {
             const disabled = name === "Create Clans";
             const active = tab === name;
@@ -507,7 +512,7 @@ export default function CreatorHub() {
                 disabled={disabled}
                 title={disabled ? "Not available in v1" : undefined}
                 onClick={() => !disabled && setTab(name)}
-                className={`-mb-px border-b-[3px] pb-3 font-ui text-2xl transition-colors ${
+                className={`-mb-px shrink-0 border-b-[3px] pb-3 font-ui text-lg transition-colors sm:text-2xl ${
                   active ? "border-primary text-primary" : "border-transparent text-white"
                 } ${disabled ? "cursor-not-allowed opacity-50" : "hover:text-primary"}`}
               >
