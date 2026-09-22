@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
-import Footer from "../components/Footer";
 import { ALBUMS, artistsIn } from "../data/marketplace";
 import PortfolioGrid from "../components/marketplace/PortfolioGrid";
 import heroArt from "../assets/auth/banner.webp";
@@ -193,7 +192,6 @@ export default function Marketplace() {
         </section>
       </div>
 
-      <Footer />
     </div>
   );
 }

@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
-import Footer from "../components/Footer";
 import { HOW_IT_WORKS } from "../data/marketplace";
 
 export default function MarketplaceHowItWorks() {
@@ -33,7 +32,6 @@ export default function MarketplaceHowItWorks() {
         </ol>
       </main>
 
-      <Footer />
     </div>
   );
 }

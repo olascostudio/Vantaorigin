@@ -32,7 +32,7 @@ describe("App routing", () => {
     expect(
       screen.getByRole("heading", { name: "Welcome to VantaOrigin" })
     ).toBeInTheDocument();
-    expect(screen.queryByRole("contentinfo")).not.toBeInTheDocument();
+    expect(screen.getByRole("contentinfo")).toBeInTheDocument();
   });
 
   it("does not reference remote Figma asset URLs anywhere", () => {

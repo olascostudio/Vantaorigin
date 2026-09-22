@@ -1,4 +1,5 @@
 import { Route, Routes } from "react-router-dom";
+import Footer from "./components/Footer";
 import Landing from "./pages/Landing";
 import Discover from "./pages/Discover";
 import CreatorHub from "./pages/CreatorHub";
@@ -45,6 +46,8 @@ export default function App() {
         />
         <Route path="/forgot-password/reset" element={<ResetPassword />} />
       </Routes>
+      {/* Shared across every route so it stays consistent site-wide */}
+      <Footer />
     </div>
   );
 }

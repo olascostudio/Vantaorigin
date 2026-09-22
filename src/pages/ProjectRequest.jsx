@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
-import Footer from "../components/Footer";
 
 // Google Form: "Vantaorigin Studio Project Request Form".
 // The /d/e/… link is the public one — the /d/…/edit link only works for editors.
@@ -66,7 +65,6 @@ export default function ProjectRequest() {
         </p>
       </main>
 
-      <Footer />
     </div>
   );
 }
