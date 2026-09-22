@@ -37,7 +37,7 @@ export default function Community() {
 
       <main className="relative flex min-h-[calc(100vh-76px)] flex-col items-center px-6 pt-[22vh]">
         <h1 className="text-center font-ui text-[32px] font-bold text-white sm:text-[40px]">
-          Join Our Community
+          Join a Community of Creators
         </h1>
 
         <ul className="mt-12 grid grid-cols-2 gap-6 sm:gap-8 lg:grid-cols-4 lg:gap-10">

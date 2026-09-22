@@ -11,7 +11,7 @@ import studioTilt3 from "../assets/creator/studio-tilt-3.webp";
 const STUDIO_CARDS = [studioTilt1, studioTilt2, studioTilt3];
 
 // Long enough for a proper origin, short enough to fit the profile card.
-const ORIGIN_CHAR_LIMIT = 350;
+const ORIGIN_CHAR_LIMIT = 800;
 
 // Every field feeds the character card, so all of them must be filled.
 function missingFields(form, cover) {

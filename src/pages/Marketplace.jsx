@@ -55,19 +55,55 @@ function Lockup() {
 }
 
 function Sidebar({ activeId, onSelect }) {
+  // Phones and tablets keep the list folded away until it's asked for.
+  const [open, setOpen] = useState(false);
+  const active = ALBUMS.find((album) => album.id === activeId);
+
   return (
     <nav aria-label="Marketplace categories" className="w-full shrink-0 lg:w-[300px]">
-      <p className="px-4 font-ui text-base font-bold text-[#a855f7]">VantaOrigin</p>
+      <p className="hidden px-4 font-ui text-base font-bold text-[#a855f7] lg:block">VantaOrigin</p>
+
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
+        aria-controls="service-list"
+        className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#a855f7]/50 bg-[#222b3c] px-4 py-3 text-left lg:hidden"
+      >
+        <span className="min-w-0">
+          <span className="block font-ui text-base font-bold text-[#a855f7]">
+            VantaOrigin Studio Services
+          </span>
+          {active && (
+            <span className="mt-0.5 block truncate font-ui text-sm text-neutral-300">
+              {active.title} · {active.count}
+            </span>
+          )}
+        </span>
+        <svg
+          viewBox="0 0 24 24"
+          className={`size-5 shrink-0 text-white transition-transform ${open ? "rotate-180" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          aria-hidden="true"
+        >
+          <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
 
       {/* One entry per ArtStation album — add an album there, it appears here. */}
-      <ul className="mt-6 flex flex-col gap-1">
+      <ul id="service-list" className={`mt-2 flex-col gap-1 lg:mt-6 lg:flex ${open ? "flex" : "hidden"}`}>
         {ALBUMS.map((album) => {
           const active = album.id === activeId;
           return (
             <li key={album.id}>
               <button
                 type="button"
-                onClick={() => onSelect(album.id)}
+                onClick={() => {
+                  onSelect(album.id);
+                  setOpen(false);
+                }}
                 aria-current={active ? "true" : undefined}
                 className={`flex w-full items-center justify-between gap-3 rounded-lg px-4 py-3 text-left font-ui text-base transition-colors ${
                   active

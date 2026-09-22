@@ -1,5 +1,8 @@
 import { useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
+import { loadLibrary } from "../data/character";
+import characterCover from "../assets/creator/character-cover.svg";
 import heroArt from "../assets/auth/banner.webp";
 import artOrange from "../assets/landing/worlds/world-1.webp";
 import artObaalu from "../assets/landing/worlds/world-2-base.jpg";
@@ -14,7 +17,10 @@ const EXCERPT_LEAD = "From the heart of molten mountains, Obaalu rises — ";
 const EXCERPT_BODY =
   "the forge-born sovereign of flame and will. His dominion burns with purpose, shaping worlds and warriors alike in the heat of creation...";
 
-const CHARACTERS = [
+const SAMPLE_EXCERPT = { lead: EXCERPT_LEAD, body: EXCERPT_BODY };
+
+// Sample cards shown alongside creators' own public characters.
+const SAMPLES = [
   { id: "ember", title: "Obaalu’s Dominion: The Iron Inferno", author: "Arinola", colour: "#fc590b", art: artOrange },
   { id: "obaalu", title: "Obaalu’s Dominion: The Iron Inferno", author: "Arinola", colour: "#f5af32", art: artObaalu, overlay: artObaaluOverlay },
   { id: "iyanu", title: "Iyanu-Etere: The Song Beneath the Waves", author: "Arinola", colour: "#6687cd", art: artIyanu },
@@ -23,9 +29,31 @@ const CHARACTERS = [
   { id: "switch-2", title: "Switch Face Part 2", author: "Arinola", colour: "#96307e", art: artObaalu, overlay: artObaaluOverlay },
 ];
 
+// Characters the creator chose to publish, shaped for the cards below.
+function publicCharacters() {
+  return loadLibrary()
+    .characters.filter((character) => character.visibility === "public")
+    .reverse() // newest first
+    .map((character) => ({
+      id: character.id,
+      title: character.realm ? `${character.alias} — ${character.realm}` : character.alias,
+      author: character.creator,
+      colour: "#f5af32",
+      art: character.cover || characterCover,
+      excerpt: {
+        lead: character.tagline ? `${character.tagline} — ` : "",
+        body: character.backstory,
+      },
+      to: `/character?id=${character.id}`,
+      searchText: [character.alias, character.realm, character.tagline, character.creator]
+        .filter(Boolean)
+        .join(" "),
+    }));
+}
+
 const SUGGESTIONS = ["Asomyyy", "voidsmith", "Emberfyre — Pyrokinetic", "Asomy — Ploserin"];
 
-function CharacterCard({ title, author, colour, art, overlay }) {
+function CharacterCard({ title, author, colour, art, overlay, excerpt = SAMPLE_EXCERPT, to = "/character" }) {
   return (
     <article
       className="flex w-[360px] shrink-0 flex-col gap-[18px] overflow-hidden rounded-[25px] border-[1.667px] bg-black/40 p-4 sm:w-[500px] sm:p-[25px]"
@@ -46,22 +74,22 @@ function CharacterCard({ title, author, colour, art, overlay }) {
           </h3>
           <p className="whitespace-nowrap font-ui text-lg font-medium text-accent">By: {author}</p>
         </div>
-        <p className="min-h-[76px] font-ui text-base text-neutral-300">
-          <span className="font-bold">{EXCERPT_LEAD}</span>
-          {EXCERPT_BODY}
+        <p className="line-clamp-3 min-h-[76px] font-ui text-base text-neutral-300">
+          <span className="font-bold">{excerpt.lead}</span>
+          {excerpt.body}
         </p>
       </div>
 
-      <a href="#character" className="flex items-center gap-[5px] self-end font-ui text-base font-medium text-white underline">
+      <Link to={to} className="flex items-center gap-[5px] self-end font-ui text-base font-medium text-white underline">
         Read More
         <img src={arrowUpRight} alt="" className="size-5" />
-      </a>
+      </Link>
     </article>
   );
 }
 
 // Continuously scrolling row; the list is duplicated so the loop is seamless.
-function CharacterMarquee() {
+function CharacterMarquee({ characters }) {
   const [offset, setOffset] = useState(0);
   const step = (direction) => setOffset((o) => o + direction * 530);
 
@@ -73,7 +101,7 @@ function CharacterMarquee() {
           style={{ transform: `translateX(${-offset}px)` }}
           data-testid="marquee"
         >
-          {[...CHARACTERS, ...CHARACTERS].map((character, i) => (
+          {[...characters, ...characters].map((character, i) => (
             <CharacterCard key={`${character.id}-${i}`} {...character} />
           ))}
         </div>
@@ -104,12 +132,16 @@ export default function Discover() {
   const [submitted, setSubmitted] = useState("");
   const [showHints, setShowHints] = useState(false);
   const inputRef = useRef(null);
+  // Published characters lead, then the samples.
+  const [characters] = useState(() => [...publicCharacters(), ...SAMPLES]);
 
   const results = useMemo(() => {
     const term = submitted.trim().toLowerCase();
     if (!term) return null;
-    return CHARACTERS.filter((c) => c.title.toLowerCase().includes(term) || c.author.toLowerCase().includes(term));
-  }, [submitted]);
+    return characters.filter((c) =>
+      [c.title, c.author, c.searchText].filter(Boolean).join(" ").toLowerCase().includes(term)
+    );
+  }, [submitted, characters]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -198,7 +230,7 @@ export default function Discover() {
               )}
             </div>
           ) : (
-            <CharacterMarquee />
+            <CharacterMarquee characters={characters} />
           )}
         </div>
       </div>

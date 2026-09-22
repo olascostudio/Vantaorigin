@@ -13,6 +13,8 @@ export const DEFAULT_CHARACTER = {
   alias: "Switch Face", // character name
   realm: "The Emberforge of Creation", // the universe they belong to
   cover: null, // uploaded card art (data URL); null falls back to the sample art
+  banner: null, // background behind the origin story; null uses the default art
+  visibility: "private", // "public" shows it on Discover
   power: "1.3M",
   creator: "Joseph Marine",
   tagline: "The One Who Becomes Anyone.",

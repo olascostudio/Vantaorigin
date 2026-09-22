@@ -106,6 +106,7 @@ export default function CharacterProfile() {
     if (!data.id) navigate("/creators-hub", { replace: true, state: { tab: "Character" } });
   }, [data.id, navigate]);
   const assetInput = useRef(null);
+  const bannerInput = useRef(null);
   // Which extra core ability is expanded; null shows the main ability's description.
   const [openExtra, setOpenExtra] = useState(null);
 
@@ -161,7 +162,30 @@ export default function CharacterProfile() {
               <span className="italic">Created by:</span>{" "}
               <span className="font-bold">{data.creator}</span>
             </p>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center justify-end gap-3">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={data.visibility === "public"}
+                  aria-label="Show this character on Discover"
+                  onClick={() =>
+                    setField("visibility")(data.visibility === "public" ? "private" : "public")
+                  }
+                  className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
+                    data.visibility === "public" ? "bg-[#3ecf6a]" : "bg-[#3a4358]"
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 size-5 rounded-full bg-white shadow transition-all ${
+                      data.visibility === "public" ? "left-[22px]" : "left-0.5"
+                    }`}
+                  />
+                </button>
+                <span className="w-[52px] font-ui text-sm font-bold text-white">
+                  {data.visibility === "public" ? "Public" : "Private"}
+                </span>
+              </div>
               <span aria-live="polite" className="font-ui text-xs text-neutral-400">
                 {savedAt ? `Saved ${savedAt.toLocaleTimeString()}` : "Changes save automatically"}
               </span>
@@ -183,12 +207,48 @@ export default function CharacterProfile() {
           {/* Hero: card + backstory */}
           <section className="relative mt-5 overflow-hidden rounded-2xl bg-[#222b3c]">
             <img
-              src={heroBanner}
+              src={data.banner || heroBanner}
               alt=""
               aria-hidden="true"
               className="absolute inset-y-0 right-0 hidden h-full w-[62%] object-cover lg:block"
             />
             <div className="absolute inset-0 hidden bg-gradient-to-r from-[#222b3c] via-[#222b3c]/95 to-[#222b3c]/10 lg:block" />
+
+            {/* The background only shows on wide screens, so the control does too. */}
+            <div className="absolute bottom-3 right-3 z-10 hidden items-center gap-2 lg:flex">
+              {data.banner && (
+                <button
+                  type="button"
+                  onClick={() => setField("banner")(null)}
+                  className="rounded-full bg-black/55 px-3 py-1.5 font-ui text-xs font-bold text-white backdrop-blur hover:bg-black/75"
+                >
+                  Reset
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => bannerInput.current?.click()}
+                className="flex items-center gap-1.5 rounded-full bg-black/55 px-3 py-1.5 font-ui text-xs font-bold text-white backdrop-blur hover:bg-black/75"
+              >
+                <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <rect x="3" y="5" width="18" height="14" rx="2" />
+                  <circle cx="9" cy="10" r="1.5" />
+                  <path d="M21 16l-5-5-8 8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Change background
+              </button>
+              <input
+                ref={bannerInput}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) readImage(file, 1600).then(setField("banner")).catch(() => {});
+                  event.target.value = "";
+                }}
+              />
+            </div>
 
             <div className="relative flex flex-col gap-6 p-4 lg:flex-row lg:p-6">
               <CharacterCard alias={data.alias} power={data.power} cover={data.cover} showViewMore />
