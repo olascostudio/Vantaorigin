@@ -13,8 +13,8 @@ const DETAILS = [
 ];
 
 const STATS = [
-  ["Attack", 6],
-  ["Speed", 8],
+  ["Strength", 6],
+  ["Agility", 8],
   ["Intelligence", 10],
 ];
 

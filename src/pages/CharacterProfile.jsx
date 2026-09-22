@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import CharacterCard from "../components/creator/CharacterCard";
-import { loadCharacter, saveCharacter } from "../data/character";
+import { loadCharacter, readImage, saveCharacter } from "../data/character";
 import EditableText from "../components/creator/EditableText";
 import heroBanner from "../assets/creator/hero-banner.webp";
 import flameBright from "../assets/creator/flame-bright.svg";
@@ -26,7 +27,16 @@ function Chevron({ open }) {
 }
 
 // Collapsible panel: the header toggles it, the body is edited in place.
-function AbilityPanel({ title, value, onChange, highlight, flame, defaultOpen = true, children }) {
+function AbilityPanel({
+  title,
+  value,
+  onChange,
+  highlight,
+  flame,
+  defaultOpen = true,
+  hideDescription = false,
+  children,
+}) {
   const [open, setOpen] = useState(defaultOpen);
 
   return (
@@ -66,15 +76,17 @@ function AbilityPanel({ title, value, onChange, highlight, flame, defaultOpen = 
             className="bg-[#39435a] font-ui text-base font-bold text-white"
             inputClassName="text-base font-bold"
           />
-          <EditableText
-            value={value.description}
-            onChange={(description) => onChange({ ...value, description })}
-            placeholder="Describe ability"
-            label={`${title} description`}
-            multiline
-            className="min-h-[92px] bg-white/5 font-ui text-base text-neutral-200"
-            inputClassName="text-base"
-          />
+          {!hideDescription && (
+            <EditableText
+              value={value.description}
+              onChange={(description) => onChange({ ...value, description })}
+              placeholder="Describe ability"
+              label={`${title} description`}
+              multiline
+              className="min-h-[92px] bg-white/5 font-ui text-base text-neutral-200"
+              inputClassName="text-base"
+            />
+          )}
           {children}
         </div>
       )}
@@ -83,10 +95,19 @@ function AbilityPanel({ title, value, onChange, highlight, flame, defaultOpen = 
 }
 
 export default function CharacterProfile() {
-  const [data, setData] = useState(loadCharacter);
+  const [params] = useSearchParams();
+  const navigate = useNavigate();
+  const [data, setData] = useState(() => loadCharacter(params.get("id")));
   const [savedAt, setSavedAt] = useState(null);
-  const lastSaved = useRef(JSON.stringify(loadCharacter()));
+  const lastSaved = useRef(JSON.stringify(data));
+
+  // Only the creator's own characters can be edited; the sample can't.
+  useEffect(() => {
+    if (!data.id) navigate("/creators-hub", { replace: true, state: { tab: "Character" } });
+  }, [data.id, navigate]);
   const assetInput = useRef(null);
+  // Which extra core ability is expanded; null shows the main ability's description.
+  const [openExtra, setOpenExtra] = useState(null);
 
   // Auto-save: everything on this page persists as it is edited.
   useEffect(() => {
@@ -101,13 +122,26 @@ export default function CharacterProfile() {
 
   const setField = (key) => (value) => setData((prev) => ({ ...prev, [key]: value }));
 
-  const addAssets = (files) => {
-    const urls = [...files].map((file) => URL.createObjectURL(file));
-    setData((prev) => ({ ...prev, assets: [...prev.assets, ...urls] }));
+  // Stored as data URLs so they survive a reload.
+  const addAssets = async (files) => {
+    const urls = await Promise.all([...files].map((file) => readImage(file, 1200).catch(() => null)));
+    setData((prev) => ({ ...prev, assets: [...prev.assets, ...urls.filter(Boolean)] }));
   };
+
+  const setExtra = (index, patch) =>
+    setField("core")({
+      ...data.core,
+      extras: data.core.extras.map((extra, i) => (i === index ? { ...extra, ...patch } : extra)),
+    });
 
   const removeAsset = (index) =>
     setData((prev) => ({ ...prev, assets: prev.assets.filter((_, i) => i !== index) }));
+
+  const setNote = (index, note) =>
+    setData((prev) => ({
+      ...prev,
+      stats: prev.stats.map((row, i) => (i === index ? { ...row, note } : row)),
+    }));
 
   const setLevel = (index, level) =>
     setData((prev) => ({
@@ -131,12 +165,18 @@ export default function CharacterProfile() {
               <span aria-live="polite" className="font-ui text-xs text-neutral-400">
                 {savedAt ? `Saved ${savedAt.toLocaleTimeString()}` : "Changes save automatically"}
               </span>
-              <button
-                type="button"
-                className="rounded-full bg-gradient-to-r from-[#c2185b] to-[#a855f7] px-6 py-2 font-ui text-base font-bold text-white hover:opacity-90"
-              >
-                Challenge
-              </button>
+              <div className="flex flex-col items-end gap-1">
+                <span className="rounded-full bg-primary px-3 py-0.5 font-ui text-xs font-bold text-white">
+                  Coming soon
+                </span>
+                <button
+                  type="button"
+                  disabled
+                  className="cursor-not-allowed rounded-full bg-gradient-to-r from-[#c2185b] to-[#a855f7] px-6 py-2 font-ui text-base font-bold text-white opacity-60"
+                >
+                  Challenge
+                </button>
+              </div>
             </div>
           </div>
 
@@ -151,26 +191,44 @@ export default function CharacterProfile() {
             <div className="absolute inset-0 hidden bg-gradient-to-r from-[#222b3c] via-[#222b3c]/95 to-[#222b3c]/10 lg:block" />
 
             <div className="relative flex flex-col gap-6 p-4 lg:flex-row lg:p-6">
-              <CharacterCard alias={data.alias} power={data.power} showViewMore />
+              <CharacterCard alias={data.alias} power={data.power} cover={data.cover} showViewMore />
 
               <div className="min-w-0 flex-1">
                 <div className="flex flex-col gap-2 xl:flex-row xl:items-start xl:gap-4">
-                  <EditableText
-                    value={data.name}
-                    onChange={setField("name")}
-                    label="character name"
-                    placeholder="Character name"
-                    className="font-ui text-lg font-bold text-white xl:max-w-[440px]"
-                    inputClassName="text-lg font-bold"
-                  />
-                  <EditableText
-                    value={data.tagline}
-                    onChange={setField("tagline")}
-                    label="tagline"
-                    placeholder="Tagline"
-                    className="font-ui text-lg font-bold text-[#5fdc8a]"
-                    inputClassName="text-lg font-bold"
-                  />
+                  <div className="flex min-w-0 flex-1 items-start">
+                    <EditableText
+                      value={data.alias}
+                      onChange={setField("alias")}
+                      label="character name"
+                      placeholder="Character name"
+                      className="!w-auto shrink-0 !px-2 font-ui text-lg font-bold text-white"
+                      inputClassName="text-lg font-bold"
+                    />
+                    <span aria-hidden="true" className="shrink-0 py-2.5 font-ui text-lg font-bold text-white">
+                      —
+                    </span>
+                    <EditableText
+                      value={data.realm}
+                      onChange={setField("realm")}
+                      label="universe"
+                      placeholder="Their universe"
+                      className="!w-auto min-w-0 break-words !px-2 font-ui text-lg font-bold text-white"
+                      inputClassName="text-lg font-bold"
+                    />
+                  </div>
+                  <div className="flex min-w-0 items-start xl:max-w-[45%] xl:shrink-0">
+                    <span className="shrink-0 py-2.5 pl-2 font-ui text-lg font-bold text-white">
+                      Tagline <span aria-hidden="true">—</span>
+                    </span>
+                    <EditableText
+                      value={data.tagline}
+                      onChange={setField("tagline")}
+                      label="tagline"
+                      placeholder="Add a tagline"
+                      className="!w-auto min-w-0 break-words !px-2 font-ui text-lg font-bold text-white"
+                      inputClassName="text-lg font-bold"
+                    />
+                  </div>
                 </div>
 
                 <p className="mt-3 flex items-center gap-2 px-4 font-ui text-lg font-bold text-[#4ea1ff]">
@@ -241,33 +299,61 @@ export default function CharacterProfile() {
               value={data.core}
               onChange={setField("core")}
               highlight
+              hideDescription={openExtra !== null}
             >
               <div className="flex flex-col gap-3">
-                {data.core.extras.map((extra, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <span aria-hidden="true" className="font-ui text-lg text-[#ff8fc7]">
-                      ✦
-                    </span>
-                    <EditableText
-                      value={extra}
-                      onChange={(next) =>
-                        setField("core")({
-                          ...data.core,
-                          extras: data.core.extras.map((v, i) => (i === index ? next : v)),
-                        })
-                      }
-                      placeholder="Enter name of ability"
-                      label={`extra ability ${index + 1}`}
-                      className="bg-white/15 font-ui text-base text-white"
-                      inputClassName="text-base"
-                    />
-                  </div>
-                ))}
+                {data.core.extras.map((extra, index) => {
+                  const open = openExtra === index;
+                  return (
+                    <div key={index} className="flex flex-col gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setOpenExtra(open ? null : index)}
+                        aria-expanded={open}
+                        className={`flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-left font-ui text-base font-bold text-white transition-colors ${
+                          open ? "bg-white/25" : "bg-white/15 hover:bg-white/20"
+                        }`}
+                      >
+                        <span aria-hidden="true" className="text-lg text-[#ff8fc7]">
+                          ✦
+                        </span>
+                        <span className="min-w-0 flex-1">{extra.name || "Unnamed ability"}</span>
+                        <Chevron open={open} />
+                      </button>
+
+                      {open && (
+                        <div className="flex flex-col gap-2 pl-8">
+                          <EditableText
+                            value={extra.name}
+                            onChange={(name) => setExtra(index, { name })}
+                            placeholder="Enter name of ability"
+                            label={`extra ability ${index + 1} name`}
+                            className="bg-white/10 font-ui text-sm font-bold text-white"
+                            inputClassName="text-sm font-bold"
+                          />
+                          <EditableText
+                            value={extra.description}
+                            onChange={(description) => setExtra(index, { description })}
+                            placeholder="Describe this ability"
+                            label={`extra ability ${index + 1} description`}
+                            multiline
+                            className="min-h-[72px] bg-white/5 font-ui text-sm text-neutral-200"
+                            inputClassName="text-sm"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
                 <button
                   type="button"
-                  onClick={() =>
-                    setField("core")({ ...data.core, extras: [...data.core.extras, ""] })
-                  }
+                  onClick={() => {
+                    setField("core")({
+                      ...data.core,
+                      extras: [...data.core.extras, { name: "", description: "" }],
+                    });
+                    setOpenExtra(data.core.extras.length);
+                  }}
                   className="self-start px-4 font-ui text-sm font-bold text-white/90 underline"
                 >
                   + Add another ability
@@ -327,7 +413,16 @@ export default function CharacterProfile() {
                             ))}
                           </select>
                         </td>
-                        <td className="py-3">{row.note}</td>
+                        <td className="py-1.5">
+                          <EditableText
+                            value={row.note}
+                            onChange={(note) => setNote(index, note)}
+                            label={`${row.attribute} note`}
+                            placeholder="Add a note"
+                            className="font-ui text-sm font-bold text-white"
+                            inputClassName="text-sm font-bold"
+                          />
+                        </td>
                       </tr>
                     ))}
                   </tbody>

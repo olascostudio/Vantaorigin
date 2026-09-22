@@ -1,11 +1,16 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import HighlightModal from "../components/creator/HighlightModal";
 import PostMenu from "../components/creator/PostMenu";
 import bannerArt from "../assets/auth/banner.webp";
-import characterArt from "../assets/landing/worlds/world-2-base.jpg";
-import characterOverlay from "../assets/landing/worlds/world-2-overlay.webp";
+import characterCover from "../assets/creator/character-cover.svg";
+import {
+  addCategory,
+  deleteCategory,
+  deleteCharacter,
+  loadLibrary,
+} from "../data/character";
 import postImage from "../assets/creator/post-hero.webp";
 import postImage2 from "../assets/creator/upload-sample-1.png";
 import postImage3 from "../assets/creator/upload-sample-2.webp";
@@ -37,13 +42,6 @@ Their mask has shifted, their stance has solidified, and now they await a worthy
 Do you dare challenge them?
 Prove your strength. Test your legend. Face the ever-changing terror that is SwitchFace — if you think your character has the will to endure`,
     images: [postImage, postImage2, postImage3],
-    footer: `Victory brings:
-
-🪙 +250 VP Coins
-⚡ +120 XP Battle Cards
-🏆 Eternal bragging rights across the realms.
-Step forward... or step aside.
- Only one will walk away from this clash of legends.`,
   },
 ];
 
@@ -156,10 +154,10 @@ function ProfileHeader() {
   );
 }
 
-function CharacterCard({ onEdit, onDelete }) {
+function CharacterCard({ character, onEdit, onView, onDelete }) {
   return (
-    <article className="w-full max-w-[545px] rounded-2xl border border-white/10 p-6">
-      <div className="flex justify-end">
+    <article className="flex w-[180px] shrink-0 snap-start flex-col rounded-2xl border border-white/10 p-2.5 sm:w-[250px] sm:p-3">
+      <div className="-mt-1 mb-1 flex justify-end">
         <PostMenu
           label="Character options"
           items={[
@@ -170,29 +168,110 @@ function CharacterCard({ onEdit, onDelete }) {
         />
       </div>
 
-      <div className="rounded-2xl border-[1.667px] border-[#f5af32] p-4">
-        <div className="relative h-[330px] w-full overflow-hidden rounded-xl bg-[#888787]">
-          <img src={characterArt} alt="" className="size-full object-cover" />
-          <img src={characterOverlay} alt="" className="absolute inset-0 size-full object-cover" />
+      <div className="flex flex-1 flex-col rounded-xl border-[1.5px] border-[#f5af32] p-2 sm:p-3">
+        <div className="relative h-[140px] w-full overflow-hidden rounded-lg bg-[#888787] sm:h-[190px]">
+          <img
+            src={character.cover || characterCover}
+            alt={character.alias}
+            className="size-full object-cover"
+          />
         </div>
 
-        <div className="mt-5 flex items-start justify-between gap-3">
-          <h3 className="max-w-[300px] font-ui text-[22px] font-black text-white">
-            Obaalu’s Dominion: The Iron Inferno
-          </h3>
-          <p className="whitespace-nowrap font-ui text-base font-medium text-accent">By: Arinola</p>
-        </div>
-        <p className="mt-4 font-ui text-sm text-neutral-300">
-          <span className="font-bold">From the heart of molten mountains, Obaalu rises — </span>
-          the forge-born sovereign of flame and will. His dominion burns with purpose, shaping worlds
-          and warriors alike in the heat of creation...
+        <h3 className="mt-2 line-clamp-2 break-words font-ui text-base font-black leading-tight text-white sm:mt-3 sm:text-lg">
+          {character.alias}
+        </h3>
+        {character.realm && (
+          <p className="mt-0.5 truncate font-ui text-xs font-bold text-neutral-300">{character.realm}</p>
+        )}
+        <p className="mt-1 truncate font-ui text-xs font-medium text-accent">By: {character.creator}</p>
+        <p className="mt-2 line-clamp-2 font-ui text-xs text-neutral-300">
+          {character.tagline && <span className="font-bold">{character.tagline} — </span>}
+          {character.backstory}
         </p>
-        <a href="#character" className="mt-4 flex items-center justify-end gap-1 font-ui text-sm text-white underline">
+        <button
+          type="button"
+          onClick={onView}
+          className="ml-auto mt-auto flex items-center gap-1 pt-2 font-ui text-xs text-white underline"
+        >
           Read More
-          <img src={arrowUpRight} alt="" className="size-4" />
-        </a>
+          <img src={arrowUpRight} alt="" className="size-3.5" />
+        </button>
       </div>
     </article>
+  );
+}
+
+// Same footprint as a character card, left blank, as the way into the create flow.
+function AddCharacterSlot({ categoryId }) {
+  return (
+    <Link
+      to={`/creators-hub/character/new?category=${categoryId}`}
+      className="group flex min-h-[280px] w-[180px] shrink-0 snap-start flex-col rounded-2xl border border-dashed border-white/20 p-2.5 transition-colors hover:border-[#a855f7] sm:min-h-[340px] sm:w-[250px] sm:p-3"
+    >
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-xl border-[1.5px] border-dashed border-[#f5af32]/60 bg-white/[0.04] transition-colors group-hover:bg-white/[0.07]">
+        <span className="flex size-12 items-center justify-center rounded-full border-2 border-white/40 font-ui text-3xl font-light text-white/80">
+          +
+        </span>
+        <span className="font-ui text-base font-bold text-white">Add Character</span>
+      </div>
+    </Link>
+  );
+}
+
+function CategoryModal({ onClose, onCreate }) {
+  const [name, setName] = useState("");
+  const trimmed = name.trim();
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-md"
+      onMouseDown={(event) => event.target === event.currentTarget && onClose()}
+    >
+      <form
+        role="dialog"
+        aria-modal="true"
+        aria-label="New category"
+        className="w-full max-w-[460px] rounded-2xl bg-[#2b3547] p-6 sm:p-8"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (trimmed) onCreate(trimmed);
+        }}
+      >
+        <h2 className="font-ui text-2xl font-bold text-white">New category</h2>
+        <p className="mt-2 font-ui text-sm text-neutral-300">
+          Keep each comic, book or project in its own space.
+        </p>
+        <label htmlFor="category-name" className="mt-6 block font-ui text-base font-bold text-white">
+          Category name
+        </label>
+        <input
+          id="category-name"
+          autoFocus
+          value={name}
+          maxLength={60}
+          onChange={(event) => setName(event.target.value)}
+          onKeyDown={(event) => event.key === "Escape" && onClose()}
+          placeholder="e.g. Iron Inferno Comic"
+          className="mt-2 h-[54px] w-full rounded-xl border border-[#6b8ff5] bg-[#1f2738] px-5 font-ui text-base text-white outline-none placeholder:text-neutral-400 focus:ring-2 focus:ring-[#6b8ff5]"
+        />
+        <div className="mt-8 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border-2 border-white px-6 py-2.5 font-ui text-base font-bold text-white hover:bg-white/10"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={!trimmed}
+            className="rounded-full bg-gradient-to-r from-[#7b3fe4] to-[#a855f7] px-6 py-2.5 font-ui text-base font-bold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Create
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }
 
@@ -269,7 +348,14 @@ function HighlightPost({ post, onEdit, onDelete }) {
 }
 
 export default function CreatorHub() {
-  const [tab, setTab] = useState("Highlights");
+  const navigate = useNavigate();
+  // The creator's categories and the characters filed under them.
+  const [library, setLibrary] = useState(loadLibrary);
+  const [addingCategory, setAddingCategory] = useState(false);
+  const refreshLibrary = () => setLibrary(loadLibrary());
+  const location = useLocation();
+  // Coming back from creating a character lands on the Character tab.
+  const [tab, setTab] = useState(location.state?.tab || "Highlights");
   const [posts, setPosts] = useState(INITIAL_POSTS);
   const [modal, setModal] = useState(null); // { mode, post }
 
@@ -339,18 +425,84 @@ export default function CreatorHub() {
 
         {tab === "Character" && (
           <section aria-label="My Characters" className="pb-24">
-            <div className="flex flex-wrap items-center justify-between gap-6">
-              <h2 className="font-ui text-[42px] font-bold text-white">My Characters</h2>
-              <Link
-                to="/creators-hub/character/new"
-                className="rounded-xl bg-primary px-10 py-5 font-ui text-2xl font-bold text-white transition-opacity hover:opacity-90"
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="font-ui text-3xl font-bold text-white sm:text-[42px]">My Characters</h2>
+              <button
+                type="button"
+                onClick={() => setAddingCategory(true)}
+                className="ml-auto shrink-0 rounded-lg bg-primary px-4 py-2 font-ui text-sm font-bold text-white transition-opacity hover:opacity-90 sm:px-5 sm:py-2.5 sm:text-base"
               >
-                + Add Character
-              </Link>
+                + Add Category
+              </button>
             </div>
-            <div className="mt-10 flex flex-wrap gap-8">
-              <CharacterCard onEdit={() => {}} onDelete={() => {}} />
-            </div>
+
+            {library.categories.length === 0 ? (
+              <p className="mt-10 rounded-2xl border border-dashed border-white/15 px-6 py-16 text-center font-ui text-lg text-neutral-400">
+                Start with a category for each comic, book or project, then add its characters.
+              </p>
+            ) : (
+              <div className="mt-8 flex flex-col gap-8">
+                {library.categories.map((category) => {
+                  const characters = library.characters.filter(
+                    (character) => character.categoryId === category.id
+                  );
+                  return (
+                    <section key={category.id} aria-label={category.name}>
+                      <div className="mb-4 flex items-center justify-between gap-4">
+                        <h3 className="break-words font-ui text-xl font-bold text-white sm:text-2xl">
+                          {category.name}
+                        </h3>
+                        <PostMenu
+                          label={`${category.name} options`}
+                          items={[
+                            {
+                              label: "Delete Category",
+                              danger: true,
+                              onSelect: () => {
+                                const note = characters.length
+                                  ? ` and its ${characters.length} character${characters.length === 1 ? "" : "s"}`
+                                  : "";
+                                if (!window.confirm(`Delete “${category.name}”${note}? This can’t be undone.`)) return;
+                                deleteCategory(category.id);
+                                refreshLibrary();
+                              },
+                            },
+                          ]}
+                        />
+                      </div>
+
+                      <div className="scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto rounded-2xl border-2 border-[#a855f7] p-3 sm:gap-4 sm:p-4 lg:snap-none lg:flex-wrap lg:overflow-visible">
+                        {characters.map((character) => (
+                          <CharacterCard
+                            key={character.id}
+                            character={character}
+                            onView={() => navigate(`/creators-hub/character?id=${character.id}`)}
+                            onEdit={() => navigate(`/creators-hub/character/profile?id=${character.id}`)}
+                            onDelete={() => {
+                              if (!window.confirm(`Delete ${character.alias}? This can’t be undone.`)) return;
+                              deleteCharacter(character.id);
+                              refreshLibrary();
+                            }}
+                          />
+                        ))}
+                        <AddCharacterSlot categoryId={category.id} />
+                      </div>
+                    </section>
+                  );
+                })}
+              </div>
+            )}
+
+            {addingCategory && (
+              <CategoryModal
+                onClose={() => setAddingCategory(false)}
+                onCreate={(name) => {
+                  addCategory(name);
+                  refreshLibrary();
+                  setAddingCategory(false);
+                }}
+              />
+            )}
           </section>
         )}
 

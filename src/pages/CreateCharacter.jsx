@@ -1,8 +1,9 @@
 import { useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import { PrivacyModal, SuccessModal } from "../components/creator/CharacterModals";
 import { loadSettings } from "../data/settings";
+import { addCategory, createCharacter, loadLibrary, readImage } from "../data/character";
 import studioTilt1 from "../assets/creator/studio-tilt-1.webp";
 import studioTilt2 from "../assets/creator/studio-tilt-2.webp";
 import studioTilt3 from "../assets/creator/studio-tilt-3.webp";
@@ -11,6 +12,17 @@ const STUDIO_CARDS = [studioTilt1, studioTilt2, studioTilt3];
 
 // Long enough for a proper origin, short enough to fit the profile card.
 const ORIGIN_CHAR_LIMIT = 350;
+
+// Every field feeds the character card, so all of them must be filled.
+function missingFields(form, cover) {
+  const missing = [];
+  if (!cover) missing.push("cover");
+  if (!form.name.trim()) missing.push("name");
+  if (!form.origin.trim()) missing.push("origin");
+  if (!form.realm.trim()) missing.push("realm");
+  if (!form.tagline.trim()) missing.push("tagline");
+  return missing;
+}
 
 function PersonIcon() {
   return (
@@ -132,6 +144,7 @@ function IdentityStep({ identity, setIdentity, onNext }) {
 
 function DetailsStep({ form, setForm, cover, setCover, onSubmit }) {
   const fileRef = useRef(null);
+  const missing = missingFields(form, cover);
   const field =
     "w-full rounded-xl border border-white/15 bg-[#2b3547] px-6 font-ui text-lg text-white outline-none placeholder:text-neutral-400 focus:border-[#6b8ff5]";
 
@@ -140,7 +153,7 @@ function DetailsStep({ form, setForm, cover, setCover, onSubmit }) {
       className="mx-auto flex max-w-[1240px] flex-col gap-10 px-6 pb-24 lg:flex-row lg:gap-16"
       onSubmit={(event) => {
         event.preventDefault();
-        onSubmit();
+        if (!missing.length) onSubmit();
       }}
     >
       <div className="flex shrink-0 flex-col items-center gap-5 lg:items-start">
@@ -179,7 +192,8 @@ function DetailsStep({ form, setForm, cover, setCover, onSubmit }) {
           className="hidden"
           onChange={(event) => {
             const file = event.target.files?.[0];
-            if (file) setCover(URL.createObjectURL(file));
+            // a data URL survives the trip to the profile page; a blob URL would not
+            if (file) readImage(file).then(setCover).catch(() => {});
             event.target.value = "";
           }}
         />
@@ -222,6 +236,7 @@ function DetailsStep({ form, setForm, cover, setCover, onSubmit }) {
           placeholder="Tell us more of what that inspired your character"
           rows={6}
           maxLength={ORIGIN_CHAR_LIMIT}
+          required
           aria-describedby="origin-count"
           className={`${field} py-6 text-center placeholder:text-center`}
         />
@@ -245,6 +260,7 @@ function DetailsStep({ form, setForm, cover, setCover, onSubmit }) {
           value={form.realm}
           onChange={(event) => setForm({ ...form, realm: event.target.value })}
           placeholder="e.g. The Vantaverse"
+          required
           maxLength={60}
           className={`${field} h-[60px]`}
         />
@@ -257,6 +273,8 @@ function DetailsStep({ form, setForm, cover, setCover, onSubmit }) {
           value={form.tagline}
           onChange={(event) => setForm({ ...form, tagline: event.target.value })}
           placeholder="Enter tagline"
+          required
+          maxLength={80}
           className={`${field} h-[60px]`}
         />
 
@@ -278,14 +296,20 @@ function DetailsStep({ form, setForm, cover, setCover, onSubmit }) {
           .
         </p>
 
-        <div className="mt-10 flex justify-center">
+        <div className="mt-10 flex flex-col items-center gap-3">
           <button
             type="submit"
-            className="flex items-center gap-3 rounded-full bg-gradient-to-r from-[#c2185b] to-[#4f46e5] px-14 py-4 font-ui text-xl font-bold text-white transition-opacity hover:opacity-90"
+            disabled={missing.length > 0}
+            className="flex items-center gap-3 rounded-full bg-gradient-to-r from-[#c2185b] to-[#4f46e5] px-14 py-4 font-ui text-xl font-bold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Add Character
             <span aria-hidden="true">✦</span>
           </button>
+          {missing.length > 0 && (
+            <p className="text-center font-ui text-sm text-neutral-400">
+              Still needed: {missing.join(", ")}.
+            </p>
+          )}
         </div>
       </div>
     </form>
@@ -305,6 +329,16 @@ export default function CreateCharacter() {
     creator: loadSettings().username,
   }));
   const [modal, setModal] = useState(null); // "privacy" | "success"
+  const [created, setCreated] = useState(null);
+  const [params] = useSearchParams();
+
+  // The category this character is filed under; falls back to the first one,
+  // or a new "My Characters" if the creator has none yet.
+  const categoryId = () => {
+    const { categories } = loadLibrary();
+    const wanted = categories.find((category) => category.id === params.get("category"));
+    return (wanted || categories[0] || addCategory("My Characters")).id;
+  };
 
   return (
     <div className="min-h-screen bg-[#1b2233]">
@@ -337,7 +371,20 @@ export default function CreateCharacter() {
       <PrivacyModal
         open={modal === "privacy"}
         onClose={() => setModal(null)}
-        onSave={() => setModal("success")}
+        onSave={({ visibility }) => {
+          const character = createCharacter({
+            categoryId: categoryId(),
+            name: form.name.trim(),
+            realm: form.realm.trim(),
+            tagline: form.tagline.trim(),
+            origin: form.origin.trim(),
+            creator: form.creator,
+            cover,
+            visibility,
+          });
+          setCreated(character);
+          setModal("success");
+        }}
       />
 
       <SuccessModal
@@ -347,8 +394,8 @@ export default function CreateCharacter() {
           origin: form.origin,
           cover,
         }}
-        onClose={() => navigate("/creators-hub")}
-        onAddMore={() => navigate("/creators-hub/character/profile")}
+        onClose={() => navigate("/creators-hub", { state: { tab: "Character" } })}
+        onAddMore={() => navigate(`/creators-hub/character/profile?id=${created?.id}`)}
       />
     </div>
   );

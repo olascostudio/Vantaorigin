@@ -1,17 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import CharacterCard from "../components/creator/CharacterCard";
 import { loadCharacter } from "../data/character";
 import heroBanner from "../assets/creator/hero-banner.webp";
 import flameBright from "../assets/creator/flame-bright.svg";
 import flameSoft from "../assets/creator/flame-soft.svg";
-import asset1 from "../assets/creator/character-cover.svg";
-import asset2 from "../assets/creator/studio-card-1.webp";
-import asset3 from "../assets/creator/studio-card-2.webp";
-import asset4 from "../assets/creator/studio-card-3.webp";
-
-const PLACEHOLDER_ASSETS = [asset1, asset2, asset3, asset4];
 
 function Panel({ title, entry, flame, highlight, children }) {
   return (
@@ -49,6 +43,14 @@ function AssetRail({ assets }) {
     if (el) setCanScroll(el.scrollWidth > el.clientWidth + 8);
   }, [assets]);
 
+  if (!assets.length) {
+    return (
+      <div className="flex h-[160px] items-center justify-center rounded-2xl border border-dashed border-white/15 bg-[#222b3c] font-ui text-base text-neutral-400">
+        No assets yet
+      </div>
+    );
+  }
+
   return (
     <div className="relative">
       <div ref={rail} className="scrollbar-none flex snap-x gap-5 overflow-x-auto pb-2">
@@ -80,20 +82,22 @@ function AssetRail({ assets }) {
 
 export default function CharacterView({ owner = false }) {
   const navigate = useNavigate();
-  const [character, setCharacter] = useState(loadCharacter);
+  const [params] = useSearchParams();
+  const id = params.get("id");
+  const [character, setCharacter] = useState(() => loadCharacter(id));
 
   // Pick up edits made on the editable profile page.
   useEffect(() => {
-    const refresh = () => setCharacter(loadCharacter());
+    const refresh = () => setCharacter(loadCharacter(id));
     window.addEventListener("focus", refresh);
     window.addEventListener("storage", refresh);
     return () => {
       window.removeEventListener("focus", refresh);
       window.removeEventListener("storage", refresh);
     };
-  }, []);
+  }, [id]);
 
-  const assets = character.assets?.length ? character.assets : PLACEHOLDER_ASSETS;
+  const assets = character.assets || [];
 
   return (
     <div className="min-h-screen bg-[#1b2233]">
@@ -116,7 +120,7 @@ export default function CharacterView({ owner = false }) {
               {owner && (
                 <button
                   type="button"
-                  onClick={() => navigate("/creators-hub/character/profile")}
+                  onClick={() => navigate(`/creators-hub/character/profile?id=${character.id}`)}
                   className="flex items-center gap-2 rounded-full bg-[#3ecf6a] px-6 py-2.5 font-ui text-base font-bold text-white hover:opacity-90"
                 >
                   <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -151,14 +155,23 @@ export default function CharacterView({ owner = false }) {
               <CharacterCard
                 alias={character.alias}
                 power={character.power}
+                cover={character.cover}
                 showViewMore={owner}
-                onViewMore={() => navigate("/creators-hub/character/profile")}
+                onViewMore={() => navigate(`/creators-hub/character/profile?id=${character.id}`)}
               />
 
               <div className="min-w-0 flex-1">
-                <h1 className="max-w-[440px] font-ui text-lg font-bold text-white">
-                  {character.name}
-                </h1>
+                <div className="flex flex-col gap-1 xl:flex-row xl:items-start xl:gap-6">
+                  <h1 className="max-w-[520px] font-ui text-lg font-bold text-white">
+                    {character.alias}
+                    {character.realm && <> — {character.realm}</>}
+                  </h1>
+                  {character.tagline && (
+                    <p className="font-ui text-lg font-bold text-white">
+                      Tagline — {character.tagline}
+                    </p>
+                  )}
+                </div>
 
                 <p className="mt-3 flex items-center gap-2 font-ui text-lg font-bold text-[#4ea1ff]">
                   Origin Story {owner && <span aria-hidden="true">🥇🎖️🛡️</span>}
@@ -178,14 +191,16 @@ export default function CharacterView({ owner = false }) {
           <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-[1.1fr_1fr_1fr]">
             <Panel title="Core Ability" entry={character.core} highlight>
               <ul className="relative mt-6 flex flex-col gap-3">
-                {character.core.extras.filter(Boolean).map((extra) => (
-                  <li key={extra} className="flex items-center gap-3 font-ui text-base font-bold text-white">
-                    <span aria-hidden="true" className="text-lg text-[#ff8fc7]">
-                      ✦
-                    </span>
-                    {extra}
-                  </li>
-                ))}
+                {character.core.extras
+                  .filter((extra) => extra.name)
+                  .map((extra, index) => (
+                    <li key={index} className="flex items-center gap-3 font-ui text-base font-bold text-white">
+                      <span aria-hidden="true" className="text-lg text-[#ff8fc7]">
+                        ✦
+                      </span>
+                      {extra.name}
+                    </li>
+                  ))}
               </ul>
             </Panel>
 
