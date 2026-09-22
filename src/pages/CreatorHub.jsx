@@ -11,6 +11,7 @@ import {
   deleteCharacter,
   loadLibrary,
 } from "../data/character";
+import { loadSettings } from "../data/settings";
 import postImage from "../assets/creator/post-hero.webp";
 import postImage2 from "../assets/creator/upload-sample-1.png";
 import postImage3 from "../assets/creator/upload-sample-2.webp";
@@ -81,10 +82,14 @@ function LightningDivider() {
 }
 
 function ProfileHeader() {
+  // Whatever was saved in Settings, falling back to the sample art.
+  const settings = loadSettings();
+  const fullName = [settings.firstName, settings.lastName].filter(Boolean).join(" ");
+
   return (
     <>
       <div className="relative h-[290px] overflow-hidden">
-        <img src={bannerArt} alt="" className="size-full object-cover" />
+        <img src={settings.banner || bannerArt} alt="" className="size-full object-cover" />
         <div className="absolute inset-0 flex flex-col items-center justify-start gap-2 bg-black/25 pt-10 text-center">
           <p className="font-ui text-2xl font-bold text-white">Change banner image</p>
           <p className="font-ui text-base font-medium text-white">
@@ -106,15 +111,17 @@ function ProfileHeader() {
 
       <div className="relative flex flex-col items-center px-6 pt-6 lg:pt-0">
         <img
-          src={profilePic}
-          alt="Anthony Joseph"
-          className="-mt-[46px] size-[92px] rounded-full ring-4 ring-[#1b2233]"
+          src={settings.avatar || profilePic}
+          alt={fullName || "Your avatar"}
+          className="-mt-[46px] size-[92px] rounded-full object-cover ring-4 ring-[#1b2233]"
         />
 
         <div className="mt-3 flex flex-wrap items-center justify-center gap-4">
           <div className="text-center">
-            <h1 className="font-ui text-2xl font-bold text-white">Anthony Joseph</h1>
-            <p className="font-ui text-lg font-bold text-[#4ea1ff]">@Josephmaroon021</p>
+            <h1 className="font-ui text-2xl font-bold text-white">
+              {fullName || "Add your name"}
+            </h1>
+            <p className="font-ui text-lg font-bold text-[#4ea1ff]">{settings.username}</p>
           </div>
           <div className="flex items-center gap-3">
             <Link
@@ -132,9 +139,15 @@ function ProfileHeader() {
           </div>
         </div>
 
-        <button type="button" className="mt-2 font-ui text-base text-neutral-300 hover:text-white">
-          Add a bio
-        </button>
+        {settings.bio ? (
+          <p className="mt-2 max-w-[640px] text-center font-ui text-base text-neutral-300">
+            {settings.bio}
+          </p>
+        ) : (
+          <Link to="/settings/personal" className="mt-2 font-ui text-base text-neutral-300 hover:text-white">
+            Add a bio
+          </Link>
+        )}
 
         <div className="relative order-first mb-6 self-start pt-2 lg:absolute lg:left-12 lg:top-4 lg:order-none lg:mb-0">
           <span className="absolute -top-0.5 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-primary px-3 py-0.5 font-ui text-xs font-bold text-white shadow-md">

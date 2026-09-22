@@ -22,6 +22,12 @@ export function loadSettings() {
   }
 }
 
+// Rough size of the saved settings, so the UI can warn before the browser
+// refuses a write (localStorage is about 5MB per site).
+export function settingsSize(settings) {
+  return JSON.stringify(settings).length;
+}
+
 export function saveSettings(settings) {
   try {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));

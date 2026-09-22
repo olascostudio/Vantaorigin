@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import { loadSettings, saveSettings } from "../data/settings";
+import { readImage } from "../data/readImage";
 
 const TABS = [
   { id: "profile", label: "My Profile" },
@@ -40,23 +41,53 @@ function Label({ children, htmlFor, onEdit, editLabel }) {
   );
 }
 
-function ProfileTab({ settings, update }) {
+function ProfileTab({ settings, update, onSaved }) {
   const bannerInput = useRef(null);
   const avatarInput = useRef(null);
+  // Pictures are held here until Save, so nothing changes by accident.
+  const [draft, setDraft] = useState({ banner: settings.banner, avatar: settings.avatar });
+  const [busy, setBusy] = useState(false);
+  const dirty = draft.banner !== settings.banner || draft.avatar !== settings.avatar;
 
   const pick = (input) => input.current?.click();
-  const onFile = (key) => (event) => {
+  const onFile = (key) => async (event) => {
     const file = event.target.files?.[0];
-    if (file) update({ [key]: URL.createObjectURL(file) });
     event.target.value = "";
+    if (!file) return;
+    setBusy(true);
+    try {
+      // stored as a data URL; a blob: URL would be empty after a reload
+      const image = await readImage(file, key === "banner" ? 1600 : 400);
+      setDraft((prev) => ({ ...prev, [key]: image }));
+    } catch {
+      onSaved("That image could not be read");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const save = () => {
+    if (update(draft)) onSaved("Profile saved");
+    else onSaved("Could not save — your pictures may be too large");
   };
 
   return (
     <>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <h1 className="font-ui text-2xl font-bold text-white">My Profile</h1>
+        <button
+          type="button"
+          onClick={save}
+          disabled={!dirty || busy}
+          className="rounded-full bg-[#2f6fed] px-10 py-3 font-ui text-base font-bold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {busy ? "Reading…" : "Save"}
+        </button>
+      </div>
       <div className="relative flex h-[290px] flex-col items-center justify-center overflow-hidden rounded-2xl bg-[#2a3448]">
-        {settings.banner && (
+        {draft.banner && (
           <>
-            <img src={settings.banner} alt="" className="absolute inset-0 size-full object-cover" />
+            <img src={draft.banner} alt="" className="absolute inset-0 size-full object-cover" />
             <div className="absolute inset-0 bg-black/25" />
           </>
         )}
@@ -75,7 +106,7 @@ function ProfileTab({ settings, update }) {
             </button>
             <button
               type="button"
-              onClick={() => update({ banner: null })}
+              onClick={() => setDraft((prev) => ({ ...prev, banner: null }))}
               className="font-ui text-base font-bold text-white hover:underline"
             >
               Remove
@@ -86,8 +117,8 @@ function ProfileTab({ settings, update }) {
       </div>
 
       <div className="mt-16 flex flex-col items-center gap-6 pb-10">
-        {settings.avatar ? (
-          <img src={settings.avatar} alt="Your avatar" className="size-[104px] rounded-full object-cover" />
+        {draft.avatar ? (
+          <img src={draft.avatar} alt="Your avatar" className="size-[104px] rounded-full object-cover" />
         ) : (
           <span className="flex size-[104px] items-center justify-center rounded-full bg-[#2f3a4f]">
             <svg viewBox="0 0 24 24" className="size-14 text-[#55648a]" fill="currentColor" aria-hidden="true">
@@ -97,10 +128,10 @@ function ProfileTab({ settings, update }) {
         )}
 
         <div className="flex flex-wrap items-center justify-center gap-4">
-          {settings.avatar && (
+          {draft.avatar && (
             <button
               type="button"
-              onClick={() => update({ avatar: null })}
+              onClick={() => setDraft((prev) => ({ ...prev, avatar: null }))}
               className="flex items-center gap-2 rounded-full border-2 border-[#f2415f] px-7 py-3 font-ui text-base font-bold text-[#f2415f] hover:bg-[#f2415f]/10"
             >
               <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -138,8 +169,7 @@ function PersonalTab({ settings, update, onSaved }) {
     <form
       onSubmit={(event) => {
         event.preventDefault();
-        update(form);
-        onSaved("Personal information saved");
+        onSaved(update(form) ? "Personal information saved" : "Could not save — please try again");
       }}
     >
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -319,11 +349,10 @@ export default function Settings() {
   const [menuOpen, setMenuOpen] = useState(true);
 
   const update = (patch) => {
-    setSettings((prev) => {
-      const next = { ...prev, ...patch };
-      saveSettings(next);
-      return next;
-    });
+    const next = { ...settings, ...patch };
+    const saved = saveSettings(next);
+    if (saved) setSettings(next);
+    return saved;
   };
 
   const onSaved = (message) => {
@@ -390,7 +419,9 @@ export default function Settings() {
         </nav>
 
         <section className="min-h-[790px] flex-1 rounded-2xl bg-[#222c40] p-5 sm:p-10">
-          {active === "profile" && <ProfileTab settings={settings} update={update} />}
+          {active === "profile" && (
+            <ProfileTab settings={settings} update={update} onSaved={onSaved} />
+          )}
           {active === "personal" && (
             <PersonalTab key="personal" settings={settings} update={update} onSaved={onSaved} />
           )}

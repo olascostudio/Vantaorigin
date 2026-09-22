@@ -1,6 +1,10 @@
 // Single source of truth for the creator's categories and characters.
 // Front-end only: it lives in localStorage until there's an API.
 
+import { readImage } from "./readImage";
+
+export { readImage };
+
 export const LIBRARY_KEY = "vantaorigin:characters";
 // Where a single character was stored before categories existed.
 const LEGACY_KEY = "vantaorigin:character-profile";
@@ -215,24 +219,3 @@ export function createCharacter({
   return character;
 }
 
-// Shrinks an uploaded image to a data URL small enough for localStorage.
-export function readImage(file, maxEdge = 900) {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      const scale = Math.min(1, maxEdge / Math.max(img.width, img.height));
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.round(img.width * scale);
-      canvas.height = Math.round(img.height * scale);
-      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-      URL.revokeObjectURL(url);
-      resolve(canvas.toDataURL("image/jpeg", 0.85));
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error("Could not read image"));
-    };
-    img.src = url;
-  });
-}
