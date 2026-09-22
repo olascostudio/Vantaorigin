@@ -54,8 +54,8 @@ export default function SignIn() {
         Welcome Back to VantaOrigin
       </h1>
       <p className="mt-[38px] text-center font-ui text-lg leading-[27px] text-[#f5f5f5] sm:text-[22px]">
-        Log in to explore new stories, manage your creations, and stay connected with the world of
-        imagination.
+        Log in to manage your Realm, update your characters, and keep your creative hub up to
+        date.
       </p>
 
       <form className="mt-[67px] flex flex-col items-center" onSubmit={submit} noValidate>

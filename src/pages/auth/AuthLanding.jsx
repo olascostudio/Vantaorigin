@@ -48,11 +48,10 @@ export default function AuthLanding() {
         </div>
 
         <h1 className="mt-[22px] text-center font-ui text-[32px] font-bold leading-[1.25] text-white sm:text-[40px]">
-          Welcome to VantaOrigin - Where Stories Awaken
+          Welcome to VantaOrigin
         </h1>
         <p className="mt-[10px] text-center font-ui text-lg leading-[27px] text-[#f5f5f5] sm:text-[22px]">
-          Create, discover, and rule the realms of imagination. Read comics, fund creators, and
-          compete for glory.
+          Create your Realm, showcase your characters, and share your world with one link.
         </p>
 
         <div className="mt-[46.5px] flex flex-col items-center">

@@ -22,8 +22,8 @@ export default function SignUp() {
         Start Creating with VantaOrigin
       </h1>
       <p className="mt-[38px] text-center font-ui text-lg leading-[27px] text-[#f5f5f5] sm:text-[22px]">
-        Build your profile, publish your stories, and gain access to the tools and community that
-        bring your creativity to life.
+        Create your Realm, add your characters, and build a public home for your creative
+        work.
       </p>
 
       <form

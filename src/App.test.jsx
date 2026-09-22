@@ -30,7 +30,7 @@ describe("App routing", () => {
   it("renders the auth screen at /auth", () => {
     renderAt("/auth");
     expect(
-      screen.getByRole("heading", { name: /Welcome to VantaOrigin - Where Stories Awaken/i })
+      screen.getByRole("heading", { name: "Welcome to VantaOrigin" })
     ).toBeInTheDocument();
     expect(screen.queryByRole("contentinfo")).not.toBeInTheDocument();
   });

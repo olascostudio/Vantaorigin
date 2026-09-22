@@ -9,9 +9,9 @@ describe("AuthLanding", () => {
   it("renders the heading and supporting copy", () => {
     renderScreen();
     expect(
-      screen.getByRole("heading", { name: "Welcome to VantaOrigin - Where Stories Awaken" })
+      screen.getByRole("heading", { name: "Welcome to VantaOrigin" })
     ).toBeInTheDocument();
-    expect(screen.getByText(/Create, discover, and rule the realms of imagination/i)).toBeInTheDocument();
+    expect(screen.getByText(/Create your Realm, showcase your characters/i)).toBeInTheDocument();
   });
 
   it("links Sign Up, Sign In and Back home to their routes", () => {
