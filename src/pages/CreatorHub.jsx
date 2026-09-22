@@ -136,14 +136,14 @@ function ProfileHeader() {
           Add a bio
         </button>
 
-        <div className="order-first mb-6 flex flex-col items-start gap-1 self-start lg:absolute lg:left-12 lg:top-4 lg:order-none lg:mb-0">
-          <span className="rounded-full bg-primary px-3 py-0.5 font-ui text-xs font-bold text-white">
+        <div className="relative order-first mb-6 self-start pt-2 lg:absolute lg:left-12 lg:top-4 lg:order-none lg:mb-0">
+          <span className="absolute -top-0.5 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-primary px-3 py-0.5 font-ui text-xs font-bold text-white shadow-md">
             Coming soon
           </span>
           <button
             type="button"
             disabled
-            className="flex items-center gap-2 rounded-full bg-[#28303f] px-5 py-2.5 font-ui text-lg font-bold text-white opacity-90"
+            className="flex items-center gap-2 rounded-full bg-[#28303f] px-5 py-3 font-ui text-lg font-bold text-white opacity-90"
           >
             Creator Studio
             <span aria-hidden="true" className="text-xs">▾</span>

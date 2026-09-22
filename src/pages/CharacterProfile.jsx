@@ -224,14 +224,15 @@ export default function CharacterProfile() {
                   {savedAt ? `Saved ${savedAt.toLocaleTimeString()}` : "Changes save automatically"}
                 </span>
               </div>
-              <div className="flex shrink-0 items-center gap-2">
-                <span className="rounded-full bg-primary px-2.5 py-0.5 font-ui text-[11px] font-bold text-white">
+              {/* The badge sits over the button so it's clear what's coming */}
+              <div className="relative shrink-0 pt-2">
+                <span className="absolute -top-0.5 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-primary px-2.5 py-0.5 font-ui text-[11px] font-bold text-white shadow-md">
                   Coming soon
                 </span>
                 <button
                   type="button"
                   disabled
-                  className="cursor-not-allowed rounded-full bg-gradient-to-r from-[#c2185b] to-[#a855f7] px-5 py-2 font-ui text-sm font-bold text-white opacity-60 sm:text-base"
+                  className="cursor-not-allowed rounded-full bg-gradient-to-r from-[#c2185b] to-[#a855f7] px-5 py-2.5 font-ui text-sm font-bold text-white opacity-70 sm:text-base"
                 >
                   Challenge
                 </button>

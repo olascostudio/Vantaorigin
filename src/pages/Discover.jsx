@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import { loadLibrary } from "../data/character";
@@ -89,18 +89,72 @@ function CharacterCard({ title, author, colour, art, overlay, excerpt = SAMPLE_E
 }
 
 // Continuously scrolling row; the list is duplicated so the loop is seamless.
+// It scrolls the rail itself, so the arrows, a swipe and the wheel all work.
 function CharacterMarquee({ characters }) {
-  const [offset, setOffset] = useState(0);
-  const step = (direction) => setOffset((o) => o + direction * 530);
+  const rail = useRef(null);
+  const paused = useRef(false);
+  // Where an arrow press is taking the row; null while it just drifts.
+  const target = useRef(null);
+
+  useEffect(() => {
+    const el = rail.current;
+    if (!el) return undefined;
+    // Respect reduced motion: no drifting, but the arrows still work.
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+    let frame;
+    let last = performance.now();
+    const tick = (now) => {
+      const elapsed = now - last;
+      last = now;
+      const half = el.scrollWidth / 2;
+      if (target.current !== null) {
+        // ease towards the card an arrow asked for
+        const remaining = target.current - el.scrollLeft;
+        if (Math.abs(remaining) < 2) {
+          el.scrollLeft = target.current;
+          target.current = null;
+        } else {
+          el.scrollLeft += remaining * 0.18;
+        }
+      } else if (!reduceMotion && !paused.current && half > 0) {
+        el.scrollLeft += elapsed * 0.05; // ~50px a second
+        if (el.scrollLeft >= half) el.scrollLeft -= half; // loop seamlessly
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [characters]);
+
+  // Arrows move the row one card at a time.
+  const step = (direction) => {
+    const el = rail.current;
+    if (!el) return;
+    const max = el.scrollWidth - el.clientWidth;
+    target.current = Math.max(0, Math.min(max, el.scrollLeft + direction * 530));
+  };
 
   return (
-    <div className="group relative">
-      <div className="overflow-hidden py-2">
-        <div
-          className="flex w-max gap-[30px] animate-marquee group-hover:[animation-play-state:paused] motion-reduce:animate-none"
-          style={{ transform: `translateX(${-offset}px)` }}
-          data-testid="marquee"
-        >
+    <div className="relative">
+      <div
+        ref={rail}
+        className="scrollbar-none flex snap-x gap-[30px] overflow-x-auto px-6 py-2"
+        onMouseEnter={() => {
+          paused.current = true;
+        }}
+        onMouseLeave={() => {
+          paused.current = false;
+        }}
+        onPointerDown={() => {
+          paused.current = true;
+        }}
+        onPointerUp={() => {
+          paused.current = false;
+        }}
+        data-testid="marquee"
+      >
+        <div className="flex w-max gap-[30px]">
           {[...characters, ...characters].map((character, i) => (
             <CharacterCard key={`${character.id}-${i}`} {...character} />
           ))}
