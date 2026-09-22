@@ -2,14 +2,24 @@ import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import { PrivacyModal, SuccessModal } from "../components/creator/CharacterModals";
-import characterCover from "../assets/creator/character-cover.svg";
+import { loadSettings } from "../data/settings";
 import studioTilt1 from "../assets/creator/studio-tilt-1.webp";
 import studioTilt2 from "../assets/creator/studio-tilt-2.webp";
 import studioTilt3 from "../assets/creator/studio-tilt-3.webp";
 
 const STUDIO_CARDS = [studioTilt1, studioTilt2, studioTilt3];
 
-const REALMS = ["Marvel Universe", "My Own World", "The Vantaverse", "Obaalu", "Iyanu", "Urukojin", "Eganon"];
+// Long enough for a proper origin, short enough to fit the profile card.
+const ORIGIN_CHAR_LIMIT = 350;
+
+function PersonIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-24 text-[#9aa3b5]" fill="currentColor" aria-hidden="true">
+      <circle cx="12" cy="8" r="4.5" />
+      <path d="M3.5 21a8.5 8.5 0 0 1 17 0z" />
+    </svg>
+  );
+}
 
 function BackHome() {
   return (
@@ -135,8 +145,16 @@ function DetailsStep({ form, setForm, cover, setCover, onSubmit }) {
     >
       <div className="flex shrink-0 flex-col items-center gap-5 lg:items-start">
         <div className="relative h-[250px] w-[191px] overflow-hidden rounded-xl bg-white p-1.5 shadow-lg">
-          <img src={cover} alt="Character cover" className="size-full rounded-lg object-cover" />
-          <span className="absolute inset-x-0 bottom-6 flex items-center justify-center gap-1.5 font-ui text-sm font-bold text-white">
+          {cover ? (
+            <img src={cover} alt="Character cover" className="size-full rounded-lg object-cover" />
+          ) : (
+            <div className="flex size-full items-center justify-center rounded-lg bg-[#dfe3ea]">
+              <PersonIcon />
+            </div>
+          )}
+          <span
+            className={`absolute inset-x-0 bottom-6 flex items-center justify-center gap-1.5 font-ui text-sm font-bold ${cover ? "text-white" : "text-[#5b6478]"}`}
+          >
             View preview
             <svg viewBox="0 0 24 24" className="size-4" fill="currentColor" aria-hidden="true">
               <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 15h-2v-6h2zm0-8h-2V7h2z" />
@@ -168,8 +186,9 @@ function DetailsStep({ form, setForm, cover, setCover, onSubmit }) {
 
         <button
           type="button"
-          onClick={() => setCover(characterCover)}
-          className="flex w-[160px] items-center justify-center gap-3 rounded-full border-2 border-[#f2415f] py-3 font-ui text-base font-bold text-[#f2415f] hover:bg-[#f2415f]/10"
+          onClick={() => setCover(null)}
+          disabled={!cover}
+          className="flex w-[160px] items-center justify-center gap-3 rounded-full border-2 border-[#f2415f] py-3 font-ui text-base font-bold text-[#f2415f] hover:bg-[#f2415f]/10 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
         >
           <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
             <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" strokeLinecap="round" strokeLinejoin="round" />
@@ -197,11 +216,21 @@ function DetailsStep({ form, setForm, cover, setCover, onSubmit }) {
         <textarea
           id="origin"
           value={form.origin}
-          onChange={(event) => setForm({ ...form, origin: event.target.value })}
+          onChange={(event) =>
+            setForm({ ...form, origin: event.target.value.slice(0, ORIGIN_CHAR_LIMIT) })
+          }
           placeholder="Tell us more of what that inspired your character"
           rows={6}
+          maxLength={ORIGIN_CHAR_LIMIT}
+          aria-describedby="origin-count"
           className={`${field} py-6 text-center placeholder:text-center`}
         />
+        <p
+          id="origin-count"
+          className={`mt-2 text-right font-ui text-sm ${form.origin.length >= ORIGIN_CHAR_LIMIT ? "text-[#f2415f]" : "text-neutral-400"}`}
+        >
+          {form.origin.length}/{ORIGIN_CHAR_LIMIT} characters
+        </p>
 
         <div className="mb-3 mt-8 flex items-center justify-between gap-4">
           <label className="block font-ui text-xl font-bold text-white" htmlFor="realm">
@@ -211,19 +240,14 @@ function DetailsStep({ form, setForm, cover, setCover, onSubmit }) {
             New
           </span>
         </div>
-        <select
+        <input
           id="realm"
           value={form.realm}
           onChange={(event) => setForm({ ...form, realm: event.target.value })}
-          className={`${field} h-[60px] appearance-none bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22white%22 stroke-width=%222%22><path d=%22M6 9l6 6 6-6%22/></svg>')] bg-[length:24px] bg-[right_1.5rem_center] bg-no-repeat pr-14`}
-        >
-          <option value="">Marvel Universe, My Own World, The Vantaverse...</option>
-          {REALMS.map((realm) => (
-            <option key={realm} value={realm}>
-              {realm}
-            </option>
-          ))}
-        </select>
+          placeholder="e.g. The Vantaverse"
+          maxLength={60}
+          className={`${field} h-[60px]`}
+        />
 
         <label className="mb-3 mt-8 block font-ui text-xl font-bold text-white" htmlFor="tagline">
           Tagline
@@ -242,17 +266,24 @@ function DetailsStep({ form, setForm, cover, setCover, onSubmit }) {
         <input
           id="creator"
           value={form.creator}
-          onChange={(event) => setForm({ ...form, creator: event.target.value })}
-          placeholder="Enter name"
-          className={`${field} h-[60px]`}
+          readOnly
+          aria-describedby="creator-note"
+          className={`${field} h-[60px] cursor-not-allowed text-neutral-300`}
         />
+        <p id="creator-note" className="mt-2 font-ui text-sm text-neutral-400">
+          Filled in from your username so every character is credited to you. Change it in{" "}
+          <Link to="/settings" className="font-bold text-[#6b8ff5] hover:underline">
+            Settings
+          </Link>
+          .
+        </p>
 
         <div className="mt-10 flex justify-center">
           <button
             type="submit"
             className="flex items-center gap-3 rounded-full bg-gradient-to-r from-[#c2185b] to-[#4f46e5] px-14 py-4 font-ui text-xl font-bold text-white transition-opacity hover:opacity-90"
           >
-            Create Character
+            Add Character
             <span aria-hidden="true">✦</span>
           </button>
         </div>
@@ -265,8 +296,14 @@ export default function CreateCharacter() {
   const navigate = useNavigate();
   const [step, setStep] = useState("identity");
   const [identity, setIdentity] = useState("");
-  const [cover, setCover] = useState(characterCover);
-  const [form, setForm] = useState({ name: "", origin: "", realm: "", tagline: "", creator: "" });
+  const [cover, setCover] = useState(null);
+  const [form, setForm] = useState(() => ({
+    name: "",
+    origin: "",
+    realm: "",
+    tagline: "",
+    creator: loadSettings().username,
+  }));
   const [modal, setModal] = useState(null); // "privacy" | "success"
 
   return (
@@ -281,7 +318,11 @@ export default function CreateCharacter() {
         <IdentityStep
           identity={identity}
           setIdentity={setIdentity}
-          onNext={() => setStep("details")}
+          onNext={() => {
+            // carry the identity over so they don't type the name twice
+            setForm((current) => ({ ...current, name: current.name || identity.trim() }));
+            setStep("details");
+          }}
         />
       ) : (
         <DetailsStep
