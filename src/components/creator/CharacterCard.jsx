@@ -10,8 +10,12 @@ const WINDOW =
 export default function CharacterCard({ alias, power, cover, showViewMore = false, onViewMore }) {
   const id = useId().replace(/:/g, "");
 
+  // containerType lets the text below scale with the card, not the screen.
   return (
-    <div className="relative mx-auto aspect-[374/491] w-[280px] shrink-0 sm:w-[300px]">
+    <div
+      className="relative mx-auto aspect-[374/491] w-[280px] shrink-0 sm:w-[300px]"
+      style={{ containerType: "inline-size" }}
+    >
       <svg viewBox="0 0 374 491" className="absolute inset-0 size-full" aria-hidden="true">
         <defs>
           <clipPath id={`window-${id}`}>
@@ -37,21 +41,28 @@ export default function CharacterCard({ alias, power, cover, showViewMore = fals
         <image href={cardFrame} width="374" height="491" />
       </svg>
 
-      <div className="absolute inset-x-[4%] bottom-[5%] flex flex-col items-center gap-2 px-3 text-center">
+      <div className="absolute inset-x-[4%] bottom-[4%] flex flex-col items-center gap-[0.5em] px-2 text-center">
         {showViewMore && (
           <button
             type="button"
             onClick={onViewMore}
-            className="rounded-full bg-gradient-to-r from-[#c2185b] to-[#a855f7] px-6 py-2 font-ui text-sm font-bold text-white ring-1 ring-white/60 hover:opacity-90"
+            style={{ fontSize: "clamp(10px, 4.4cqw, 14px)" }}
+            className="rounded-full bg-gradient-to-r from-[#c2185b] to-[#a855f7] px-[1.6em] py-[0.6em] font-ui font-bold text-white ring-1 ring-white/60 hover:opacity-90"
           >
             View more
           </button>
         )}
-        <p className="line-clamp-2 break-words font-ui text-3xl font-black leading-tight text-white">
+        <p
+          style={{ fontSize: "clamp(14px, 8.6cqw, 30px)" }}
+          className="line-clamp-2 w-full break-words font-ui font-black leading-[1.15] text-white"
+        >
           {alias}
         </p>
-        <p className="flex items-center gap-2 font-ui text-lg font-bold text-white">
-          <img src={sword} alt="" className="size-5" />
+        <p
+          style={{ fontSize: "clamp(11px, 5.4cqw, 18px)" }}
+          className="flex items-center gap-[0.4em] font-ui font-bold text-white"
+        >
+          <img src={sword} alt="" className="h-[1.1em] w-auto" />
           {power}
         </p>
       </div>
