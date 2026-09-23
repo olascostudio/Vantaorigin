@@ -1,7 +1,18 @@
 // Every call to our own backend goes through here. The address comes from
 // VITE_API_URL, so pointing the app at a laptop, managed hosting or a VPS is
 // a build-time setting, not a code change.
-const BASE = (import.meta.env.VITE_API_URL || "http://localhost:8080").replace(/\/$/, "");
+// On vantaorigin.com the API is always api.vantaorigin.com, so the live site
+// never depends on a build-time setting being right. Anywhere else (a preview
+// build, a laptop) VITE_API_URL decides, falling back to the local API.
+function apiBase() {
+  const host = typeof window === "undefined" ? "" : window.location.hostname;
+  if (host === "vantaorigin.com" || host.endsWith(".vantaorigin.com")) {
+    return "https://api.vantaorigin.com";
+  }
+  return import.meta.env.VITE_API_URL || "http://localhost:8080";
+}
+
+const BASE = apiBase().replace(/\/$/, "");
 
 export class ApiError extends Error {
   constructor(message, status) {
