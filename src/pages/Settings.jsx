@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
-import { loadSettings, saveSettings } from "../data/settings";
-import { readImage } from "../data/readImage";
+import { changePassword, toProfilePatch, toSettings, uploadProfileImage } from "../data/settings";
+import { useAuth } from "../data/AuthContext.jsx";
 
 const TABS = [
   { id: "profile", label: "My Profile" },
@@ -56,19 +56,26 @@ function ProfileTab({ settings, update, onSaved }) {
     if (!file) return;
     setBusy(true);
     try {
-      // stored as a data URL; a blob: URL would be empty after a reload
-      const image = await readImage(file, key === "banner" ? 1600 : 400);
-      setDraft((prev) => ({ ...prev, [key]: image }));
-    } catch {
-      onSaved("That image could not be read");
+      // uploaded to storage; the account keeps the address, not the picture
+      const url = await uploadProfileImage(file, key === "banner" ? "banners" : "avatars");
+      setDraft((prev) => ({ ...prev, [key]: url }));
+    } catch (problem) {
+      onSaved(problem.message);
     } finally {
       setBusy(false);
     }
   };
 
-  const save = () => {
-    if (update(draft)) onSaved("Profile saved");
-    else onSaved("Could not save — your pictures may be too large");
+  const save = async () => {
+    setBusy(true);
+    try {
+      await update(draft);
+      onSaved("Profile saved");
+    } catch (problem) {
+      onSaved(problem.message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -167,9 +174,14 @@ function PersonalTab({ settings, update, onSaved }) {
 
   return (
     <form
-      onSubmit={(event) => {
+      onSubmit={async (event) => {
         event.preventDefault();
-        onSaved(update(form) ? "Personal information saved" : "Could not save — please try again");
+        try {
+          await update(form);
+          onSaved("Personal information saved");
+        } catch (problem) {
+          onSaved(problem.message);
+        }
       }}
     >
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -241,7 +253,7 @@ function PersonalTab({ settings, update, onSaved }) {
   );
 }
 
-function AccountTab({ settings, update, onSaved }) {
+function AccountTab({ settings, signOut, onSaved }) {
   const navigate = useNavigate();
   const [email, setEmail] = useState(settings.email);
   const [passwords, setPasswords] = useState({ current: "", next: "", confirm: "" });
@@ -249,7 +261,9 @@ function AccountTab({ settings, update, onSaved }) {
 
   const set = (key) => (event) => setPasswords({ ...passwords, [key]: event.target.value });
 
-  const updatePassword = (event) => {
+  const [busy, setBusy] = useState(false);
+
+  const updatePassword = async (event) => {
     event.preventDefault();
     if (!passwords.current || !passwords.next) {
       setError("Enter your current and new password.");
@@ -259,10 +273,22 @@ function AccountTab({ settings, update, onSaved }) {
       setError("New passwords do not match.");
       return;
     }
+    if (passwords.next.length < 8) {
+      setError("Use at least 8 characters.");
+      return;
+    }
+
     setError("");
-    setPasswords({ current: "", next: "", confirm: "" });
-    update({ email });
-    onSaved("Password updated");
+    setBusy(true);
+    try {
+      await changePassword(passwords.current, passwords.next);
+      setPasswords({ current: "", next: "", confirm: "" });
+      onSaved("Password updated");
+    } catch (problem) {
+      setError(problem.message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -287,9 +313,10 @@ function AccountTab({ settings, update, onSaved }) {
         <h2 className="font-ui text-2xl font-bold text-white">Change Password</h2>
         <button
           type="submit"
-          className="rounded-full bg-[#2f6fed] px-10 py-3 font-ui text-base font-bold text-white hover:opacity-90"
+          disabled={busy}
+          className="rounded-full bg-[#2f6fed] px-10 py-3 font-ui text-base font-bold text-white hover:opacity-90 disabled:opacity-50"
         >
-          Update
+          {busy ? "Saving…" : "Update"}
         </button>
       </div>
 
@@ -329,7 +356,10 @@ function AccountTab({ settings, update, onSaved }) {
         </button>
         <button
           type="button"
-          onClick={() => navigate("/signin")}
+          onClick={async () => {
+            await signOut();
+            navigate("/signin");
+          }}
           className="flex items-center justify-center gap-3 rounded-xl bg-[#111827] py-5 font-ui text-base font-bold text-[#f2415f] hover:bg-[#161f33]"
         >
           <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -344,16 +374,13 @@ function AccountTab({ settings, update, onSaved }) {
 
 export default function Settings() {
   const { tab = "profile" } = useParams();
-  const [settings, setSettings] = useState(loadSettings);
+  const { user, updateProfile, signOut } = useAuth();
+  const settings = toSettings(user);
   const [toast, setToast] = useState("");
   const [menuOpen, setMenuOpen] = useState(true);
 
-  const update = (patch) => {
-    const next = { ...settings, ...patch };
-    const saved = saveSettings(next);
-    if (saved) setSettings(next);
-    return saved;
-  };
+  // Saves to the account and keeps the rest of the app in step.
+  const update = (patch) => updateProfile(toProfilePatch({ ...settings, ...patch }));
 
   const onSaved = (message) => {
     setToast(message);
@@ -426,7 +453,7 @@ export default function Settings() {
             <PersonalTab key="personal" settings={settings} update={update} onSaved={onSaved} />
           )}
           {active === "account" && (
-            <AccountTab key="account" settings={settings} update={update} onSaved={onSaved} />
+            <AccountTab key="account" settings={settings} signOut={signOut} onSaved={onSaved} />
           )}
         </section>
       </div>

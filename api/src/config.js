@@ -12,6 +12,10 @@ const schema = z.object({
   // on managed hosting and on a VPS.
   DATABASE_URL: z.string().min(1),
 
+  // Where this API itself is reachable, used to build URLs for files served
+  // by the API in local development.
+  API_PUBLIC_URL: z.string().optional(),
+
   // Where the browser app runs, for cookies and CORS.
   APP_ORIGIN: z.string().default("http://localhost:5173"),
   COOKIE_DOMAIN: z.string().optional(),

@@ -18,7 +18,9 @@ function memoryStorage() {
       files.delete(key);
     },
     urlFor(key) {
-      return `/files/${key}`;
+      // Absolute, because the page is served from a different port.
+      const base = (config.API_PUBLIC_URL || `http://localhost:${config.PORT}`).replace(/\/$/, "");
+      return `${base}/files/${key}`;
     },
     // only used by the local file route
     get(key) {

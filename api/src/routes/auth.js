@@ -185,6 +185,24 @@ export default async function authRoutes(app) {
     return { ok: true };
   });
 
+  // Changing a password while signed in: the current one must be right.
+  app.post("/me/password", { preHandler: authenticate() }, async (request, reply) => {
+    const { currentPassword, password } = z
+      .object({ currentPassword: z.string(), password: z.string().min(8) })
+      .parse(request.body);
+
+    if (!(await verifyPassword(request.user.passwordHash, currentPassword))) {
+      return reply.code(400).send({ error: "Your current password is not right" });
+    }
+
+    await db
+      .update(users)
+      .set({ passwordHash: await hashPassword(password), updatedAt: new Date() })
+      .where(eq(users.id, request.user.id));
+
+    return { ok: true };
+  });
+
   // Profile settings (the Settings page).
   app.patch("/me", { preHandler: authenticate() }, async (request) => {
     const body = z

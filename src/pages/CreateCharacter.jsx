@@ -2,8 +2,14 @@ import { useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import { PrivacyModal, SuccessModal } from "../components/creator/CharacterModals";
-import { loadSettings } from "../data/settings";
-import { addCategory, createCharacter, loadLibrary, readImage } from "../data/character";
+import { useAuth } from "../data/AuthContext.jsx";
+import {
+  addCategory,
+  createCharacter,
+  loadLibrary,
+  saveCharacter,
+  uploadImage,
+} from "../data/character";
 import studioTilt1 from "../assets/creator/studio-tilt-1.webp";
 import studioTilt2 from "../assets/creator/studio-tilt-2.webp";
 import studioTilt3 from "../assets/creator/studio-tilt-3.webp";
@@ -192,8 +198,8 @@ function DetailsStep({ form, setForm, cover, setCover, onSubmit }) {
           className="hidden"
           onChange={(event) => {
             const file = event.target.files?.[0];
-            // a data URL survives the trip to the profile page; a blob URL would not
-            if (file) readImage(file).then(setCover).catch(() => {});
+            // uploaded to storage; the character keeps the address
+            if (file) uploadImage(file, "covers").then(setCover).catch(() => {});
             event.target.value = "";
           }}
         />
@@ -321,23 +327,25 @@ export default function CreateCharacter() {
   const [step, setStep] = useState("identity");
   const [identity, setIdentity] = useState("");
   const [cover, setCover] = useState(null);
+  const { user } = useAuth();
   const [form, setForm] = useState(() => ({
     name: "",
     origin: "",
     realm: "",
     tagline: "",
-    creator: loadSettings().username,
+    creator: user?.username || "",
   }));
   const [modal, setModal] = useState(null); // "privacy" | "success"
   const [created, setCreated] = useState(null);
+  const [createError, setCreateError] = useState("");
   const [params] = useSearchParams();
 
   // The category this character is filed under; falls back to the first one,
   // or a new "My Characters" if the creator has none yet.
-  const categoryId = () => {
-    const { categories } = loadLibrary();
+  const categoryId = async () => {
+    const { categories } = await loadLibrary();
     const wanted = categories.find((category) => category.id === params.get("category"));
-    return (wanted || categories[0] || addCategory("My Characters")).id;
+    return (wanted || categories[0] || (await addCategory("My Characters"))).id;
   };
 
   return (
@@ -346,6 +354,11 @@ export default function CreateCharacter() {
 
       <div className="mx-auto max-w-[1620px] px-6 py-10 lg:px-12">
         <BackHome />
+        {createError && (
+          <p role="alert" className="mt-4 font-ui text-base text-[#f2415f]">
+            {createError}
+          </p>
+        )}
       </div>
 
       {step === "identity" ? (
@@ -371,19 +384,26 @@ export default function CreateCharacter() {
       <PrivacyModal
         open={modal === "privacy"}
         onClose={() => setModal(null)}
-        onSave={({ visibility }) => {
-          const character = createCharacter({
-            categoryId: categoryId(),
-            name: form.name.trim(),
-            realm: form.realm.trim(),
-            tagline: form.tagline.trim(),
-            origin: form.origin.trim(),
-            creator: form.creator,
-            cover,
-            visibility,
-          });
-          setCreated(character);
-          setModal("success");
+        onSave={async ({ visibility }) => {
+          try {
+            const character = await createCharacter({
+              categoryId: await categoryId(),
+              name: form.name.trim(),
+              realm: form.realm.trim(),
+              tagline: form.tagline.trim(),
+              origin: form.origin.trim(),
+              cover,
+            });
+            // Publishing is a separate flag on the character.
+            if (visibility === "public") {
+              await saveCharacter({ ...character, visibility: "public" });
+            }
+            setCreated(character);
+            setModal("success");
+          } catch (error) {
+            setCreateError(error.message);
+            setModal(null);
+          }
         }}
       />
 

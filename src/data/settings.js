@@ -1,38 +1,34 @@
-// Account settings, stored locally until there's an API.
+// Account settings now live with the account, on the API. The page holds the
+// signed-in user from AuthContext and saves through here.
+import { api } from "./api";
+import { uploadImage } from "./character";
 
-export const SETTINGS_KEY = "vantaorigin:settings";
+// Shape the Settings page works with.
+export function toSettings(user) {
+  return {
+    firstName: user?.firstName || "",
+    lastName: user?.lastName || "",
+    username: user?.username || "",
+    dateOfBirth: user?.dateOfBirth || "",
+    bio: user?.bio || "",
+    email: user?.email || "",
+    avatar: user?.avatarUrl || null,
+    banner: user?.bannerUrl || null,
+  };
+}
 
-export const DEFAULT_SETTINGS = {
-  banner: null,
-  avatar: null,
-  firstName: "",
-  lastName: "",
-  username: "@josephmaroon001",
-  dateOfBirth: "",
-  bio: "",
-  email: "josephmaroon677@gmail.com",
-};
-
-export function loadSettings() {
-  try {
-    const raw = localStorage.getItem(SETTINGS_KEY);
-    return raw ? { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } : DEFAULT_SETTINGS;
-  } catch {
-    return DEFAULT_SETTINGS;
+// Only the fields the API knows about, under its own names.
+export function toProfilePatch(settings) {
+  const patch = {};
+  for (const key of ["firstName", "lastName", "username", "dateOfBirth", "bio"]) {
+    if (settings[key] !== undefined) patch[key] = settings[key];
   }
+  if (settings.avatar !== undefined) patch.avatarUrl = settings.avatar;
+  if (settings.banner !== undefined) patch.bannerUrl = settings.banner;
+  return patch;
 }
 
-// Rough size of the saved settings, so the UI can warn before the browser
-// refuses a write (localStorage is about 5MB per site).
-export function settingsSize(settings) {
-  return JSON.stringify(settings).length;
-}
+export const uploadProfileImage = (file, kind) => uploadImage(file, kind);
 
-export function saveSettings(settings) {
-  try {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-    return true;
-  } catch {
-    return false;
-  }
-}
+export const changePassword = (currentPassword, password) =>
+  api.post("/me/password", { currentPassword, password });

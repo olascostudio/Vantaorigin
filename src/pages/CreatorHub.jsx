@@ -11,7 +11,8 @@ import {
   deleteCharacter,
   loadLibrary,
 } from "../data/character";
-import { loadSettings } from "../data/settings";
+import { toSettings } from "../data/settings";
+import { useAuth } from "../data/AuthContext.jsx";
 import postImage from "../assets/creator/post-hero.webp";
 import postImage2 from "../assets/creator/upload-sample-1.png";
 import postImage3 from "../assets/creator/upload-sample-2.webp";
@@ -82,8 +83,9 @@ function LightningDivider() {
 }
 
 function ProfileHeader() {
-  // Whatever was saved in Settings, falling back to the sample art.
-  const settings = loadSettings();
+  // Whatever is saved on the account, falling back to the sample art.
+  const { user } = useAuth();
+  const settings = toSettings(user);
   const fullName = [settings.firstName, settings.lastName].filter(Boolean).join(" ");
 
   return (
@@ -169,6 +171,10 @@ function ProfileHeader() {
 }
 
 function CharacterCard({ character, onEdit, onView, onDelete }) {
+  // Own characters carry no creator name; they are always this account's.
+  const { user } = useAuth();
+  const creator = character.creator || user?.username || "";
+
   return (
     <article className="flex w-[180px] shrink-0 snap-start flex-col rounded-2xl border border-white/10 p-2.5 sm:w-[250px] sm:p-3">
       <div className="-mt-1 mb-1 flex justify-end">
@@ -197,7 +203,7 @@ function CharacterCard({ character, onEdit, onView, onDelete }) {
         {character.realm && (
           <p className="mt-0.5 truncate font-ui text-xs font-bold text-neutral-300">{character.realm}</p>
         )}
-        <p className="mt-1 truncate font-ui text-xs font-medium text-accent">By: {character.creator}</p>
+        <p className="mt-1 truncate font-ui text-xs font-medium text-accent">By: {creator}</p>
         <p className="mt-2 line-clamp-2 font-ui text-xs text-neutral-300">
           {character.tagline && <span className="font-bold">{character.tagline} — </span>}
           {character.backstory}
@@ -447,9 +453,18 @@ function HighlightPost({ post, onEdit, onDelete }) {
 export default function CreatorHub() {
   const navigate = useNavigate();
   // The creator's categories and the characters filed under them.
-  const [library, setLibrary] = useState(loadLibrary);
+  const [library, setLibrary] = useState({ categories: [], characters: [] });
   const [addingCategory, setAddingCategory] = useState(false);
-  const refreshLibrary = () => setLibrary(loadLibrary());
+  const [problem, setProblem] = useState("");
+
+  const refreshLibrary = () =>
+    loadLibrary()
+      .then(setLibrary)
+      .catch((error) => setProblem(error.message));
+
+  useEffect(() => {
+    refreshLibrary();
+  }, []);
   const location = useLocation();
   // Coming back from creating a character lands on the Character tab.
   const [tab, setTab] = useState(location.state?.tab || "Highlights");
@@ -537,6 +552,12 @@ export default function CreatorHub() {
               </button>
             </div>
 
+            {problem && (
+              <p role="alert" className="mt-6 rounded-xl bg-[#3a2030] px-5 py-4 font-ui text-base text-[#ffb4c4]">
+                {problem}
+              </p>
+            )}
+
             {library.categories.length === 0 ? (
               <p className="mt-10 rounded-2xl border border-dashed border-white/15 px-6 py-16 text-center font-ui text-lg text-neutral-400">
                 Start with a category for each comic, book or project, then add its characters.
@@ -559,13 +580,13 @@ export default function CreatorHub() {
                             {
                               label: "Delete Category",
                               danger: true,
-                              onSelect: () => {
+                              onSelect: async () => {
                                 const note = characters.length
                                   ? ` and its ${characters.length} character${characters.length === 1 ? "" : "s"}`
                                   : "";
                                 if (!window.confirm(`Delete “${category.name}”${note}? This can’t be undone.`)) return;
-                                deleteCategory(category.id);
-                                refreshLibrary();
+                                await deleteCategory(category.id);
+                                await refreshLibrary();
                               },
                             },
                           ]}
@@ -579,10 +600,10 @@ export default function CreatorHub() {
                             character={character}
                             onView={() => navigate(`/creators-hub/character?id=${character.id}`)}
                             onEdit={() => navigate(`/creators-hub/character/profile?id=${character.id}`)}
-                            onDelete={() => {
+                            onDelete={async () => {
                               if (!window.confirm(`Delete ${character.alias}? This can’t be undone.`)) return;
-                              deleteCharacter(character.id);
-                              refreshLibrary();
+                              await deleteCharacter(character.id);
+                              await refreshLibrary();
                             }}
                           />
                         ))}
@@ -597,10 +618,14 @@ export default function CreatorHub() {
             {addingCategory && (
               <CategoryModal
                 onClose={() => setAddingCategory(false)}
-                onCreate={(name) => {
-                  addCategory(name);
-                  refreshLibrary();
-                  setAddingCategory(false);
+                onCreate={async (name) => {
+                  try {
+                    await addCategory(name);
+                    await refreshLibrary();
+                    setAddingCategory(false);
+                  } catch (error) {
+                    setProblem(error.message);
+                  }
                 }}
               />
             )}

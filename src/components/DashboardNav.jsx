@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import logoMark from "../assets/landing/hero/logo-mark.svg";
 import logoWordmark from "../assets/landing/hero/logo-wordmark.svg";
-import { loadSettings } from "../data/settings";
 import { useAuth } from "../data/AuthContext.jsx";
 
 const LINKS = [
@@ -17,10 +16,9 @@ export default function DashboardNav({ active = "Discover" }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const settings = loadSettings();
-  const name = user?.firstName || user?.username || settings.firstName || settings.username || "A";
+  const name = user?.firstName || user?.username || "A";
   const initial = name.replace("@", "").charAt(0).toUpperCase();
-  const avatar = user?.avatarUrl || settings.avatar;
+  const avatar = user?.avatarUrl;
 
   // Close the menu after navigating, and on Escape.
   useEffect(() => setOpen(false), [pathname]);

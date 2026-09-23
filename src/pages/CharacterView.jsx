@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import CharacterCard from "../components/creator/CharacterCard";
-import { loadCharacter } from "../data/character";
+import { DEFAULT_CHARACTER, loadCharacter, loadPublicCharacter } from "../data/character";
 import heroBanner from "../assets/creator/hero-banner.webp";
 import mobileBanner from "../assets/creator/profile-mobile-bg.webp";
 import flameBright from "../assets/creator/flame-bright.svg";
@@ -107,22 +107,47 @@ export default function CharacterView({ owner = false }) {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const id = params.get("id");
-  const [character, setCharacter] = useState(() => loadCharacter(id));
+  // Owners read their own character; visitors read the published one. With no
+  // id (the links on the marketing pages) the sample is shown.
+  const [character, setCharacter] = useState(null);
 
-  // Pick up edits made on the editable profile page.
   useEffect(() => {
-    const refresh = () => setCharacter(loadCharacter(id));
-    window.addEventListener("focus", refresh);
-    window.addEventListener("storage", refresh);
-    return () => {
-      window.removeEventListener("focus", refresh);
-      window.removeEventListener("storage", refresh);
-    };
-  }, [id]);
+    let cancelled = false;
 
-  const assets = character.assets || [];
+    const load = async () => {
+      if (!id) return DEFAULT_CHARACTER;
+      try {
+        return owner ? (await loadCharacter(id)) || DEFAULT_CHARACTER : await loadPublicCharacter(id);
+      } catch {
+        return DEFAULT_CHARACTER;
+      }
+    };
+
+    load().then((next) => {
+      if (!cancelled) setCharacter(next);
+    });
+
+    // Coming back from the editable page should show the new version.
+    const refresh = () => load().then((next) => !cancelled && setCharacter(next));
+    window.addEventListener("focus", refresh);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("focus", refresh);
+    };
+  }, [id, owner]);
+
+  const assets = (character?.assets || []).map((asset) => asset.url ?? asset);
   // Phones show the origin story folded until it's opened.
   const [storyOpen, setStoryOpen] = useState(false);
+
+  if (!character) {
+    return (
+      <div className="min-h-screen bg-[#1b2233]">
+        <DashboardNav active="Creators’ Hub" />
+        <p className="p-10 text-center font-ui text-base text-neutral-300">Loading…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#1b2233]">

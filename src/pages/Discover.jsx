@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
-import { loadLibrary } from "../data/character";
+import { loadPublicCharacters } from "../data/character";
 import characterCover from "../assets/creator/character-cover.svg";
 import heroArt from "../assets/auth/banner.webp";
 import artOrange from "../assets/landing/worlds/world-1.webp";
@@ -29,12 +29,10 @@ const SAMPLES = [
   { id: "switch-2", title: "Switch Face Part 2", author: "Arinola", colour: "#96307e", art: artObaalu, overlay: artObaaluOverlay },
 ];
 
-// Characters the creator chose to publish, shaped for the cards below.
-function publicCharacters() {
-  return loadLibrary()
-    .characters.filter((character) => character.visibility === "public")
-    .reverse() // newest first
-    .map((character) => ({
+// Published characters, shaped for the cards below.
+async function publicCharacters() {
+  const characters = await loadPublicCharacters(24).catch(() => []);
+  return characters.map((character) => ({
       id: character.id,
       title: character.realm ? `${character.alias} — ${character.realm}` : character.alias,
       author: character.creator,
@@ -48,7 +46,7 @@ function publicCharacters() {
       searchText: [character.alias, character.realm, character.tagline, character.creator]
         .filter(Boolean)
         .join(" "),
-    }));
+  }));
 }
 
 const SUGGESTIONS = ["Asomyyy", "voidsmith", "Emberfyre — Pyrokinetic", "Asomy — Ploserin"];
@@ -187,7 +185,17 @@ export default function Discover() {
   const [showHints, setShowHints] = useState(false);
   const inputRef = useRef(null);
   // Published characters lead, then the samples.
-  const [characters] = useState(() => [...publicCharacters(), ...SAMPLES]);
+  const [characters, setCharacters] = useState(SAMPLES);
+
+  useEffect(() => {
+    let cancelled = false;
+    publicCharacters().then((published) => {
+      if (!cancelled) setCharacters([...published, ...SAMPLES]);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const results = useMemo(() => {
     const term = submitted.trim().toLowerCase();

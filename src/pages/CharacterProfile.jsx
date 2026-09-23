@@ -2,7 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import CharacterCard from "../components/creator/CharacterCard";
-import { loadCharacter, readImage, saveCharacter } from "../data/character";
+import {
+  addAsset,
+  loadCharacter,
+  removeAsset,
+  saveCharacter,
+  uploadImage,
+} from "../data/character";
 import EditableText from "../components/creator/EditableText";
 import heroBanner from "../assets/creator/hero-banner.webp";
 import mobileBanner from "../assets/creator/profile-mobile-bg.webp";
@@ -128,14 +134,30 @@ function AbilityPanel({
 export default function CharacterProfile() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
-  const [data, setData] = useState(() => loadCharacter(params.get("id")));
+  const id = params.get("id");
+  const [data, setData] = useState(null);
   const [savedAt, setSavedAt] = useState(null);
-  const lastSaved = useRef(JSON.stringify(data));
+  const [problem, setProblem] = useState("");
+  const lastSaved = useRef("");
 
-  // Only the creator's own characters can be edited; the sample can't.
+  // Fetch the character being edited. Without one there is nothing to edit.
   useEffect(() => {
-    if (!data.id) navigate("/creators-hub", { replace: true, state: { tab: "Character" } });
-  }, [data.id, navigate]);
+    let cancelled = false;
+    loadCharacter(id)
+      .then((character) => {
+        if (cancelled) return;
+        if (!character) {
+          navigate("/creators-hub", { replace: true, state: { tab: "Character" } });
+          return;
+        }
+        lastSaved.current = JSON.stringify(character);
+        setData(character);
+      })
+      .catch(() => navigate("/creators-hub", { replace: true, state: { tab: "Character" } }));
+    return () => {
+      cancelled = true;
+    };
+  }, [id, navigate]);
   const assetInput = useRef(null);
   const bannerInput = useRef(null);
   // Phones show the origin story folded until it's opened.
@@ -145,21 +167,35 @@ export default function CharacterProfile() {
 
   // Auto-save: everything on this page persists as it is edited.
   useEffect(() => {
+    if (!data) return undefined;
     const serialised = JSON.stringify(data);
     if (serialised === lastSaved.current) return undefined;
-    lastSaved.current = serialised;
-    const id = setTimeout(() => {
-      if (saveCharacter(data)) setSavedAt(new Date());
-    }, 600);
-    return () => clearTimeout(id);
+
+    const timer = setTimeout(async () => {
+      try {
+        await saveCharacter(data);
+        lastSaved.current = serialised;
+        setProblem("");
+        setSavedAt(new Date());
+      } catch (error) {
+        setProblem(error.message);
+      }
+    }, 700);
+
+    return () => clearTimeout(timer);
   }, [data]);
 
   const setField = (key) => (value) => setData((prev) => ({ ...prev, [key]: value }));
 
-  // Stored as data URLs so they survive a reload.
+  // Uploaded to storage, then attached to this character.
   const addAssets = async (files) => {
-    const urls = await Promise.all([...files].map((file) => readImage(file, 1200).catch(() => null)));
-    setData((prev) => ({ ...prev, assets: [...prev.assets, ...urls.filter(Boolean)] }));
+    try {
+      const added = [];
+      for (const file of files) added.push(await addAsset(data.id, file));
+      setData((prev) => ({ ...prev, assets: [...prev.assets, ...added] }));
+    } catch (error) {
+      setProblem(error.message);
+    }
   };
 
   const setExtra = (index, patch) =>
@@ -168,8 +204,10 @@ export default function CharacterProfile() {
       extras: data.core.extras.map((extra, i) => (i === index ? { ...extra, ...patch } : extra)),
     });
 
-  const removeAsset = (index) =>
-    setData((prev) => ({ ...prev, assets: prev.assets.filter((_, i) => i !== index) }));
+  const dropAsset = async (asset) => {
+    await removeAsset(asset.id).catch(() => {});
+    setData((prev) => ({ ...prev, assets: prev.assets.filter((item) => item.id !== asset.id) }));
+  };
 
   const setNote = (index, note) =>
     setData((prev) => ({
@@ -182,6 +220,15 @@ export default function CharacterProfile() {
       ...prev,
       stats: prev.stats.map((row, i) => (i === index ? { ...row, level } : row)),
     }));
+
+  if (!data) {
+    return (
+      <div className="min-h-screen bg-[#1b2233]">
+        <DashboardNav active="Creators’ Hub" />
+        <p className="p-10 text-center font-ui text-base text-neutral-300">Loading…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#1b2233]">
@@ -221,7 +268,11 @@ export default function CharacterProfile() {
                   </span>
                 </div>
                 <span aria-live="polite" className="hidden font-ui text-xs text-neutral-400 sm:inline">
-                  {savedAt ? `Saved ${savedAt.toLocaleTimeString()}` : "Changes save automatically"}
+                  {problem
+                  ? problem
+                  : savedAt
+                    ? `Saved ${savedAt.toLocaleTimeString()}`
+                    : "Changes save automatically"}
                 </span>
               </div>
               {/* The badge sits over the button so it's clear what's coming */}
@@ -248,7 +299,7 @@ export default function CharacterProfile() {
             className="hidden"
             onChange={(event) => {
               const file = event.target.files?.[0];
-              if (file) readImage(file, 1600).then(setField("banner")).catch(() => {});
+              if (file) uploadImage(file, "banners").then(setField("banner")).catch(() => {});
               event.target.value = "";
             }}
           />
@@ -479,13 +530,13 @@ export default function CharacterProfile() {
             <div className={`scrollbar-none snap-x gap-5 overflow-x-auto pb-2 ${data.assets.length ? "flex" : "hidden"}`}>
               {data.assets.map((asset, index) => (
                 <div
-                  key={asset}
+                  key={asset.id}
                   className="relative h-[260px] w-[270px] shrink-0 snap-start overflow-hidden rounded-2xl bg-[#222b3c] sm:h-[400px] sm:w-[320px]"
                 >
-                  <img src={asset} alt={`Asset ${index + 1}`} className="size-full object-cover" />
+                  <img src={asset.url} alt={`Asset ${index + 1}`} className="size-full object-cover" />
                   <button
                     type="button"
-                    onClick={() => removeAsset(index)}
+                    onClick={() => dropAsset(asset)}
                     aria-label={`Remove asset ${index + 1}`}
                     className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full bg-black/60 font-ui text-lg text-white hover:bg-black/80"
                   >
