@@ -29,12 +29,23 @@ function memoryStorage() {
   };
 }
 
+// Cloudflare shows the endpoint in several shapes, and a pasted value often
+// arrives without the scheme or with the bucket on the end. The client needs
+// the origin only.
+function normaliseEndpoint(value) {
+  const trimmed = (value || "").trim();
+  if (!trimmed) throw new Error("S3_ENDPOINT is not set");
+  const withScheme = /^https?:///i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  return new URL(withScheme).origin;
+}
+
 async function s3Storage() {
   const { S3Client, PutObjectCommand, DeleteObjectCommand } = await import("@aws-sdk/client-s3");
+  const endpoint = normaliseEndpoint(config.S3_ENDPOINT);
 
   const client = new S3Client({
     region: config.S3_REGION,
-    endpoint: config.S3_ENDPOINT,
+    endpoint,
     credentials: {
       accessKeyId: config.S3_ACCESS_KEY_ID,
       secretAccessKey: config.S3_SECRET_ACCESS_KEY,
