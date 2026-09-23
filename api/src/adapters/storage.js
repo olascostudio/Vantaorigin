@@ -41,9 +41,20 @@ function normaliseEndpoint(value) {
 
 async function s3Storage() {
   const { S3Client, PutObjectCommand, DeleteObjectCommand } = await import("@aws-sdk/client-s3");
-  const endpoint = normaliseEndpoint(config.S3_ENDPOINT);
 
-  const client = new S3Client({
+  // A bad endpoint must not stop the API from starting: sign-in and every
+  // other route still work, and uploads explain what to fix.
+  let endpoint;
+  let configError = null;
+  try {
+    endpoint = normaliseEndpoint(config.S3_ENDPOINT);
+  } catch {
+    configError = `S3_ENDPOINT is not a valid address: "${config.S3_ENDPOINT}"`;
+  }
+
+  const client = configError
+    ? null
+    : new S3Client({
     region: config.S3_REGION,
     endpoint,
     credentials: {
@@ -54,11 +65,13 @@ async function s3Storage() {
     // MinIO) reject outright. Only send them when the operation needs them.
     requestChecksumCalculation: "WHEN_REQUIRED",
     responseChecksumValidation: "WHEN_REQUIRED",
-  });
+      });
 
   return {
     name: "s3",
+    configError,
     async put(key, body, contentType) {
+      if (configError) throw new Error(configError);
       await client.send(
         new PutObjectCommand({
           Bucket: config.S3_BUCKET,
@@ -70,6 +83,7 @@ async function s3Storage() {
       return this.urlFor(key);
     },
     async remove(key) {
+      if (configError) return;
       await client.send(new DeleteObjectCommand({ Bucket: config.S3_BUCKET, Key: key }));
     },
     urlFor(key) {

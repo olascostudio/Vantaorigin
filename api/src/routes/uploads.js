@@ -36,6 +36,7 @@ export default async function uploadRoutes(app) {
         error: "That image could not be saved. Please try again.",
         code: error.name || "UnknownError",
         detail: String(error.message || "").slice(0, 200),
+        hint: storage.configError || undefined,
         status: error.$metadata?.httpStatusCode,
       });
     }
