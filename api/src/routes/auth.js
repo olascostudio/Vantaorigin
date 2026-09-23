@@ -9,6 +9,18 @@ import { mailer } from "../adapters/email.js";
 // production, where EMAIL_DRIVER is "resend".
 const devCode = (code) => (config.EMAIL_DRIVER === "console" ? { devCode: code } : {});
 
+// A rejected email must never take down the request that triggered it: the
+// account still exists, and the code can be asked for again.
+async function trySend(app, message) {
+  try {
+    await mailer.send(message);
+    return true;
+  } catch (error) {
+    app.log.error({ err: error, to: message.to }, "email failed");
+    return false;
+  }
+}
+
 import {
   SESSION_COOKIE,
   authenticate,
@@ -51,7 +63,7 @@ export default async function authRoutes(app) {
       .returning();
 
     const code = await issueCode(user.id, "verify_email");
-    await mailer.send({
+    const sent = await trySend(app, {
       to: email,
       subject: "Your VantaOrigin verification code",
       html: `<p>Welcome to VantaOrigin.</p><p>Your code is <b>${code}</b>. It lasts 15 minutes.</p>`,
@@ -59,7 +71,7 @@ export default async function authRoutes(app) {
 
     const session = await createSession(user.id);
     setSessionCookie(reply, session.token, session.expiresAt);
-    return reply.code(201).send({ user: publicUser(user), ...devCode(code) });
+    return reply.code(201).send({ user: publicUser(user), emailSent: sent, ...devCode(code) });
   });
 
   app.post("/auth/signin", async (request, reply) => {
@@ -105,14 +117,15 @@ export default async function authRoutes(app) {
     return { ok: true };
   });
 
-  app.post("/auth/resend-code", { preHandler: authenticate() }, async (request) => {
+  app.post("/auth/resend-code", { preHandler: authenticate() }, async (request, reply) => {
     const code = await issueCode(request.user.id, "verify_email");
-    await mailer.send({
+    const sent = await trySend(app, {
       to: request.user.email,
       subject: "Your VantaOrigin verification code",
-      html: `<p>Your code is <b>${code}</b>. It lasts 15 minutes.</p>`,
+      html: `<p>Your code is ${code}. It lasts 15 minutes.</p>`,
     });
-    return { ...devCode(code) , ok: true };
+    if (!sent) return reply.code(502).send({ error: "We could not send that email. Try again shortly." });
+    return { ...devCode(code), ok: true };
   });
 
   app.post("/auth/forgot-password", async (request) => {
@@ -127,7 +140,7 @@ export default async function authRoutes(app) {
     if (user) {
       const code = await issueCode(user.id, "reset_password");
       sentCode = code;
-      await mailer.send({
+      await trySend(app, {
         to: user.email,
         subject: "Your VantaOrigin reset code",
         html: `<p>Your password reset code is <b>${code}</b>. It lasts 15 minutes.</p>`,
