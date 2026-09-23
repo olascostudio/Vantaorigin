@@ -57,7 +57,19 @@ export async function buildApp() {
 
   app.get("/health", async () => {
     await ping();
-    return { ok: true, storage: config.STORAGE_DRIVER, email: config.EMAIL_DRIVER };
+    return {
+      ok: true,
+      storage: config.STORAGE_DRIVER,
+      email: config.EMAIL_DRIVER,
+      // Which storage settings arrived — true/false only, never the values.
+      storageConfig: {
+        endpoint: Boolean(config.S3_ENDPOINT),
+        bucket: Boolean(config.S3_BUCKET),
+        keyId: Boolean(config.S3_ACCESS_KEY_ID),
+        secret: Boolean(config.S3_SECRET_ACCESS_KEY),
+        publicUrl: Boolean(config.S3_PUBLIC_URL),
+      },
+    };
   });
 
   await app.register(authRoutes);
