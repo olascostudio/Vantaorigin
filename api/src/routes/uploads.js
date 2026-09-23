@@ -30,7 +30,13 @@ export default async function uploadRoutes(app) {
     } catch (error) {
       // Storage misconfiguration is worth saying out loud in the logs.
       request.log.error({ err: error, driver: storage.name }, "upload failed");
-      return reply.code(502).send({ error: "That image could not be saved. Please try again." });
+      // The storage error name (AccessDenied, NoSuchBucket, ...) says which
+      // setting is wrong. It names no credentials, so it is safe to return.
+      return reply.code(502).send({
+        error: "That image could not be saved. Please try again.",
+        code: error.name || "UnknownError",
+        status: error.$metadata?.httpStatusCode,
+      });
     }
   });
 
