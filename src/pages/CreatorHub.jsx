@@ -412,7 +412,11 @@ function HighlightPost({ post, onEdit, onDelete }) {
                 </svg>
               )}
             </p>
-            <p className="font-ui text-sm text-neutral-400">{post.author?.username}</p>
+            {/* Only when it adds something: without a display name the
+                API falls back to the username, and one line is enough. */}
+            {post.author?.name !== post.author?.username && (
+              <p className="font-ui text-sm text-neutral-400">{post.author?.username}</p>
+            )}
           </div>
         </div>
 
