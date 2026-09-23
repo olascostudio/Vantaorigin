@@ -39,6 +39,10 @@ async function s3Storage() {
       accessKeyId: config.S3_ACCESS_KEY_ID,
       secretAccessKey: config.S3_SECRET_ACCESS_KEY,
     },
+    // Recent AWS SDK versions add checksum headers that Cloudflare R2 (and
+    // MinIO) reject outright. Only send them when the operation needs them.
+    requestChecksumCalculation: "WHEN_REQUIRED",
+    responseChecksumValidation: "WHEN_REQUIRED",
   });
 
   return {

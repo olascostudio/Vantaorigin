@@ -24,8 +24,14 @@ export default async function uploadRoutes(app) {
     if (buffer.length > MAX_BYTES) return reply.code(413).send({ error: "That image is too large" });
 
     const key = newKey(`${request.user.id}/${folder}`, file.filename || "upload.jpg");
-    const url = await storage.put(key, buffer, file.mimetype);
-    return reply.code(201).send({ url, key });
+    try {
+      const url = await storage.put(key, buffer, file.mimetype);
+      return reply.code(201).send({ url, key });
+    } catch (error) {
+      // Storage misconfiguration is worth saying out loud in the logs.
+      request.log.error({ err: error, driver: storage.name }, "upload failed");
+      return reply.code(502).send({ error: "That image could not be saved. Please try again." });
+    }
   });
 
   // Serves files back while STORAGE_DRIVER=memory, so local development needs
