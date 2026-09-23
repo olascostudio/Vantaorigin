@@ -29,14 +29,30 @@ function memoryStorage() {
   };
 }
 
-// Cloudflare shows the endpoint in several shapes, and a pasted value often
-// arrives without the scheme or with the bucket on the end. The client needs
-// the origin only.
-function normaliseEndpoint(value) {
-  const trimmed = (value || "").trim();
-  if (!trimmed) throw new Error("S3_ENDPOINT is not set");
-  const withScheme = /^https?:///i.test(trimmed) ? trimmed : `https://${trimmed}`;
-  return new URL(withScheme).origin;
+// Cloudflare shows this value in several shapes, and pasted values arrive
+// with stray characters: no scheme, a bucket on the end, leftover placeholder
+// text, markdown link syntax, or invisible characters from a copy. Pull the
+// last real address out of whatever arrived.
+export function normaliseEndpoint(value) {
+  // Strip spaces, zero-width characters and byte-order marks, which copying
+  // from a web page or chat message often drags along invisibly.
+  const cleaned = String(value || "").replace(/[\s​‌‍﻿]/g, "");
+  if (!cleaned) throw new Error("S3_ENDPOINT is not set");
+
+  // The last full address wins, so leftover placeholder text in front of a
+  // pasted value is ignored.
+  const addresses = cleaned.match(/https?:\/\/[^"<>()[\]]+/gi);
+  const candidate = addresses
+    ? addresses[addresses.length - 1]
+    : `https://${cleaned.match(/[a-z0-9.-]+\.[a-z]{2,}/i)?.[0] ?? ""}`;
+
+  try {
+    const url = new URL(candidate);
+    if (!url.hostname.includes(".")) throw new Error("no host");
+    return url.origin;
+  } catch {
+    throw new Error(`S3_ENDPOINT is not a valid address: "${value}"`);
+  }
 }
 
 async function s3Storage() {
@@ -48,8 +64,8 @@ async function s3Storage() {
   let configError = null;
   try {
     endpoint = normaliseEndpoint(config.S3_ENDPOINT);
-  } catch {
-    configError = `S3_ENDPOINT is not a valid address: "${config.S3_ENDPOINT}"`;
+  } catch (error) {
+    configError = error.message;
   }
 
   const client = configError
