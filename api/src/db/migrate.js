@@ -3,7 +3,7 @@
 // VPS, without this project's tooling.
 import { readdir, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { sql } from "drizzle-orm";
 import { db, endConnection, execSql } from "./client.js";
 
@@ -34,8 +34,9 @@ export async function migrate() {
   return ran;
 }
 
-// `npm run migrate`
-if (import.meta.url === `file://${process.argv[1]?.replace(/\\/g, "/")}`) {
+// `npm run migrate`. pathToFileURL gets this right on Windows too, where the
+// naive comparison silently did nothing.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const ran = await migrate();
   console.log(ran.length ? `Applied: ${ran.join(", ")}` : "Already up to date");
   await endConnection();

@@ -40,8 +40,10 @@ if (usePglite) {
   const sql = postgres(config.DATABASE_URL, {
     max: isProduction ? 10 : 4,
     prepare: !pooled,
-    // Managed providers usually require TLS; a local container does not.
-    ssl: config.DATABASE_URL.includes("sslmode=require") ? "require" : false,
+    // Hosted Postgres always wants TLS; a local container does not offer it.
+    ssl: /localhost|127.0.0.1/.test(config.DATABASE_URL) || config.DATABASE_URL.includes("sslmode=disable")
+      ? false
+      : "require",
   });
 
   db = drizzle(sql, { schema });
