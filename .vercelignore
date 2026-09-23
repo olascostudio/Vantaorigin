@@ -1,0 +1,7 @@
+# The backend runs on Render (or a VPS), never on Vercel. Without this,
+# Vercel treats every file under api/ as a serverless function and the
+# deployment fails with "No more than 12 Serverless Functions".
+api/
+docker-compose.yml
+render.yaml
+DEPLOY.md
