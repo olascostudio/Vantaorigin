@@ -32,8 +32,14 @@ if (usePglite) {
   const postgres = (await import("postgres")).default;
   const { drizzle } = await import("drizzle-orm/postgres-js");
 
+  // Connection poolers in transaction mode (Supabase port 6543, PgBouncer)
+  // cannot keep prepared statements between queries.
+  const pooled =
+    config.DATABASE_URL.includes(":6543/") || config.DATABASE_URL.includes("pgbouncer=true");
+
   const sql = postgres(config.DATABASE_URL, {
     max: isProduction ? 10 : 4,
+    prepare: !pooled,
     // Managed providers usually require TLS; a local container does not.
     ssl: config.DATABASE_URL.includes("sslmode=require") ? "require" : false,
   });

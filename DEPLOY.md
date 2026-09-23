@@ -7,17 +7,23 @@ Work through it in this order — each step produces a value the next one needs.
 
 ---
 
-## 1. Database — Neon (free)
+## 1. Database — any managed Postgres (free)
 
-1. Sign up at [neon.tech](https://neon.tech) and create a project called
-   `vantaorigin`.
-2. Copy the connection string. It looks like:
-   `postgresql://user:password@ep-something.eu-central-1.aws.neon.tech/neondb?sslmode=require`
+All the API needs is a connection string, so the provider is interchangeable.
 
-Keep it for `DATABASE_URL`. Neon's free tier doesn't expire, unlike Render's
-free database, which is deleted after 30 days.
+**Supabase** (used only as a database — no SDK, no lock-in):
+1. [supabase.com](https://supabase.com) → **New project**, name it `vantaorigin`,
+   set a database password and keep it.
+2. **Project Settings → Database → Connection string → URI**.
+3. Pick the **Session pooler** string (port 5432). Replace `[YOUR-PASSWORD]`
+   with the password from step 1.
 
-The API creates its own tables on first boot, so there is nothing to run by hand.
+Other options that work identically: **Neon** (neon.com — unreachable from some
+networks), **Render Postgres** (same dashboard as the API, but the free database
+is deleted after 30 days), **Railway**, **Aiven**.
+
+Keep the string for `DATABASE_URL`. The API creates its own tables on first
+boot, so there is nothing to run by hand.
 
 ---
 
