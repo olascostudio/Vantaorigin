@@ -126,6 +126,26 @@ export const characters = pgTable(
   })
 );
 
+// Creator highlight posts, shown on the Creator hub feed.
+export const highlights = pgTable(
+  "highlights",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    title: text("title").default("").notNull(),
+    content: text("content").default("").notNull(),
+    // just the addresses; the files themselves live in storage
+    images: jsonb("images").$type().default([]).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdx: index("highlights_user_id_idx").on(table.userId),
+  })
+);
+
 // Artwork attached to a character; the file itself lives in S3-compatible storage.
 export const characterAssets = pgTable(
   "character_assets",

@@ -38,7 +38,8 @@ function UploadSlot({ image, onPick, onClear }) {
         className="hidden"
         onChange={(event) => {
           const file = event.target.files?.[0];
-          if (file) onPick({ url: URL.createObjectURL(file), name: file.name });
+          // The File travels with the preview, so submit can upload it.
+          if (file) onPick({ url: URL.createObjectURL(file), name: file.name, file });
           event.target.value = "";
         }}
       />
@@ -50,6 +51,8 @@ export default function HighlightModal({ open, mode = "create", post, onClose, o
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [images, setImages] = useState([null, null]);
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -81,13 +84,17 @@ export default function HighlightModal({ open, mode = "create", post, onClose, o
         aria-modal="true"
         aria-label={mode === "edit" ? "Edit highlight" : "Add highlight"}
         className="max-h-[calc(100dvh-2rem)] w-full max-w-[760px] overflow-y-auto rounded-2xl bg-[#2b3547] p-5 sm:p-7"
-        onSubmit={(event) => {
+        onSubmit={async (event) => {
           event.preventDefault();
-          onSubmit({
-            title,
-            content,
-            images: images.filter(Boolean).map((image) => image.url),
-          });
+          setProblem("");
+          setBusy(true);
+          try {
+            await onSubmit({ title, content, images: images.filter(Boolean) });
+          } catch (error) {
+            setProblem(error.message);
+          } finally {
+            setBusy(false);
+          }
         }}
       >
         <div className="mb-2 flex items-start justify-between gap-4">
@@ -148,11 +155,18 @@ export default function HighlightModal({ open, mode = "create", post, onClose, o
           </button>
         </div>
 
+        {problem && (
+          <p role="alert" className="mt-4 text-center font-ui text-base text-[#f2415f]">
+            {problem}
+          </p>
+        )}
+
         <button
           type="submit"
-          className="mt-6 h-[52px] w-full rounded-lg bg-primary font-ui text-lg font-bold text-white transition-opacity hover:opacity-90"
+          disabled={busy}
+          className="mt-6 h-[52px] w-full rounded-lg bg-primary font-ui text-lg font-bold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {mode === "edit" ? "Update Highlights" : "+ Add Highlights"}
+          {busy ? "Saving…" : mode === "edit" ? "Update Highlights" : "+ Add Highlights"}
         </button>
       </form>
     </div>

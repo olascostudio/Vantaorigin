@@ -12,10 +12,14 @@ import {
   loadLibrary,
 } from "../data/character";
 import { toSettings } from "../data/settings";
+import {
+  createHighlight,
+  deleteHighlight,
+  loadHighlights,
+  updateHighlight,
+  uploadHighlightImages,
+} from "../data/highlights";
 import { useAuth } from "../data/AuthContext.jsx";
-import postImage from "../assets/creator/post-hero.webp";
-import postImage2 from "../assets/creator/upload-sample-1.png";
-import postImage3 from "../assets/creator/upload-sample-2.webp";
 import arrowUpRight from "../assets/landing/worlds/arrow-up-right.svg";
 import profilePic from "../assets/creator/profile.webp";
 import bolt1 from "../assets/creator/bolt-1.svg";
@@ -30,22 +34,6 @@ import streak4 from "../assets/creator/streak-4.svg";
 import streak5 from "../assets/creator/streak-5.svg";
 
 const TABS = ["Character", "Highlights", "Create Clans"];
-
-const INITIAL_POSTS = [
-  {
-    id: "challenger",
-    author: "Abraham Lincoln",
-    handle: "@kinloxx",
-    verified: true,
-    title: "🔥 A New Challenger Approaches the Battlegrounds! 🔥",
-    content: `SwitchFace has officially entered the Vanta Arena — and the realm trembles.
-Their mask has shifted, their stance has solidified, and now they await a worthy opponent brave enough to step forward.
-
-Do you dare challenge them?
-Prove your strength. Test your legend. Face the ever-changing terror that is SwitchFace — if you think your character has the will to endure`,
-    images: [postImage, postImage2, postImage3],
-  },
-];
 
 // Decorative lightning strokes under the tab row.
 function LightningDivider() {
@@ -409,10 +397,14 @@ function HighlightPost({ post, onEdit, onDelete }) {
     <article className="rounded-2xl bg-[#232c3d] p-6 sm:p-8">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <img src={profilePic} alt="" className="size-10 rounded-full" />
+          <img
+            src={post.author?.avatarUrl || profilePic}
+            alt=""
+            className="size-10 rounded-full object-cover"
+          />
           <div>
             <p className="flex items-center gap-1.5 font-ui text-base font-bold text-white">
-              {post.author}
+              {post.author?.name}
               {post.verified && (
                 <svg viewBox="0 0 24 24" className="size-4 text-[#22c55e]" fill="currentColor" aria-label="Verified">
                   <path d="M12 2l2.4 2.1 3.2-.3.9 3.1 2.8 1.6-1.3 2.9 1.3 2.9-2.8 1.6-.9 3.1-3.2-.3L12 22l-2.4-2.1-3.2.3-.9-3.1L2.7 15.5 4 12.6 2.7 9.7l2.8-1.6.9-3.1 3.2.3z" />
@@ -420,7 +412,7 @@ function HighlightPost({ post, onEdit, onDelete }) {
                 </svg>
               )}
             </p>
-            <p className="font-ui text-sm text-neutral-400">{post.handle}</p>
+            <p className="font-ui text-sm text-neutral-400">{post.author?.username}</p>
           </div>
         </div>
 
@@ -468,28 +460,28 @@ export default function CreatorHub() {
   const location = useLocation();
   // Coming back from creating a character lands on the Character tab.
   const [tab, setTab] = useState(location.state?.tab || "Highlights");
-  const [posts, setPosts] = useState(INITIAL_POSTS);
+  const [posts, setPosts] = useState([]);
+  const [postsProblem, setPostsProblem] = useState("");
+
+  const refreshPosts = () =>
+    loadHighlights()
+      .then(setPosts)
+      .catch((error) => setPostsProblem(error.message));
+
+  useEffect(() => {
+    refreshPosts();
+  }, []);
   const [modal, setModal] = useState(null); // { mode, post }
 
-  const savePost = ({ title, content, images }) => {
-    if (modal?.mode === "edit") {
-      setPosts((prev) =>
-        prev.map((p) => (p.id === modal.post.id ? { ...p, title, content, images } : p))
-      );
-    } else {
-      setPosts((prev) => [
-        {
-          id: `post-${Date.now()}`,
-          author: "Anthony Joseph",
-          handle: "@Josephmaroon021",
-          verified: false,
-          title,
-          content,
-          images,
-        },
-        ...prev,
-      ]);
-    }
+  const savePost = async ({ title, content, images }) => {
+    // Any picture picked in the form is uploaded first.
+    const urls = await uploadHighlightImages(images);
+    const post = { title, content, images: urls };
+
+    if (modal?.mode === "edit") await updateHighlight(modal.post.id, post);
+    else await createHighlight(post);
+
+    await refreshPosts();
     setModal(null);
   };
 
@@ -645,13 +637,29 @@ export default function CreatorHub() {
               </button>
             </div>
 
+            {postsProblem && (
+              <p role="alert" className="mt-6 rounded-xl bg-[#3a2030] px-5 py-4 font-ui text-base text-[#ffb4c4]">
+                {postsProblem}
+              </p>
+            )}
+
+            {posts.length === 0 && !postsProblem && (
+              <p className="mt-10 rounded-2xl border border-dashed border-white/15 px-6 py-16 text-center font-ui text-lg text-neutral-400">
+                No highlights yet. Share what your characters are up to.
+              </p>
+            )}
+
             <div className="mt-10 flex flex-col gap-8">
               {posts.map((post) => (
                 <HighlightPost
                   key={post.id}
                   post={post}
                   onEdit={() => setModal({ mode: "edit", post })}
-                  onDelete={() => setPosts((prev) => prev.filter((p) => p.id !== post.id))}
+                  onDelete={async () => {
+                    if (!window.confirm("Delete this highlight?")) return;
+                    await deleteHighlight(post.id).catch(() => {});
+                    await refreshPosts();
+                  }}
                 />
               ))}
             </div>
