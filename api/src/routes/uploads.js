@@ -35,6 +35,7 @@ export default async function uploadRoutes(app) {
       return reply.code(502).send({
         error: "That image could not be saved. Please try again.",
         code: error.name || "UnknownError",
+        detail: String(error.message || "").slice(0, 200),
         status: error.$metadata?.httpStatusCode,
       });
     }
