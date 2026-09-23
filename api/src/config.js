@@ -44,7 +44,16 @@ const schema = z.object({
   SESSION_TTL_DAYS: z.coerce.number().default(30),
 });
 
-const parsed = schema.safeParse(process.env);
+// Values typed into a hosting dashboard often arrive wrapped in quotes or
+// with stray spaces. Clean them before anything else reads them.
+const cleaned = Object.fromEntries(
+  Object.entries(process.env).map(([key, value]) => [
+    key,
+    typeof value === "string" ? value.trim().replace(/^["']|["']$/g, "") : value,
+  ])
+);
+
+const parsed = schema.safeParse(cleaned);
 
 if (!parsed.success) {
   const missing = parsed.error.issues.map((issue) => `  ${issue.path.join(".")}: ${issue.message}`);
