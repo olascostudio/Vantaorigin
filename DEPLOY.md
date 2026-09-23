@@ -88,6 +88,36 @@ it when you have real users.
 
 ---
 
+## 5b. Your own domain
+
+DNS lives with the registrar (for vantaorigin.com: OpenSRS, reached through
+Zoho -> Modify DNS Zone).
+
+| Type | Host | Value |
+| --- | --- | --- |
+| A | @ | 76.76.21.21 (Vercel) |
+| CNAME | www | cname.vercel-dns.com |
+| CNAME | api | <service>.onrender.com |
+| CNAME | studio | cname.vercel-dns.com |
+
+Leave MX and Zoho TXT records alone: they carry the email.
+
+Add all three hostnames in Vercel (Settings -> Domains) and the api one in
+Render (Settings -> Custom Domains), then update:
+
+- Render: API_PUBLIC_URL=https://api.vantaorigin.com,
+  APP_ORIGIN=https://vantaorigin.com,https://www.vantaorigin.com,
+  ALLOWED_ORIGIN_SUFFIXES=.vantaorigin.com,.vercel.app,
+  COOKIE_DOMAIN=.vantaorigin.com, COOKIE_SAMESITE=lax
+- Vercel: VITE_API_URL=https://api.vantaorigin.com, then redeploy
+
+With the API on a subdomain of the site, the session cookie is no longer
+cross-site, which is why SameSite goes back to lax.
+
+studio.vantaorigin.com serves the same app and opens on the marketplace.
+
+---
+
 ## 6. Check it end to end
 
 On the live site: sign up → the code arrives by email → verify → create a

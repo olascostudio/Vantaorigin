@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Footer from "./components/Footer";
 import RequireAuth from "./components/RequireAuth.jsx";
 import Landing from "./pages/Landing";
@@ -19,11 +19,20 @@ import VerifyEmail from "./pages/auth/VerifyEmail";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 
+// studio.vantaorigin.com is the marketplace's own address: visiting its root
+// lands on the marketplace rather than the marketing home page. Every other
+// route still works there, so links between pages never break.
+function StudioHome() {
+  const { search } = useLocation();
+  const onStudio = window.location.hostname.startsWith("studio.");
+  return onStudio ? <Navigate to={`/marketplace${search}`} replace /> : <Landing />;
+}
+
 export default function App() {
   return (
     <div className="min-h-screen overflow-x-hidden bg-background">
       <Routes>
-        <Route path="/" element={<Landing />} />
+        <Route path="/" element={<StudioHome />} />
         <Route path="/discover" element={<RequireAuth><Discover /></RequireAuth>} />
         <Route path="/creators-hub" element={<RequireAuth><CreatorHub /></RequireAuth>} />
         <Route path="/creators-hub/character/new" element={<RequireAuth><CreateCharacter /></RequireAuth>} />
