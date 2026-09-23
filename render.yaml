@@ -1,0 +1,65 @@
+# Render reads this file and creates the API service for you.
+# Everything marked sync: false is typed into Render's dashboard once, so no
+# secret ever lives in the repository.
+#
+# It is deliberately plain: a Docker container with environment variables.
+# The same container runs on a VPS later, with the same variables.
+
+services:
+  - type: web
+    name: vantaorigin-api
+    runtime: docker
+    plan: free
+    rootDir: api
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8080
+
+      # Postgres connection string (Neon, Render Postgres, or a VPS later).
+      - key: DATABASE_URL
+        sync: false
+
+      # This API's own address, e.g. https://vantaorigin-api.onrender.com
+      - key: API_PUBLIC_URL
+        sync: false
+
+      # The front end's address, e.g. https://vantaorigin.vercel.app
+      - key: APP_ORIGIN
+        sync: false
+
+      # Lets Vercel preview deployments talk to the API too.
+      - key: ALLOWED_ORIGIN_SUFFIXES
+        value: .vercel.app
+
+      # The API and the front end are on different domains, so the session
+      # cookie must be SameSite=None.
+      - key: COOKIE_SAMESITE
+        value: none
+
+      # Cloudflare R2 (S3-compatible). Swap the endpoint for MinIO on a VPS.
+      - key: STORAGE_DRIVER
+        value: s3
+      - key: S3_ENDPOINT
+        sync: false
+      - key: S3_REGION
+        value: auto
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_ACCESS_KEY_ID
+        sync: false
+      - key: S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: S3_PUBLIC_URL
+        sync: false
+
+      # Resend, for verification codes and password resets.
+      - key: EMAIL_DRIVER
+        value: resend
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false

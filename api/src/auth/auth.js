@@ -104,15 +104,21 @@ export function setSessionCookie(reply, token, expiresAt) {
   reply.setCookie(SESSION_COOKIE, token, {
     path: "/",
     httpOnly: true,
-    sameSite: "lax",
-    secure: isProduction,
+    sameSite: config.COOKIE_SAMESITE,
+    // "none" is only accepted over https
+    secure: isProduction || config.COOKIE_SAMESITE === "none",
     domain: config.COOKIE_DOMAIN,
     expires: expiresAt,
   });
 }
 
 export function clearSessionCookie(reply) {
-  reply.clearCookie(SESSION_COOKIE, { path: "/", domain: config.COOKIE_DOMAIN });
+  reply.clearCookie(SESSION_COOKIE, {
+    path: "/",
+    sameSite: config.COOKIE_SAMESITE,
+    secure: isProduction || config.COOKIE_SAMESITE === "none",
+    domain: config.COOKIE_DOMAIN,
+  });
 }
 
 // Fastify hook: attaches request.user, or 401s when required.

@@ -16,9 +16,16 @@ const schema = z.object({
   // by the API in local development.
   API_PUBLIC_URL: z.string().optional(),
 
-  // Where the browser app runs, for cookies and CORS.
+  // Where the browser app runs, for cookies and CORS. Several are allowed,
+  // comma separated.
   APP_ORIGIN: z.string().default("http://localhost:5173"),
+  // Lets preview deployments through, e.g. ".vercel.app".
+  ALLOWED_ORIGIN_SUFFIXES: z.string().optional(),
   COOKIE_DOMAIN: z.string().optional(),
+  // The API and the front end sit on different domains in production, so the
+  // session cookie has to be SameSite=None (which also forces Secure).
+  // Locally they are both localhost, where "lax" is right.
+  COOKIE_SAMESITE: z.enum(["lax", "none", "strict"]).default("lax"),
 
   // Storage: any S3-compatible service (Cloudflare R2 now, MinIO on a VPS).
   STORAGE_DRIVER: z.enum(["s3", "memory"]).default("memory"),

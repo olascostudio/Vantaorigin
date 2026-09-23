@@ -18,9 +18,22 @@ export async function buildApp() {
     trustProxy: true, // correct client IPs behind Render, Cloudflare or nginx
   });
 
+  const allowedOrigins = config.APP_ORIGIN.split(",").map((value) => value.trim());
+  const allowedSuffixes = (config.ALLOWED_ORIGIN_SUFFIXES || "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+
   await app.register(cors, {
-    origin: config.APP_ORIGIN.split(",").map((value) => value.trim()),
-    credentials: true, // the session cookie
+    credentials: true, // the session cookie travels with every request
+    origin(origin, done) {
+      // No Origin header: curl, health checks, same-origin requests.
+      if (!origin) return done(null, true);
+      const allowed =
+        allowedOrigins.includes(origin) ||
+        allowedSuffixes.some((suffix) => new URL(origin).hostname.endsWith(suffix));
+      done(null, allowed);
+    },
   });
   await app.register(cookie);
   await app.register(multipart);
@@ -37,6 +50,10 @@ export async function buildApp() {
     request.log.error(error);
     return reply.code(500).send({ error: "Something went wrong" });
   });
+
+  if (isProduction && config.STORAGE_DRIVER === "memory") {
+    app.log.warn("STORAGE_DRIVER=memory: uploads are lost on restart. Set up S3/R2.");
+  }
 
   app.get("/health", async () => {
     await ping();
