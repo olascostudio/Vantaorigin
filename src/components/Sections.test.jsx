@@ -128,7 +128,7 @@ describe("Footer", () => {
     const input = screen.getByRole("textbox", { name: "Email address" });
     expect(input).toHaveAttribute("type", "email");
 
-    const submit = screen.getByRole("button", { name: "Send Email" });
+    const submit = screen.getByRole("button", { name: "Get Creator Updates" });
     const event = new Event("submit", { bubbles: true, cancelable: true });
     submit.form.dispatchEvent(event);
     expect(event.defaultPrevented).toBe(true);
