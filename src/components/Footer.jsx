@@ -20,7 +20,12 @@ const LINK_COLUMNS = [
   {
     title: "Support",
     width: "sm:w-[136.8px]",
-    links: ["Contact Us", "Term of Service", "Privacy Policy", { label: "About", to: "/about" }],
+    links: [
+      "Contact Us",
+      { label: "Terms of Service", to: "/terms" },
+      "Privacy Policy",
+      { label: "About", to: "/about" },
+    ],
   },
   { title: "Socials", width: "sm:min-w-[70.56px]", links: ["Discord", "X(Twitter)", "Instagram"] },
 ];

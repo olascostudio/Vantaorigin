@@ -10,6 +10,7 @@ import CharacterView from "./pages/CharacterView";
 import Settings from "./pages/Settings";
 import Community from "./pages/Community";
 import About from "./pages/About";
+import Terms from "./pages/Terms";
 import Marketplace from "./pages/Marketplace";
 import MarketplaceHowItWorks from "./pages/MarketplaceHowItWorks";
 import ProjectRequest from "./pages/ProjectRequest";
@@ -45,6 +46,7 @@ export default function App() {
         <Route path="/marketplace/project-request" element={<ProjectRequest />} />
         <Route path="/community" element={<Community />} />
         <Route path="/about" element={<About />} />
+        <Route path="/terms" element={<Terms />} />
         <Route path="/settings" element={<RequireAuth><Settings /></RequireAuth>} />
         <Route path="/settings/:tab" element={<RequireAuth><Settings /></RequireAuth>} />
         <Route path="/auth" element={<AuthLanding />} />

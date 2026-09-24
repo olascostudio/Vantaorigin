@@ -88,7 +88,7 @@ export default function SignUp() {
           <Checkbox
             checked={agreed}
             onChange={setAgreed}
-            label="I am 13+ and agree to the creator code."
+            label="I am 18+ and agree to the creator code."
             labelClassName="text-center"
           />
         </div>

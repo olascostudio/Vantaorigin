@@ -34,10 +34,10 @@ export function OrDivider() {
 export function TermsNote() {
   return (
     <p className="max-w-[330px] text-center font-ui text-base text-[#f5f5f5]">
-      By joining you agree to the VantaOrigin Studios{" "}
-      <a href="#terms" className="text-[#04a8d5] hover:underline">
-        Terms and Conditions
-      </a>
+      By joining you agree to the VantaOrigin{" "}
+      <Link to="/terms" className="text-[#04a8d5] hover:underline">
+        Terms of Service
+      </Link>
     </p>
   );
 }
