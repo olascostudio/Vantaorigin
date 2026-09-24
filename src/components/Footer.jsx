@@ -9,14 +9,31 @@ import pattern4967 from "../assets/landing/footer/pattern-4967.svg";
 import pattern4968 from "../assets/landing/footer/pattern-4968.svg";
 
 const SOCIALS = [
-  { label: "Instagram", icon: instagramIcon },
-  { label: "Facebook", icon: facebookIcon },
-  { label: "TikTok", icon: tiktokIcon },
+  { label: "Instagram", icon: instagramIcon, url: "https://www.instagram.com/vantaoriginstudio/" },
+  { label: "Facebook", icon: facebookIcon, url: "https://facebook.com/groups/1640856640355085/" },
+  { label: "TikTok", icon: tiktokIcon, url: "https://www.tiktok.com/@vantaorigin" },
 ];
 
+// Only what is live today. Event & Realm Wars, Leaderboards and Explore
+// Comics are held back until they exist.
 const LINK_COLUMNS = [
-  { title: "Platform", width: "sm:w-[133.2px]", links: ["Explore Comics", "Creator Studio"] },
-  { title: "Community", width: "sm:w-[184.8px]", links: ["Event & Realm Wars", "Marketplace", "Leaderbroads", { label: "Help Center", to: "/help" }] },
+  {
+    title: "Platform",
+    width: "sm:w-[133.2px]",
+    links: [
+      { label: "Explore Realms", to: "/discover" },
+      { label: "Creator Studio", to: "/marketplace" },
+    ],
+  },
+  {
+    title: "Community",
+    width: "sm:w-[184.8px]",
+    links: [
+      { label: "Community", to: "/community" },
+      { label: "Marketplace", to: "/marketplace" },
+      { label: "Help Center", to: "/help" },
+    ],
+  },
   {
     title: "Support",
     width: "sm:w-[136.8px]",
@@ -24,10 +41,18 @@ const LINK_COLUMNS = [
       { label: "Contact Us", to: "/contact" },
       { label: "Terms of Service", to: "/terms" },
       { label: "Privacy Policy", to: "/privacy" },
-      { label: "About", to: "/about" },
+      { label: "About VantaOrigin", to: "/about" },
     ],
   },
-  { title: "Socials", width: "sm:min-w-[70.56px]", links: ["Discord", "X(Twitter)", "Instagram"] },
+  {
+    title: "Socials",
+    width: "sm:min-w-[70.56px]",
+    links: [
+      { label: "Discord", href: "https://discord.gg/4E5dFcaEAa" },
+      { label: "X", href: "https://x.com/vantaorigin" },
+      { label: "Instagram", href: "https://www.instagram.com/vantaoriginstudio/" },
+    ],
+  },
 ];
 
 // Logo sequence of the white pattern row, as laid out in Figma.
@@ -56,13 +81,20 @@ function PatternRow({ top, logo }) {
 function Newsletter() {
   return (
     <div className="flex flex-col gap-[30.24px]">
-      <p className="font-ui text-[20.16px] leading-none text-white">Join our newsletter</p>
+      <div>
+        <p className="font-ui text-[20.16px] leading-none text-white">Join the Creator Newsletter</p>
+        <p className="mt-2 font-ui text-[13px] leading-snug text-subtext">
+          Creator updates, featured work and opportunities. Optional, and you can leave any time.
+        </p>
+      </div>
 
       <ul className="flex items-center gap-[29.4px]">
-        {SOCIALS.map(({ label, icon }) => (
+        {SOCIALS.map(({ label, icon, url }) => (
           <li key={label}>
             <a
-              href="#"
+              href={url}
+              target="_blank"
+              rel="noreferrer"
               aria-label={label}
               className="flex size-[26.88px] items-center rounded-[13.44px] border-[1.26px] border-neutral-400 p-[3.36px] transition-colors hover:border-white"
             >
@@ -84,7 +116,7 @@ function Newsletter() {
           type="submit"
           className="h-[47.04px] w-[126.84px] shrink-0 rounded-[6.72px] bg-secondary px-[13.44px] font-ui text-[13.44px] leading-[1.4] text-white transition-opacity hover:opacity-90"
         >
-          Send Email
+          Get Creator Updates
         </button>
       </form>
     </div>
@@ -114,15 +146,24 @@ export default function Footer() {
                 {links.map((link) => {
                   // A link is either a label waiting for a destination, or one
                   // that already has a page.
-                  const { label, to } = typeof link === "string" ? { label: link } : link;
+                  // A link is a page on this site (to), somewhere else (href),
+                  // or a label still waiting for a destination.
+                  const { label, to, href } = typeof link === "string" ? { label: link } : link;
+                  const className = "whitespace-nowrap transition-colors hover:text-white";
                   return (
                     <li key={label}>
-                      {to ? (
-                        <Link to={to} className="whitespace-nowrap transition-colors hover:text-white">
+                      {to && (
+                        <Link to={to} className={className}>
                           {label}
                         </Link>
-                      ) : (
-                        <a href="#" className="whitespace-nowrap transition-colors hover:text-white">
+                      )}
+                      {href && (
+                        <a href={href} target="_blank" rel="noreferrer" className={className}>
+                          {label}
+                        </a>
+                      )}
+                      {!to && !href && (
+                        <a href="#" className={className}>
                           {label}
                         </a>
                       )}

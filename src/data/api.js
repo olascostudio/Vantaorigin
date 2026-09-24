@@ -28,8 +28,13 @@ async function request(path, { method = "GET", body, headers } = {}) {
       method,
       // the session cookie rides along
       credentials: "include",
-      headers: body instanceof FormData ? headers : { "Content-Type": "application/json", ...headers },
-      body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
+      // Only claim a JSON body when there is one: a JSON content-type with an
+      // empty body is rejected, which silently broke every DELETE.
+      headers:
+        body instanceof FormData || body === undefined
+          ? headers
+          : { "Content-Type": "application/json", ...headers },
+      body: body instanceof FormData ? body : body === undefined ? undefined : JSON.stringify(body),
     });
   } catch {
     throw new ApiError("Can't reach VantaOrigin. Check your connection.", 0);

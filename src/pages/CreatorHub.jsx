@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import HighlightModal from "../components/creator/HighlightModal";
@@ -100,11 +100,19 @@ function ProfileHeader() {
       </div>
 
       <div className="relative flex flex-col items-center px-6 pt-12 sm:pt-6 lg:pt-0">
-        <img
-          src={settings.avatar || profilePic}
-          alt={fullName || "Your avatar"}
-          className="-mt-[46px] size-[92px] rounded-full object-cover ring-4 ring-[#1b2233]"
-        />
+        {settings.avatar ? (
+          <img
+            src={settings.avatar}
+            alt={fullName || "Your avatar"}
+            className="-mt-[46px] size-[92px] rounded-full object-cover ring-4 ring-[#1b2233]"
+          />
+        ) : (
+          <span className="-mt-[46px] flex size-[92px] items-center justify-center rounded-full bg-[#2f3a4f] ring-4 ring-[#1b2233]">
+            <svg viewBox="0 0 24 24" className="size-12 text-[#55648a]" fill="currentColor" aria-hidden="true">
+              <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5z" />
+            </svg>
+          </span>
+        )}
 
         <div className="mt-3 flex flex-wrap items-center justify-center gap-4">
           <div className="text-center">
@@ -228,6 +236,10 @@ function AddCharacterSlot({ categoryId }) {
 
 function CategoryModal({ onClose, onCreate }) {
   const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+  // A ref, not the state above: three fast clicks all land in the same tick,
+  // before React has re-rendered the disabled button.
+  const sending = useRef(false);
   const trimmed = name.trim();
 
   return (
@@ -240,9 +252,19 @@ function CategoryModal({ onClose, onCreate }) {
         aria-modal="true"
         aria-label="New category"
         className="w-full max-w-[460px] rounded-2xl bg-[#2b3547] p-6 sm:p-8"
-        onSubmit={(event) => {
+        onSubmit={async (event) => {
           event.preventDefault();
-          if (trimmed) onCreate(trimmed);
+          // One category per press: the button locks until the server answers,
+          // so an impatient second click cannot create a second category.
+          if (!trimmed || sending.current) return;
+          sending.current = true;
+          setBusy(true);
+          try {
+            await onCreate(trimmed);
+          } finally {
+            sending.current = false;
+            setBusy(false);
+          }
         }}
       >
         <h2 className="font-ui text-2xl font-bold text-white">New category</h2>
@@ -272,10 +294,10 @@ function CategoryModal({ onClose, onCreate }) {
           </button>
           <button
             type="submit"
-            disabled={!trimmed}
+            disabled={!trimmed || busy}
             className="rounded-full bg-gradient-to-r from-[#7b3fe4] to-[#a855f7] px-6 py-2.5 font-ui text-base font-bold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Create
+            {busy ? "Creating…" : "Create"}
           </button>
         </div>
       </form>
@@ -397,11 +419,15 @@ function HighlightPost({ post, onEdit, onDelete }) {
     <article className="rounded-2xl bg-[#232c3d] p-6 sm:p-8">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <img
-            src={post.author?.avatarUrl || profilePic}
-            alt=""
-            className="size-10 rounded-full object-cover"
-          />
+          {post.author?.avatarUrl ? (
+            <img src={post.author.avatarUrl} alt="" className="size-10 rounded-full object-cover" />
+          ) : (
+            <span className="flex size-10 items-center justify-center rounded-full bg-[#2f3a4f]">
+              <svg viewBox="0 0 24 24" className="size-6 text-[#55648a]" fill="currentColor" aria-hidden="true">
+                <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5z" />
+              </svg>
+            </span>
+          )}
           <div>
             <p className="flex items-center gap-1.5 font-ui text-base font-bold text-white">
               {post.author?.name}
@@ -463,7 +489,7 @@ export default function CreatorHub() {
   }, []);
   const location = useLocation();
   // Coming back from creating a character lands on the Character tab.
-  const [tab, setTab] = useState(location.state?.tab || "Highlights");
+  const [tab, setTab] = useState(location.state?.tab || "Character");
   const [posts, setPosts] = useState([]);
   const [postsProblem, setPostsProblem] = useState("");
 
@@ -581,7 +607,21 @@ export default function CreatorHub() {
                                   ? ` and its ${characters.length} character${characters.length === 1 ? "" : "s"}`
                                   : "";
                                 if (!window.confirm(`Delete “${category.name}”${note}? This can’t be undone.`)) return;
-                                await deleteCategory(category.id);
+
+                                // Remove it from view at once; the page does not
+                                // wait on the network to stop showing it.
+                                setLibrary((current) => ({
+                                  categories: current.categories.filter((c) => c.id !== category.id),
+                                  characters: current.characters.filter(
+                                    (c) => c.categoryId !== category.id
+                                  ),
+                                }));
+
+                                try {
+                                  await deleteCategory(category.id);
+                                } catch (error) {
+                                  setProblem(error.message);
+                                }
                                 await refreshLibrary();
                               },
                             },
@@ -598,7 +638,17 @@ export default function CreatorHub() {
                             onEdit={() => navigate(`/creators-hub/character/profile?id=${character.id}`)}
                             onDelete={async () => {
                               if (!window.confirm(`Delete ${character.alias}? This can’t be undone.`)) return;
-                              await deleteCharacter(character.id);
+
+                              setLibrary((current) => ({
+                                ...current,
+                                characters: current.characters.filter((c) => c.id !== character.id),
+                              }));
+
+                              try {
+                                await deleteCharacter(character.id);
+                              } catch (error) {
+                                setProblem(error.message);
+                              }
                               await refreshLibrary();
                             }}
                           />
@@ -615,13 +665,14 @@ export default function CreatorHub() {
               <CategoryModal
                 onClose={() => setAddingCategory(false)}
                 onCreate={async (name) => {
-                  try {
-                    await addCategory(name);
-                    await refreshLibrary();
-                    setAddingCategory(false);
-                  } catch (error) {
-                    setProblem(error.message);
-                  }
+                  const category = await addCategory(name);
+                  // Show it immediately, then reconcile with the server.
+                  setLibrary((current) => ({
+                    ...current,
+                    categories: [...current.categories, category],
+                  }));
+                  setAddingCategory(false);
+                  refreshLibrary();
                 }}
               />
             )}

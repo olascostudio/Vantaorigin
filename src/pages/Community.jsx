@@ -11,10 +11,26 @@ import backdrop5 from "../assets/community/backdrop-5.webp";
 
 // Swap these for the real VantaOrigin handles when they exist.
 const LINKS = [
-  { id: "tiktok", label: "TikTok", icon: tiktok, url: "https://www.tiktok.com/" },
-  { id: "discord", label: "Discord", icon: discord, url: "https://discord.com/", featured: true },
-  { id: "instagram", label: "Instagram", icon: instagram, url: "https://www.instagram.com/" },
-  { id: "facebook", label: "Facebook", icon: facebook, url: "https://www.facebook.com/" },
+  { id: "tiktok", label: "TikTok", icon: tiktok, url: "https://www.tiktok.com/@vantaorigin" },
+  {
+    id: "discord",
+    label: "Discord",
+    icon: discord,
+    url: "https://discord.gg/4E5dFcaEAa",
+    featured: true,
+  },
+  {
+    id: "instagram",
+    label: "Instagram",
+    icon: instagram,
+    url: "https://www.instagram.com/vantaoriginstudio/",
+  },
+  {
+    id: "facebook",
+    label: "Facebook",
+    icon: facebook,
+    url: "https://facebook.com/groups/1640856640355085/",
+  },
 ];
 
 const BACKDROPS = [backdrop1, backdrop2, backdrop3, backdrop4, backdrop5];
