@@ -25,9 +25,15 @@ export default {
           "0%": { transform: "translateX(0)" },
           "100%": { transform: "translateX(-50%)" },
         },
+        "logo-pulse": {
+          "0%, 100%": { transform: "scale(0.92)", opacity: "0.75" },
+          "50%": { transform: "scale(1.06)", opacity: "1" },
+        },
       },
       animation: {
         marquee: "marquee 60s linear infinite",
+        // the loading mark: a slow breath, never a spinner
+        "logo-pulse": "logo-pulse 1.4s ease-in-out infinite",
       },
       boxShadow: {
         // Offset white block behind the rectangular CTAs (Figma draws it as a

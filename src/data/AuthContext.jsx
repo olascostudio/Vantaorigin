@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "./api";
 
 // Who is signed in, for the whole app. The session lives in an httpOnly
@@ -23,7 +23,12 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  // Runs once even in development's double-render, so the session is not
+  // fetched twice on every page.
+  const asked = useRef(false);
   useEffect(() => {
+    if (asked.current) return;
+    asked.current = true;
     refresh();
   }, [refresh]);
 

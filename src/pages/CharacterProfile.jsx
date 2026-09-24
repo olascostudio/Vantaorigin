@@ -10,6 +10,7 @@ import {
   uploadImage,
 } from "../data/character";
 import EditableText from "../components/creator/EditableText";
+import Loading from "../components/Loading.jsx";
 import heroBanner from "../assets/creator/hero-banner.webp";
 import mobileBanner from "../assets/creator/profile-mobile-bg.webp";
 import flameBright from "../assets/creator/flame-bright.svg";
@@ -235,7 +236,7 @@ export default function CharacterProfile() {
     return (
       <div className="min-h-screen bg-[#1b2233]">
         <DashboardNav active="Creators’ Hub" />
-        <p className="p-10 text-center font-ui text-base text-neutral-300">Loading…</p>
+        <Loading label="Opening your character" />
       </div>
     );
   }

@@ -49,6 +49,14 @@ async function request(path, { method = "GET", body, headers } = {}) {
   return data;
 }
 
+// The hosting plan puts the API to sleep after 15 minutes idle, and waking it
+// takes the better part of a minute. Asking for /health as soon as the page
+// opens means it wakes while someone is still reading, rather than when they
+// press Sign in. Failures are irrelevant here.
+export function wakeApi() {
+  fetch(`${BASE}/health`, { cache: "no-store" }).catch(() => {});
+}
+
 export const api = {
   get: (path) => request(path),
   post: (path, body) => request(path, { method: "POST", body }),

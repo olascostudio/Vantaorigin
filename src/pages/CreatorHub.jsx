@@ -20,6 +20,7 @@ import {
   uploadHighlightImages,
 } from "../data/highlights";
 import { useAuth } from "../data/AuthContext.jsx";
+import { Skeleton } from "../components/Loading.jsx";
 import arrowUpRight from "../assets/landing/worlds/arrow-up-right.svg";
 import profilePic from "../assets/creator/profile.webp";
 import bolt1 from "../assets/creator/bolt-1.svg";
@@ -476,31 +477,39 @@ export default function CreatorHub() {
   const navigate = useNavigate();
   // The creator's categories and the characters filed under them.
   const [library, setLibrary] = useState({ categories: [], characters: [] });
+  const [libraryLoading, setLibraryLoading] = useState(true);
   const [addingCategory, setAddingCategory] = useState(false);
   const [problem, setProblem] = useState("");
 
   const refreshLibrary = () =>
     loadLibrary()
       .then(setLibrary)
-      .catch((error) => setProblem(error.message));
+      .catch((error) => setProblem(error.message))
+      .finally(() => setLibraryLoading(false));
 
+  // One fetch per visit: development renders effects twice, and this page
+  // would otherwise ask for the same three things on every load.
+  const loaded = useRef(false);
   useEffect(() => {
+    if (loaded.current) return;
+    loaded.current = true;
     refreshLibrary();
+    refreshPosts();
   }, []);
   const location = useLocation();
   // Coming back from creating a character lands on the Character tab.
   const [tab, setTab] = useState(location.state?.tab || "Character");
   const [posts, setPosts] = useState([]);
+  const [postsLoading, setPostsLoading] = useState(true);
   const [postsProblem, setPostsProblem] = useState("");
 
   const refreshPosts = () =>
     loadHighlights()
       .then(setPosts)
-      .catch((error) => setPostsProblem(error.message));
+      .catch((error) => setPostsProblem(error.message))
+      .finally(() => setPostsLoading(false));
 
-  useEffect(() => {
-    refreshPosts();
-  }, []);
+
   const [modal, setModal] = useState(null); // { mode, post }
 
   const savePost = async ({ title, content, images }) => {
@@ -580,7 +589,15 @@ export default function CreatorHub() {
               </p>
             )}
 
-            {library.categories.length === 0 ? (
+            {libraryLoading ? (
+              <div className="mt-8 flex flex-col gap-4">
+                <Skeleton className="h-7 w-48" />
+                <div className="flex gap-4 rounded-2xl border-2 border-[#a855f7]/40 p-4">
+                  <Skeleton className="h-[342px] w-[180px] sm:h-[411px] sm:w-[250px]" />
+                  <Skeleton className="hidden h-[411px] w-[250px] sm:block" />
+                </div>
+              </div>
+            ) : library.categories.length === 0 ? (
               <p className="mt-10 rounded-2xl border border-dashed border-white/15 px-6 py-16 text-center font-ui text-lg text-neutral-400">
                 Start with a category for each comic, book or project, then add its characters.
               </p>
@@ -698,7 +715,24 @@ export default function CreatorHub() {
               </p>
             )}
 
-            {posts.length === 0 && !postsProblem && (
+            {postsLoading && (
+              <div className="mt-10 flex flex-col gap-8">
+                {[0, 1].map((row) => (
+                  <div key={row} className="rounded-2xl bg-[#232c3d] p-6 sm:p-8">
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="size-10 rounded-full" />
+                      <Skeleton className="h-4 w-40" />
+                    </div>
+                    <Skeleton className="mt-6 h-7 w-3/4" />
+                    <Skeleton className="mt-4 h-4 w-full" />
+                    <Skeleton className="mt-2 h-4 w-5/6" />
+                    <Skeleton className="mt-6 aspect-[16/9] w-full max-w-[680px]" />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!postsLoading && posts.length === 0 && !postsProblem && (
               <p className="mt-10 rounded-2xl border border-dashed border-white/15 px-6 py-16 text-center font-ui text-lg text-neutral-400">
                 No highlights yet. Share what your characters are up to.
               </p>

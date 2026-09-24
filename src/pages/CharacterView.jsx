@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import CharacterCard from "../components/creator/CharacterCard";
 import { DEFAULT_CHARACTER, loadCharacter, loadPublicCharacter } from "../data/character";
+import Loading from "../components/Loading.jsx";
 import heroBanner from "../assets/creator/hero-banner.webp";
 import mobileBanner from "../assets/creator/profile-mobile-bg.webp";
 import flameBright from "../assets/creator/flame-bright.svg";
@@ -28,7 +29,22 @@ function Stacked({ children, className = "" }) {
   );
 }
 
-function Panel({ title, entry, flame, highlight, children }) {
+function Chevron({ open }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={`size-5 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
+      <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function Panel({ title, entry, flame, highlight, hideDescription = false, children }) {
   return (
     <section
       className={`relative overflow-hidden rounded-2xl p-5 ${
@@ -47,9 +63,11 @@ function Panel({ title, entry, flame, highlight, children }) {
       )}
       <h2 className="relative font-ui text-lg font-bold text-[#6b8ff5]">{title}</h2>
       <p className="relative mt-5 font-ui text-base font-bold text-white">{entry.name}</p>
-      <p className="relative mt-3 font-ui text-sm leading-relaxed text-neutral-200">
-        {entry.description}
-      </p>
+      {!hideDescription && (
+        <p className="relative mt-3 font-ui text-sm leading-relaxed text-neutral-200">
+          {entry.description}
+        </p>
+      )}
       {children}
     </section>
   );
@@ -143,12 +161,14 @@ export default function CharacterView({ owner = false }) {
   const assets = (character?.assets || []).map((asset) => asset.url ?? asset);
   // Phones show the origin story folded until it's opened.
   const [storyOpen, setStoryOpen] = useState(false);
+  // Which extra core ability is expanded; null shows the main description.
+  const [openExtra, setOpenExtra] = useState(null);
 
   if (!character) {
     return (
       <div className="min-h-screen bg-[#1b2233]">
         <DashboardNav active="Creators’ Hub" />
-        <p className="p-10 text-center font-ui text-base text-neutral-300">Loading…</p>
+        <Loading label="Opening character" />
       </div>
     );
   }
@@ -339,18 +359,39 @@ export default function CharacterView({ owner = false }) {
             <SectionPill>Strength &amp; Weakness</SectionPill>
           </div>
           <div className="mt-8 grid grid-cols-1 gap-5 lg:mt-5 lg:grid-cols-[1.1fr_1fr_1fr]">
-            <Panel title="Core Ability" entry={character.core} highlight>
+            <Panel title="Core Ability" entry={character.core} highlight hideDescription={openExtra !== null}>
               <ul className="relative mt-6 flex flex-col gap-3">
                 {character.core.extras
                   .filter((extra) => extra.name)
-                  .map((extra, index) => (
-                    <li key={index} className="flex items-center gap-3 font-ui text-base font-bold text-white">
-                      <span aria-hidden="true" className="text-lg text-[#ff8fc7]">
-                        ✦
-                      </span>
-                      {extra.name}
-                    </li>
-                  ))}
+                  .map((extra, index) => {
+                    const open = openExtra === index;
+                    const hasDescription = Boolean(extra.description);
+                    return (
+                      <li key={index} className="flex flex-col gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setOpenExtra(open ? null : index)}
+                          aria-expanded={hasDescription ? open : undefined}
+                          disabled={!hasDescription}
+                          className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left font-ui text-base font-bold text-white transition-colors ${
+                            hasDescription ? (open ? "bg-white/20" : "hover:bg-white/10") : "cursor-default"
+                          }`}
+                        >
+                          <span aria-hidden="true" className="text-lg text-[#ff8fc7]">
+                            ✦
+                          </span>
+                          <span className="min-w-0 flex-1">{extra.name}</span>
+                          {hasDescription && <Chevron open={open} />}
+                        </button>
+
+                        {open && (
+                          <p className="pl-9 font-ui text-sm leading-relaxed text-neutral-200">
+                            {extra.description}
+                          </p>
+                        )}
+                      </li>
+                    );
+                  })}
               </ul>
             </Panel>
 
