@@ -130,7 +130,8 @@ const SECTIONS = [
       {
         q: "How do I delete my account?",
         a: [
-          "Self-service deletion isn't built yet. Email hello@vantaorigin.com from the address on the account and we'll handle it.",
+          "Settings → Account Management → Delete Account. You'll be asked to confirm, then to enter your password.",
+          "Deletion is permanent and takes everything with it: your categories, characters, artwork and highlight posts. Published characters disappear from Discovery straight away.",
           "After deletion starts, some information may remain briefly for security, fraud prevention, dispute resolution and legal obligations. Our general retention period is 14 days, unless something must be kept longer under legal, contractual or accounting requirements.",
         ],
       },

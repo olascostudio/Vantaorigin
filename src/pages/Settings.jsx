@@ -1,7 +1,13 @@
 import { useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
-import { changePassword, toProfilePatch, toSettings, uploadProfileImage } from "../data/settings";
+import {
+  changePassword,
+  deleteAccount,
+  toProfilePatch,
+  toSettings,
+  uploadProfileImage,
+} from "../data/settings";
 import { useAuth } from "../data/AuthContext.jsx";
 
 const TABS = [
@@ -255,7 +261,6 @@ function PersonalTab({ settings, update, onSaved }) {
 
 function AccountTab({ settings, signOut, onSaved }) {
   const navigate = useNavigate();
-  const [email, setEmail] = useState(settings.email);
   const [passwords, setPasswords] = useState({ current: "", next: "", confirm: "" });
   const [error, setError] = useState("");
 
@@ -296,17 +301,18 @@ function AccountTab({ settings, signOut, onSaved }) {
       <h1 className="font-ui text-2xl font-bold text-white">Account Management</h1>
 
       <div className="mt-8">
-        <Label htmlFor="email" onEdit={() => document.getElementById("email")?.focus()} editLabel="Edit email address">
-          Email Address
-        </Label>
+        <Label htmlFor="email">Email Address</Label>
         <input
           id="email"
           type="email"
-          className={FIELD}
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          placeholder="you@example.com"
+          className={`${FIELD} cursor-not-allowed text-neutral-300`}
+          value={settings.email}
+          readOnly
+          aria-describedby="email-note"
         />
+        <p id="email-note" className="mt-2 font-ui text-sm text-neutral-400">
+          Your email is the address you signed up with. Contact support if it needs to change.
+        </p>
       </div>
 
       <div className="mt-10 flex flex-wrap items-center justify-between gap-4">
@@ -344,8 +350,25 @@ function AccountTab({ settings, signOut, onSaved }) {
       <div className="mt-16 grid grid-cols-1 gap-6 sm:grid-cols-2">
         <button
           type="button"
-          onClick={() => {
-            if (window.confirm("Delete your account? This cannot be undone.")) navigate("/");
+          onClick={async () => {
+            if (
+              !window.confirm(
+                "Delete your account? Your characters, artwork and posts are deleted with it. This cannot be undone."
+              )
+            ) {
+              return;
+            }
+
+            const password = window.prompt("Enter your password to confirm.");
+            if (!password) return;
+
+            try {
+              await deleteAccount(password);
+              onSaved("Your account has been deleted");
+              navigate("/");
+            } catch (problem) {
+              setError(problem.message);
+            }
           }}
           className="flex items-center justify-center gap-3 rounded-xl bg-[#111827] py-5 font-ui text-base font-bold text-[#f2415f] hover:bg-[#161f33]"
         >

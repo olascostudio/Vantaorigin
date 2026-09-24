@@ -216,6 +216,22 @@ export default async function authRoutes(app) {
     return { ok: true };
   });
 
+  // Deleting an account removes it along with everything filed under it:
+  // categories, characters, artwork records, highlights and every session.
+  // The database does the cascade, so nothing is left orphaned.
+  app.delete("/me", { preHandler: authenticate() }, async (request, reply) => {
+    const { password } = z.object({ password: z.string() }).parse(request.body);
+
+    // Ask for the password, so a borrowed session cannot delete an account.
+    if (!(await verifyPassword(request.user.passwordHash, password))) {
+      return reply.code(400).send({ error: "That password is not right" });
+    }
+
+    await db.delete(users).where(eq(users.id, request.user.id));
+    clearSessionCookie(reply);
+    return { ok: true };
+  });
+
   // Profile settings (the Settings page).
   app.patch("/me", { preHandler: authenticate() }, async (request) => {
     const body = z

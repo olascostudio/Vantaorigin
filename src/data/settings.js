@@ -32,3 +32,6 @@ export const uploadProfileImage = (file, kind) => uploadImage(file, kind);
 
 export const changePassword = (currentPassword, password) =>
   api.post("/me/password", { currentPassword, password });
+
+// Permanent: the account and everything filed under it are removed.
+export const deleteAccount = (password) => api.delete("/me", { password });

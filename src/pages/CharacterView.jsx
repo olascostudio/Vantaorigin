@@ -115,11 +115,15 @@ export default function CharacterView({ owner = false }) {
     let cancelled = false;
 
     const load = async () => {
+      // No id: the sample character, used by the links on the marketing pages.
       if (!id) return DEFAULT_CHARACTER;
       try {
-        return owner ? (await loadCharacter(id)) || DEFAULT_CHARACTER : await loadPublicCharacter(id);
+        const character = owner ? await loadCharacter(id) : await loadPublicCharacter(id);
+        // A character that is private, deleted or never existed is "missing"
+        // to a visitor. Showing the sample instead would be a lie.
+        return character || "missing";
       } catch {
-        return DEFAULT_CHARACTER;
+        return "missing";
       }
     };
 
@@ -145,6 +149,26 @@ export default function CharacterView({ owner = false }) {
       <div className="min-h-screen bg-[#1b2233]">
         <DashboardNav active="Creators’ Hub" />
         <p className="p-10 text-center font-ui text-base text-neutral-300">Loading…</p>
+      </div>
+    );
+  }
+
+  if (character === "missing") {
+    return (
+      <div className="min-h-screen bg-[#1b2233]">
+        <DashboardNav active="Creators’ Hub" />
+        <div className="mx-auto max-w-[560px] px-6 py-24 text-center">
+          <h1 className="font-ui text-3xl font-bold text-white">Character not found</h1>
+          <p className="mt-4 font-ui text-lg leading-relaxed text-neutral-300">
+            This character is private, has been removed, or the link is wrong.
+          </p>
+          <Link
+            to="/discover"
+            className="mt-8 inline-block rounded-full bg-gradient-to-r from-[#c2185b] to-[#a855f7] px-8 py-3 font-ui text-base font-bold text-white hover:opacity-90"
+          >
+            Explore Discovery
+          </Link>
+        </div>
       </div>
     );
   }
