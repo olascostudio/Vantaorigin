@@ -76,11 +76,11 @@ function AssetRail({ assets }) {
 
   return (
     <div className="relative">
-      <div ref={rail} className="scrollbar-none flex snap-x gap-5 overflow-x-auto pb-2">
+      <div ref={rail} className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {assets.map((asset, index) => (
           <div
             key={`${asset}-${index}`}
-            className="h-[260px] w-[270px] shrink-0 snap-start overflow-hidden rounded-2xl bg-[#222b3c] sm:h-[400px] sm:w-[320px]"
+            className="aspect-[3/4] overflow-hidden rounded-2xl bg-[#222b3c]"
           >
             <img src={asset} alt={`Asset ${index + 1}`} className="size-full object-cover" />
           </div>

@@ -29,8 +29,11 @@ export default function SignUp() {
     setBusy(true);
     try {
       const result = await signUp(form);
-      // devCode only exists while the API prints emails instead of sending them
-      navigate("/signup/verify", { state: { devCode: result.devCode } });
+      navigate("/signup/verify", {
+        // devCode only exists while the API prints emails instead of sending
+        // them; emailSent says whether the code actually left the building.
+        state: { devCode: result.devCode, emailSent: result.emailSent !== false },
+      });
     } catch (problem) {
       setError(problem.message);
     } finally {

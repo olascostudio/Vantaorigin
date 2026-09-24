@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import logoMark from "../assets/landing/hero/logo-mark.svg";
 import logoWordmark from "../assets/landing/hero/logo-wordmark.svg";
 import { useAuth } from "../data/AuthContext.jsx";
+import VerifyBanner from "./VerifyBanner.jsx";
 
 const LINKS = [
   { label: "Discover", to: "/discover" },
@@ -84,6 +85,8 @@ export default function DashboardNav({ active = "Discover" }) {
           </button>
         </div>
       </div>
+
+      <VerifyBanner />
 
       {/* Phones and tablets: the same links, folded away until asked for */}
       {open && (

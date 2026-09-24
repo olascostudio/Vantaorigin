@@ -28,6 +28,8 @@ async function request(path, { method = "GET", body, headers } = {}) {
       method,
       // the session cookie rides along
       credentials: "include",
+      // never a cached copy: deletions must be visible on every device
+      cache: "no-store",
       // Only claim a JSON body when there is one: a JSON content-type with an
       // empty body is rejected, which silently broke every DELETE.
       headers:

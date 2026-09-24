@@ -164,6 +164,8 @@ export default function CharacterProfile() {
   const [storyOpen, setStoryOpen] = useState(false);
   // Which extra core ability is expanded; null shows the main ability's description.
   const [openExtra, setOpenExtra] = useState(null);
+  // { done, total } while pictures are being uploaded.
+  const [uploading, setUploading] = useState(null);
 
   // Auto-save: everything on this page persists as it is edited.
   useEffect(() => {
@@ -187,15 +189,23 @@ export default function CharacterProfile() {
 
   const setField = (key) => (value) => setData((prev) => ({ ...prev, [key]: value }));
 
-  // Uploaded to storage, then attached to this character.
+  // Uploaded to storage one at a time, each appearing as soon as it lands,
+  // so a batch of ten doesn't look frozen until the last one finishes.
   const addAssets = async (files) => {
-    try {
-      const added = [];
-      for (const file of files) added.push(await addAsset(data.id, file));
-      setData((prev) => ({ ...prev, assets: [...prev.assets, ...added] }));
-    } catch (error) {
-      setProblem(error.message);
+    const chosen = [...files];
+    setUploading({ done: 0, total: chosen.length });
+
+    for (const [index, file] of chosen.entries()) {
+      try {
+        const added = await addAsset(data.id, file);
+        setData((prev) => ({ ...prev, assets: [...prev.assets, added] }));
+      } catch (error) {
+        setProblem(`${file.name}: ${error.message}`);
+      }
+      setUploading({ done: index + 1, total: chosen.length });
     }
+
+    setUploading(null);
   };
 
   const setExtra = (index, patch) =>
@@ -511,7 +521,7 @@ export default function CharacterProfile() {
           {/* Assets: empty state until something is uploaded, then a scrolling row */}
           <section aria-label="Assets" className="mt-12 flex flex-col gap-8 lg:mt-5 lg:block">
             <SectionPill>Assets</SectionPill>
-            {data.assets.length === 0 ? (
+            {data.assets.length === 0 && !uploading ? (
               <Stacked className="mx-auto w-full max-w-[420px] lg:max-w-none">
                 <div className="flex min-h-[260px] flex-col items-center justify-center gap-6 rounded-[26px] border border-white/10 bg-[#222b3c] px-6 py-10 text-center">
                   <p className="max-w-[240px] font-ui text-base text-[#6b8ff5]">
@@ -527,29 +537,47 @@ export default function CharacterProfile() {
                 </div>
               </Stacked>
             ) : null}
-            <div className={`scrollbar-none snap-x gap-5 overflow-x-auto pb-2 ${data.assets.length ? "flex" : "hidden"}`}>
+            {uploading && (
+              <p aria-live="polite" className="font-ui text-base text-[#6b8ff5]">
+                Uploading {uploading.done} of {uploading.total}…
+              </p>
+            )}
+
+            <div className={`grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 ${data.assets.length || uploading ? "grid" : "hidden"}`}>
               {data.assets.map((asset, index) => (
                 <div
                   key={asset.id}
-                  className="relative h-[260px] w-[270px] shrink-0 snap-start overflow-hidden rounded-2xl bg-[#222b3c] sm:h-[400px] sm:w-[320px]"
+                  className="group relative aspect-[3/4] overflow-hidden rounded-2xl bg-[#222b3c]"
                 >
                   <img src={asset.url} alt={`Asset ${index + 1}`} className="size-full object-cover" />
                   <button
                     type="button"
                     onClick={() => dropAsset(asset)}
                     aria-label={`Remove asset ${index + 1}`}
-                    className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full bg-black/60 font-ui text-lg text-white hover:bg-black/80"
+                    className="absolute right-2 top-2 flex size-8 items-center justify-center rounded-full bg-black/60 font-ui text-lg text-white hover:bg-black/80"
                   >
                     ×
                   </button>
                 </div>
               ))}
 
-              <div className="flex h-[260px] w-[270px] shrink-0 snap-start items-center justify-center rounded-2xl bg-[#222b3c] sm:h-[400px] sm:w-[320px]">
+              {/* One placeholder per picture still uploading */}
+              {uploading &&
+                Array.from({ length: uploading.total - uploading.done }).map((_, index) => (
+                  <div
+                    key={`pending-${index}`}
+                    className="flex aspect-[3/4] animate-pulse items-center justify-center rounded-2xl bg-[#222b3c] font-ui text-sm text-neutral-400"
+                  >
+                    Uploading…
+                  </div>
+                ))}
+
+              <div className="flex aspect-[3/4] items-center justify-center rounded-2xl border border-dashed border-white/20 bg-[#222b3c]/60 p-3">
                 <button
                   type="button"
+                  disabled={Boolean(uploading)}
                   onClick={() => assetInput.current?.click()}
-                  className="flex items-center gap-2 rounded-full border border-white/70 px-5 py-2.5 font-ui text-base text-white hover:bg-white/10"
+                  className="flex items-center gap-2 rounded-full border border-white/70 px-4 py-2.5 text-center font-ui text-sm text-white hover:bg-white/10 disabled:opacity-50 sm:text-base"
                 >
                   <img src={sword} alt="" className="size-5" />
                   Add Assets

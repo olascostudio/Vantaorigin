@@ -54,13 +54,37 @@ export default async function authRoutes(app) {
     const email = body.email.toLowerCase();
     const username = body.username.startsWith("@") ? body.username : `@${body.username}`;
 
-    const [taken] = await db.select({ id: users.id }).from(users).where(eq(users.email, email));
-    if (taken) return reply.code(409).send({ error: "That email is already registered" });
+    // Check both unique columns up front, so the answer names the problem
+    // instead of arriving as a database error.
+    const [byEmail] = await db.select({ id: users.id }).from(users).where(eq(users.email, email));
+    if (byEmail) {
+      return reply.code(409).send({
+        error: "That email is already registered. Try signing in, or reset your password.",
+        field: "email",
+      });
+    }
 
-    const [user] = await db
-      .insert(users)
-      .values({ email, username, passwordHash: await hashPassword(body.password) })
-      .returning();
+    const [byUsername] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.username, username));
+    if (byUsername) {
+      return reply.code(409).send({ error: "That username is taken. Try another.", field: "username" });
+    }
+
+    let user;
+    try {
+      [user] = await db
+        .insert(users)
+        .values({ email, username, passwordHash: await hashPassword(body.password) })
+        .returning();
+    } catch (error) {
+      // Two people registering the same name at the same moment land here.
+      if (error?.cause?.code === "23505" || error?.code === "23505") {
+        return reply.code(409).send({ error: "That email or username was just taken. Try again." });
+      }
+      throw error;
+    }
 
     const code = await issueCode(user.id, "verify_email");
     const sent = await trySend(app, {

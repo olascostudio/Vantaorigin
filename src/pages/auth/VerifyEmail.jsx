@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AuthShell, GRADIENT, PILL } from "./authUi";
 import { useAuth } from "../../data/AuthContext.jsx";
 
@@ -28,6 +28,9 @@ export default function VerifyEmail({
   const inputs = useRef([]);
 
   const email = location.state?.email;
+  // Sign-up succeeded but the code email did not go out: say so, rather than
+  // leaving someone waiting for a message that never arrives.
+  const [emailFailed, setEmailFailed] = useState(location.state?.emailSent === false);
   // Shown only while emails print to the API's terminal instead of being sent.
   const [devCode, setDevCode] = useState(location.state?.devCode);
 
@@ -87,6 +90,7 @@ export default function VerifyEmail({
     try {
       const result = mode === "reset" ? await forgotPassword(email) : await resendCode();
       setDevCode(result?.devCode);
+      setEmailFailed(false);
       setSecondsLeft(RESEND_SECONDS);
     } catch (problem) {
       setError(problem.message);
@@ -101,6 +105,14 @@ export default function VerifyEmail({
       <p className="mt-[38px] text-center font-ui text-lg leading-[27px] text-[#f5f5f5] sm:text-[22px]">
         {description}
       </p>
+
+      {emailFailed && (
+        <p role="alert" className="mt-5 rounded-xl bg-[#3a2030] px-5 py-4 text-center font-ui text-base leading-relaxed text-[#ffb4c4]">
+          Your account was created, but we couldn’t send the code. Try Resend Code below, or email
+          hello@vantaorigin.com and we’ll verify you by hand. You can keep using VantaOrigin
+          meanwhile.
+        </p>
+      )}
 
       {devCode && (
         <p className="mt-4 text-center font-ui text-base text-[#5fdc8a]">
@@ -157,6 +169,15 @@ export default function VerifyEmail({
         >
           {busy ? "Checking…" : "Verify"}
         </button>
+
+        {mode !== "reset" && (
+          <Link
+            to="/creators-hub"
+            className="mt-5 font-ui text-base text-neutral-300 underline hover:text-white"
+          >
+            Skip for now
+          </Link>
+        )}
       </form>
     </AuthShell>
   );
