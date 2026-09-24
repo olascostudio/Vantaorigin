@@ -88,7 +88,7 @@ export default function SignUp() {
           <Checkbox
             checked={agreed}
             onChange={setAgreed}
-            label="I am 18+ and agree to the creator code."
+            label="I am 18 plus and agree to VantaOrigin's Terms of Service."
             labelClassName="text-center"
           />
         </div>

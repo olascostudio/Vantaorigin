@@ -23,7 +23,7 @@ const LINK_COLUMNS = [
     links: [
       "Contact Us",
       { label: "Terms of Service", to: "/terms" },
-      "Privacy Policy",
+      { label: "Privacy Policy", to: "/privacy" },
       { label: "About", to: "/about" },
     ],
   },
