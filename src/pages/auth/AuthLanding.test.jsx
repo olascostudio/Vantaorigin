@@ -25,6 +25,6 @@ describe("AuthLanding", () => {
     renderScreen();
     expect(screen.getByRole("button", { name: /Sign up with Google/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Sign up with Apple/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Terms and Conditions" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Terms of Service" })).toHaveAttribute("href", "/terms");
   });
 });
