@@ -148,19 +148,12 @@ export default function Contact() {
             </p>
           </div>
 
-          {/* TODO: point this at the Help Center once it exists. */}
-          <div className="relative shrink-0 pt-2">
-            <span className="absolute -top-0.5 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-primary px-2.5 py-0.5 font-ui text-[11px] font-bold text-white shadow-md">
-              Coming soon
-            </span>
-            <button
-              type="button"
-              disabled
-              className="cursor-not-allowed rounded-full border-2 border-white px-7 py-3 font-ui text-base font-bold text-white opacity-60"
-            >
-              Visit Help Center →
-            </button>
-          </div>
+          <Link
+            to="/help"
+            className="shrink-0 rounded-full border-2 border-white px-7 py-3 font-ui text-base font-bold text-white transition-colors hover:bg-white/10"
+          >
+            Visit Help Center →
+          </Link>
         </section>
 
         <div className="mt-12 flex flex-wrap gap-6">

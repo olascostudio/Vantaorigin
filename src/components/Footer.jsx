@@ -16,7 +16,7 @@ const SOCIALS = [
 
 const LINK_COLUMNS = [
   { title: "Platform", width: "sm:w-[133.2px]", links: ["Explore Comics", "Creator Studio"] },
-  { title: "Community", width: "sm:w-[184.8px]", links: ["Event & Realm Wars", "Marketplace", "Leaderbroads", "Help Center"] },
+  { title: "Community", width: "sm:w-[184.8px]", links: ["Event & Realm Wars", "Marketplace", "Leaderbroads", { label: "Help Center", to: "/help" }] },
   {
     title: "Support",
     width: "sm:w-[136.8px]",
