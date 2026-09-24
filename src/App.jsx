@@ -14,6 +14,7 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Contact from "./pages/Contact";
 import Help from "./pages/Help";
+import Realm from "./pages/Realm";
 import Marketplace from "./pages/Marketplace";
 import MarketplaceHowItWorks from "./pages/MarketplaceHowItWorks";
 import ProjectRequest from "./pages/ProjectRequest";
@@ -53,6 +54,7 @@ export default function App() {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/help" element={<Help />} />
+        <Route path="/realm/:username" element={<Realm />} />
         <Route path="/settings" element={<RequireAuth><Settings /></RequireAuth>} />
         <Route path="/settings/:tab" element={<RequireAuth><Settings /></RequireAuth>} />
         <Route path="/auth" element={<AuthLanding />} />

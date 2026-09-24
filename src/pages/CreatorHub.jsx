@@ -71,11 +71,27 @@ function LightningDivider() {
   );
 }
 
+// The public address of this creator's Realm, ready to paste anywhere.
+function realmLink(username) {
+  return `${window.location.origin}/realm/${String(username || "").replace(/^@+/, "")}`;
+}
+
+async function copyRealmLink(username) {
+  const link = realmLink(username);
+  try {
+    await navigator.clipboard.writeText(link);
+    return `Link copied: ${link}`;
+  } catch {
+    return link;
+  }
+}
+
 function ProfileHeader() {
   // Whatever is saved on the account, falling back to the sample art.
   const { user } = useAuth();
   const settings = toSettings(user);
   const fullName = [settings.firstName, settings.lastName].filter(Boolean).join(" ");
+  const [shared, setShared] = useState("");
 
   return (
     <>
@@ -131,12 +147,27 @@ function ProfileHeader() {
             </Link>
             <button
               type="button"
+              onClick={async () => setShared(await copyRealmLink(settings.username))}
               className="rounded-full bg-[#a855f7] px-5 py-1.5 font-ui text-sm font-bold text-white hover:opacity-90"
             >
               Share
             </button>
+            <a
+              href={realmLink(settings.username)}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full border border-white/60 px-5 py-1.5 font-ui text-sm font-bold text-white hover:bg-white/10"
+            >
+              View Realm ↗
+            </a>
           </div>
         </div>
+
+        {shared && (
+          <p role="status" className="mt-3 font-ui text-sm text-[#5fdc8a]">
+            {shared}
+          </p>
+        )}
 
         {settings.bio ? (
           <p className="mt-2 max-w-[640px] text-center font-ui text-base text-neutral-300">
