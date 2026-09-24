@@ -21,7 +21,7 @@ const LINK_COLUMNS = [
     title: "Support",
     width: "sm:w-[136.8px]",
     links: [
-      "Contact Us",
+      { label: "Contact Us", to: "/contact" },
       { label: "Terms of Service", to: "/terms" },
       { label: "Privacy Policy", to: "/privacy" },
       { label: "About", to: "/about" },
