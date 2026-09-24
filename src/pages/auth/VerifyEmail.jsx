@@ -14,20 +14,21 @@ const format = (total) =>
 // on the previous screen).
 export default function VerifyEmail({
   title = "Email verification",
-  description = "We sent a 4-digits code to the email address associated with this account.",
   next = "/creators-hub",
   mode = "signup",
 }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { verifyEmail, resendCode, checkResetCode, forgotPassword } = useAuth();
+  const { user, verifyEmail, resendCode, checkResetCode, forgotPassword } = useAuth();
   const [digits, setDigits] = useState(Array(CODE_LENGTH).fill(""));
   const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const inputs = useRef([]);
 
-  const email = location.state?.email;
+  // Resetting a password carries the address from the previous screen;
+  // verifying an account uses the one on the account itself.
+  const email = location.state?.email || (mode === "signup" ? user?.email : "");
   // Sign-up succeeded but the code email did not go out: say so, rather than
   // leaving someone waiting for a message that never arrives.
   const [emailFailed, setEmailFailed] = useState(location.state?.emailSent === false);
@@ -103,7 +104,8 @@ export default function VerifyEmail({
         {title}
       </h1>
       <p className="mt-[38px] text-center font-ui text-lg leading-[27px] text-[#f5f5f5] sm:text-[22px]">
-        {description}
+        We sent a 4-digit code to{" "}
+        {email ? <b className="break-all">{email}</b> : "the email address on this account"}.
       </p>
 
       {emailFailed && (

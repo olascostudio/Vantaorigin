@@ -148,7 +148,12 @@ export default async function authRoutes(app) {
       subject: "Your VantaOrigin verification code",
       html: `<p>Your code is ${code}. It lasts 15 minutes.</p>`,
     });
-    if (!sent) return reply.code(502).send({ error: "We could not send that email. Try again shortly." });
+    if (!sent) {
+      return reply.code(502).send({
+        error:
+          "We couldn't deliver the code to that address yet — our email domain is still being set up. Email hello@vantaorigin.com and we'll verify your account by hand.",
+      });
+    }
     return { ...devCode(code), ok: true };
   });
 
