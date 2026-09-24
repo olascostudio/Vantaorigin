@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import logoMark from "../assets/landing/footer/logo-mark.svg";
 import logoWordmark from "../assets/landing/footer/logo-wordmark.svg";
 import instagramIcon from "../assets/landing/footer/instagram.svg";
@@ -16,7 +17,11 @@ const SOCIALS = [
 const LINK_COLUMNS = [
   { title: "Platform", width: "sm:w-[133.2px]", links: ["Explore Comics", "Creator Studio"] },
   { title: "Community", width: "sm:w-[184.8px]", links: ["Event & Realm Wars", "Marketplace", "Leaderbroads", "Help Center"] },
-  { title: "Support", width: "sm:w-[136.8px]", links: ["Contact Us", "Term of Service", "Privacy Policy", "About"] },
+  {
+    title: "Support",
+    width: "sm:w-[136.8px]",
+    links: ["Contact Us", "Term of Service", "Privacy Policy", { label: "About", to: "/about" }],
+  },
   { title: "Socials", width: "sm:min-w-[70.56px]", links: ["Discord", "X(Twitter)", "Instagram"] },
 ];
 
@@ -101,13 +106,24 @@ export default function Footer() {
             >
               <h3 className="font-ui text-lg font-medium text-white">{title}</h3>
               <ul className="flex flex-col gap-[24.48px] font-ui text-[15.84px] text-subtext">
-                {links.map((link) => (
-                  <li key={link}>
-                    <a href="#" className="whitespace-nowrap transition-colors hover:text-white">
-                      {link}
-                    </a>
-                  </li>
-                ))}
+                {links.map((link) => {
+                  // A link is either a label waiting for a destination, or one
+                  // that already has a page.
+                  const { label, to } = typeof link === "string" ? { label: link } : link;
+                  return (
+                    <li key={label}>
+                      {to ? (
+                        <Link to={to} className="whitespace-nowrap transition-colors hover:text-white">
+                          {label}
+                        </Link>
+                      ) : (
+                        <a href="#" className="whitespace-nowrap transition-colors hover:text-white">
+                          {label}
+                        </a>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))}
