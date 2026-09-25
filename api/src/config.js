@@ -45,6 +45,11 @@ const schema = z.object({
   // Defaults to the app itself, which serves /emails/banner.jpg.
   EMAIL_BANNER_URL: z.string().optional(),
 
+  // Who may open the admin dashboard, by email, comma separated. Kept in
+  // the environment rather than a column, so granting or taking away access
+  // needs neither a deploy nor a migration.
+  ADMIN_EMAILS: z.string().default(""),
+
   SESSION_TTL_DAYS: z.coerce.number().default(30),
 });
 

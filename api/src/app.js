@@ -7,6 +7,7 @@ import multipart from "@fastify/multipart";
 import rateLimit from "@fastify/rate-limit";
 import { ZodError } from "zod";
 import { config, isProduction } from "./config.js";
+import adminRoutes from "./routes/admin.js";
 import authRoutes from "./routes/auth.js";
 import characterRoutes from "./routes/characters.js";
 import highlightRoutes from "./routes/highlights.js";
@@ -75,6 +76,7 @@ export async function buildApp() {
     };
   });
 
+  await app.register(adminRoutes);
   await app.register(authRoutes);
   await app.register(characterRoutes);
   await app.register(highlightRoutes);
