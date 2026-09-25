@@ -80,7 +80,7 @@ async function copyRealmLink(username) {
   const link = realmLink(username);
   try {
     await navigator.clipboard.writeText(link);
-    return `Link copied: ${link}`;
+    return `Realm link copied — paste it anywhere: ${link}`;
   } catch {
     return link;
   }
@@ -152,14 +152,6 @@ function ProfileHeader() {
             >
               Share
             </button>
-            <a
-              href={realmLink(settings.username)}
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-full border border-white/60 px-5 py-1.5 font-ui text-sm font-bold text-white hover:bg-white/10"
-            >
-              View Realm ↗
-            </a>
           </div>
         </div>
 

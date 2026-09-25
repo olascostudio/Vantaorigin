@@ -6,9 +6,8 @@ import logoMark from "../assets/landing/hero/logo-mark.svg";
 import logoWordmark from "../assets/landing/hero/logo-wordmark.svg";
 import characterCover from "../assets/creator/character-cover.svg";
 
-// The page behind a creator's shared link: their characters and posts in one
-// place, readable without an account. Everything opens in place, so a visitor
-// can look through several without losing the Realm.
+// What someone sees when they follow a creator's shared link from a bio or a
+// post: banner, face, name, and a look at the work. Nothing else.
 
 function PersonIcon({ className }) {
   return (
@@ -18,131 +17,43 @@ function PersonIcon({ className }) {
   );
 }
 
-function CharacterPanel({ character, onClose }) {
-  const details = character.details || {};
-  const extras = (details.core?.extras || []).filter((extra) => extra.name);
-
+// Opened only for posts: characters have a page of their own to go to.
+function PostView({ post, onClose }) {
   return (
-    <div className="mt-6 rounded-3xl border border-[#465578] bg-[#222b3c] p-5 sm:p-7">
-      <div className="flex flex-col gap-6 sm:flex-row">
-        <img
-          src={character.coverUrl || characterCover}
-          alt={character.name}
-          className="h-[260px] w-full shrink-0 rounded-2xl object-cover sm:w-[200px]"
-        />
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h3 className="font-ui text-2xl font-bold text-white">{character.name}</h3>
-              {character.realm && (
-                <p className="mt-1 font-ui text-base text-neutral-300">{character.realm}</p>
-              )}
-              {character.tagline && (
-                <p className="mt-2 font-ui text-base font-bold text-[#5fdc8a]">{character.tagline}</p>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Close character"
-              className="shrink-0 rounded-full px-3 py-1 font-ui text-xl text-neutral-300 hover:bg-white/10 hover:text-white"
-            >
-              ×
-            </button>
-          </div>
-
-          {character.backstory && (
-            <p className="mt-4 line-clamp-6 whitespace-pre-line font-ui text-base leading-relaxed text-neutral-200">
-              {character.backstory}
-            </p>
-          )}
-
-          {details.core?.name && (
-            <div className="mt-5">
-              <p className="font-ui text-sm font-bold uppercase tracking-wide text-[#6b8ff5]">
-                Core ability
-              </p>
-              <p className="mt-1 font-ui text-base font-bold text-white">{details.core.name}</p>
-              {details.core.description && (
-                <p className="mt-1 font-ui text-sm leading-relaxed text-neutral-300">
-                  {details.core.description}
-                </p>
-              )}
-            </div>
-          )}
-
-          {extras.length > 0 && (
-            <ul className="mt-4 flex flex-wrap gap-2">
-              {extras.map((extra) => (
-                <li
-                  key={extra.name}
-                  className="rounded-full bg-white/10 px-3 py-1.5 font-ui text-sm text-white"
-                >
-                  ✦ {extra.name}
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <Link
-            to={`/character?id=${character.id}`}
-            className="mt-6 inline-block rounded-full bg-gradient-to-r from-[#c2185b] to-[#a855f7] px-7 py-3 font-ui text-base font-bold text-white hover:opacity-90"
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-sm"
+      onMouseDown={(event) => event.target === event.currentTarget && onClose()}
+    >
+      <article
+        role="dialog"
+        aria-modal="true"
+        aria-label={post.title || "Post"}
+        className="my-8 w-full max-w-[640px] rounded-2xl bg-[#222b3c] p-5 sm:p-7"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <h2 className="font-ui text-xl font-bold text-white sm:text-2xl">{post.title}</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="shrink-0 rounded-full px-3 py-1 font-ui text-xl text-neutral-300 hover:bg-white/10 hover:text-white"
           >
-            View full character
-          </Link>
+            ×
+          </button>
         </div>
-      </div>
 
-      {character.assets?.length > 0 && (
-        <div className="mt-6 grid grid-cols-3 gap-3 sm:grid-cols-4">
-          {character.assets.slice(0, 8).map((asset) => (
-            <img
-              key={asset.id}
-              src={asset.url}
-              alt=""
-              loading="lazy"
-              className="aspect-square w-full rounded-xl object-cover"
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+        <p className="mt-4 whitespace-pre-line font-ui text-base leading-relaxed text-neutral-200">
+          {post.content}
+        </p>
 
-function HighlightPanel({ post, onClose }) {
-  return (
-    <div className="mt-6 rounded-3xl border border-[#465578] bg-[#222b3c] p-5 sm:p-7">
-      <div className="flex items-start justify-between gap-4">
-        <h3 className="font-ui text-2xl font-bold text-white">{post.title}</h3>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close post"
-          className="shrink-0 rounded-full px-3 py-1 font-ui text-xl text-neutral-300 hover:bg-white/10 hover:text-white"
-        >
-          ×
-        </button>
-      </div>
-
-      <p className="mt-4 whitespace-pre-line font-ui text-base leading-relaxed text-neutral-200">
-        {post.content}
-      </p>
-
-      {post.images?.length > 0 && (
-        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {post.images.map((image) => (
-            <img
-              key={image}
-              src={image}
-              alt=""
-              loading="lazy"
-              className="aspect-[4/3] w-full rounded-xl object-cover"
-            />
-          ))}
-        </div>
-      )}
+        {post.images?.length > 0 && (
+          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {post.images.map((image) => (
+              <img key={image} src={image} alt="" loading="lazy" className="w-full rounded-xl" />
+            ))}
+          </div>
+        )}
+      </article>
     </div>
   );
 }
@@ -151,7 +62,8 @@ export default function Realm() {
   const { username } = useParams();
   const [realm, setRealm] = useState(null);
   const [problem, setProblem] = useState("");
-  const [open, setOpen] = useState(null); // { kind: "character" | "highlight", id }
+  const [tab, setTab] = useState("Characters");
+  const [openPost, setOpenPost] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -170,7 +82,8 @@ export default function Realm() {
         <img src={logoMark} alt="" className="h-12 w-auto" />
         <h1 className="font-ui text-3xl font-bold text-white">Realm not found</h1>
         <p className="max-w-[420px] font-ui text-lg text-neutral-300">
-          Nobody is using <b>{username}</b> on VantaOrigin, or the link is wrong.
+          Nobody is using <b className="break-all">{username}</b> on VantaOrigin, or the link is
+          wrong.
         </p>
         <Link
           to="/"
@@ -191,149 +104,161 @@ export default function Realm() {
   }
 
   const { creator, characters, highlights } = realm;
-  const openCharacter = open?.kind === "character" && characters.find((c) => c.id === open.id);
-  const openHighlight = open?.kind === "highlight" && highlights.find((h) => h.id === open.id);
-  const isEmpty = characters.length === 0 && highlights.length === 0;
+  const showing = tab === "Characters" ? characters : highlights;
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      {/* Banner and creator */}
-      <div className="relative h-[180px] overflow-hidden sm:h-[240px]">
-        {creator.bannerUrl ? (
-          <img src={creator.bannerUrl} alt="" className="size-full object-cover" />
-        ) : (
-          <div className="size-full bg-gradient-to-r from-[#2a3348] via-[#7a2352] to-[#c2185b]" />
-        )}
-        <div className="absolute inset-0 bg-black/30" />
-      </div>
+    <div className="min-h-screen bg-background pb-16">
+      <div className="mx-auto max-w-[680px]">
+        {/* Banner, with the profile picture sitting over its lower edge */}
+        <div className="relative">
+          <div className="h-[130px] overflow-hidden sm:h-[180px] sm:rounded-b-3xl">
+            {creator.bannerUrl ? (
+              <img src={creator.bannerUrl} alt="" className="size-full object-cover" />
+            ) : (
+              <div className="size-full bg-gradient-to-r from-[#2a3348] via-[#7a2352] to-[#c2185b]" />
+            )}
+          </div>
 
-      <header className="mx-auto -mt-12 flex max-w-[860px] flex-col gap-4 px-5 sm:-mt-14 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex min-w-0 items-end gap-4">
-          {creator.avatarUrl ? (
-            <img
-              src={creator.avatarUrl}
-              alt={creator.name}
-              className="size-[92px] shrink-0 rounded-full object-cover ring-4 ring-background sm:size-[110px]"
-            />
-          ) : (
-            <span className="flex size-[92px] shrink-0 items-center justify-center rounded-full bg-[#2f3a4f] ring-4 ring-background sm:size-[110px]">
-              <PersonIcon className="size-12 text-[#55648a]" />
-            </span>
-          )}
+          {/* Bordered, so it reads against a light or a dark banner */}
+          <Link
+            to="/discover"
+            className="absolute right-3 top-3 rounded-full border border-white/80 bg-black/40 px-4 py-2 font-ui text-xs font-bold text-white backdrop-blur-sm transition-colors hover:bg-black/60 sm:right-4 sm:top-4 sm:text-sm"
+          >
+            Visit Profile ↗
+          </Link>
 
-          <div className="min-w-0 pb-1">
-            <h1 className="truncate font-ui text-2xl font-bold text-white sm:text-3xl">
-              {creator.name}
-            </h1>
-            <p className="font-ui text-base font-bold text-[#4ea1ff]">{creator.username}</p>
+          <div className="absolute inset-x-0 -bottom-10 flex justify-center sm:-bottom-12">
+            {creator.avatarUrl ? (
+              <img
+                src={creator.avatarUrl}
+                alt={creator.name}
+                className="size-20 rounded-full object-cover ring-4 ring-background sm:size-24"
+              />
+            ) : (
+              <span className="flex size-20 items-center justify-center rounded-full bg-[#2f3a4f] ring-4 ring-background sm:size-24">
+                <PersonIcon className="size-10 text-[#55648a] sm:size-12" />
+              </span>
+            )}
           </div>
         </div>
 
-        <Link
-          to={`/discover`}
-          className="shrink-0 self-start rounded-full border-2 border-white px-6 py-2.5 font-ui text-base font-bold text-white transition-colors hover:bg-white/10 sm:self-auto"
-        >
-          Visit Profile ↗
-        </Link>
-      </header>
+        <header className="mt-14 px-5 text-center sm:mt-16">
+          <h1 className="font-ui text-2xl font-bold text-white sm:text-3xl">{creator.name}</h1>
+          {creator.bio && (
+            <p className="mx-auto mt-2 max-w-[520px] font-ui text-sm leading-relaxed text-neutral-300 sm:text-base">
+              {creator.bio}
+            </p>
+          )}
+        </header>
 
-      {creator.bio && (
-        <p className="mx-auto mt-4 max-w-[860px] px-5 font-ui text-base leading-relaxed text-neutral-300">
-          {creator.bio}
-        </p>
-      )}
-
-      <main className="mx-auto mt-10 max-w-[860px] px-5">
-        <h2 className="font-ui text-xl font-bold text-white sm:text-2xl">Characters &amp; Highlights</h2>
-
-        {isEmpty && (
-          <p className="mt-6 rounded-2xl border border-dashed border-white/15 px-6 py-12 text-center font-ui text-base text-neutral-400">
-            This Realm is still being built. Check back soon.
-          </p>
-        )}
-
-        {/* Whatever is open sits right under the heading, so it is seen */}
-        {openCharacter && <CharacterPanel character={openCharacter} onClose={() => setOpen(null)} />}
-        {openHighlight && <HighlightPanel post={openHighlight} onClose={() => setOpen(null)} />}
-
-        {characters.length > 0 && (
-          <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-            {characters.map((character) => (
+        {/* The small divide between the two kinds of thing */}
+        <div className="mt-7 px-5">
+          <div className="mx-auto flex w-fit gap-1 rounded-full bg-white/5 p-1">
+            {["Characters", "Highlights"].map((name) => (
               <button
-                key={character.id}
+                key={name}
                 type="button"
-                onClick={() => setOpen({ kind: "character", id: character.id })}
-                aria-pressed={open?.id === character.id}
-                className={`group overflow-hidden rounded-2xl border bg-[#222b3c] text-left transition-colors ${
-                  open?.id === character.id ? "border-[#6b8ff5]" : "border-white/10 hover:border-white/30"
+                onClick={() => setTab(name)}
+                aria-pressed={tab === name}
+                className={`rounded-full px-5 py-2 font-ui text-sm font-bold transition-colors sm:text-base ${
+                  tab === name ? "bg-white text-black" : "text-neutral-300 hover:text-white"
                 }`}
               >
-                <img
-                  src={character.coverUrl || characterCover}
-                  alt=""
-                  loading="lazy"
-                  className="aspect-[3/4] w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                />
-                <div className="p-3">
-                  <p className="truncate font-ui text-sm font-bold text-white">{character.name}</p>
-                  {character.realm && (
-                    <p className="truncate font-ui text-xs text-neutral-400">{character.realm}</p>
-                  )}
-                </div>
+                {name}
+                <span className="ml-1.5 font-normal opacity-60">
+                  {name === "Characters" ? characters.length : highlights.length}
+                </span>
               </button>
             ))}
           </div>
-        )}
+        </div>
 
-        {highlights.length > 0 && (
-          <div className="mt-6 flex flex-col gap-3">
-            {highlights.map((post) => (
-              <button
-                key={post.id}
-                type="button"
-                onClick={() => setOpen({ kind: "highlight", id: post.id })}
-                className={`flex items-center gap-4 rounded-2xl border bg-[#222b3c] p-3 text-left transition-colors ${
-                  open?.id === post.id ? "border-[#6b8ff5]" : "border-white/10 hover:border-white/30"
-                }`}
-              >
-                {post.images?.[0] ? (
+        <main className="mt-6 px-5">
+          {showing.length === 0 && (
+            <p className="rounded-2xl border border-dashed border-white/15 px-6 py-12 text-center font-ui text-base text-neutral-400">
+              {tab === "Characters"
+                ? "No characters shared yet."
+                : "No highlights posted yet."}
+            </p>
+          )}
+
+          {tab === "Characters" && characters.length > 0 && (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+              {characters.map((character) => (
+                <Link
+                  key={character.id}
+                  to={`/character?id=${character.id}`}
+                  className="group overflow-hidden rounded-2xl border border-white/10 bg-[#222b3c] transition-colors hover:border-white/30"
+                >
                   <img
-                    src={post.images[0]}
+                    src={character.coverUrl || characterCover}
                     alt=""
                     loading="lazy"
-                    className="size-16 shrink-0 rounded-xl object-cover"
+                    className="aspect-[3/4] w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                   />
-                ) : (
-                  <span className="flex size-16 shrink-0 items-center justify-center rounded-xl bg-white/5 font-ui text-xs text-neutral-400">
-                    Post
-                  </span>
-                )}
+                  <div className="p-2.5 sm:p-3">
+                    <p className="truncate font-ui text-sm font-bold text-white">{character.name}</p>
+                    {character.tagline && (
+                      <p className="truncate font-ui text-xs text-neutral-400">{character.tagline}</p>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
 
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-ui text-base font-bold text-white">
-                    {post.title || "Untitled post"}
-                  </span>
-                  <span className="mt-0.5 line-clamp-1 block font-ui text-sm text-neutral-400">
-                    {post.content}
-                  </span>
-                </span>
+          {tab === "Highlights" && highlights.length > 0 && (
+            <div className="flex flex-col gap-3">
+              {highlights.map((post) => (
+                <button
+                  key={post.id}
+                  type="button"
+                  onClick={() => setOpenPost(post)}
+                  className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#222b3c] p-3 text-left transition-colors hover:border-white/30 sm:gap-4"
+                >
+                  {post.images?.[0] ? (
+                    <img
+                      src={post.images[0]}
+                      alt=""
+                      loading="lazy"
+                      className="size-14 shrink-0 rounded-xl object-cover sm:size-16"
+                    />
+                  ) : (
+                    <span className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-white/5 font-ui text-xs text-neutral-400 sm:size-16">
+                      Post
+                    </span>
+                  )}
 
-                <span className="shrink-0 font-ui text-sm text-[#6b8ff5] underline">Read More</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </main>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-ui text-sm font-bold text-white sm:text-base">
+                      {post.title || "Untitled post"}
+                    </span>
+                    <span className="mt-0.5 line-clamp-1 block font-ui text-xs text-neutral-400 sm:text-sm">
+                      {post.content}
+                    </span>
+                  </span>
 
-      <footer className="mx-auto mt-14 flex max-w-[860px] flex-col items-center gap-3 px-5">
-        <Link to="/" className="flex items-center gap-2 opacity-80 transition-opacity hover:opacity-100">
-          <img src={logoMark} alt="" className="h-7 w-auto" />
-          <img src={logoWordmark} alt="VantaOrigin" className="h-4 w-auto" />
-        </Link>
-        <p className="text-center font-ui text-sm text-neutral-400">
-          Make your own Realm — one link for all your characters.
-        </p>
-      </footer>
+                  <span className="shrink-0 font-ui text-xs text-[#6b8ff5] underline sm:text-sm">
+                    Read More
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </main>
+
+        <footer className="mt-12 flex flex-col items-center gap-2 px-5">
+          <Link to="/" className="flex items-center gap-2 opacity-70 transition-opacity hover:opacity-100">
+            <img src={logoMark} alt="" className="h-6 w-auto" />
+            <img src={logoWordmark} alt="VantaOrigin" className="h-3.5 w-auto" />
+          </Link>
+          <p className="text-center font-ui text-xs text-neutral-500">
+            One link for all your characters.
+          </p>
+        </footer>
+      </div>
+
+      {openPost && <PostView post={openPost} onClose={() => setOpenPost(null)} />}
     </div>
   );
 }
