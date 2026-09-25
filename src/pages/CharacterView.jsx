@@ -4,6 +4,8 @@ import DashboardNav from "../components/DashboardNav";
 import CharacterCard from "../components/creator/CharacterCard";
 import { DEFAULT_CHARACTER, likeCharacter, loadCharacter, loadPublicCharacter } from "../data/character";
 import { useAuth } from "../data/AuthContext.jsx";
+import ReportCreator from "../components/ReportCreator.jsx";
+import JoinPrompt, { useJoinPrompt } from "../components/JoinPrompt.jsx";
 import Loading from "../components/Loading.jsx";
 import heroBanner from "../assets/creator/hero-banner.webp";
 import mobileBanner from "../assets/creator/profile-mobile-bg.webp";
@@ -169,11 +171,51 @@ export default function CharacterView({ owner = false }) {
   // The sword under the name is the like. A tap answers straight away and the
   // count the API sends back replaces the guess; the ref stops a double tap
   // from sending two requests.
+  // Sharing: the phone's own share sheet where there is one, the clipboard
+  // everywhere else. The link is always the public one, even when an owner
+  // shares from their own view of the character.
+  const [shareNote, setShareNote] = useState("");
+  const share = async () => {
+    const link = character?.id
+      ? `${window.location.origin}/character?id=${character.id}`
+      : window.location.href;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: `${character.alias} on VantaOrigin`, url: link });
+        return;
+      } catch (problem) {
+        // Changed their mind: leave it there rather than copying behind them.
+        if (problem?.name === "AbortError") return;
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(link);
+      setShareNote(
+        owner && character.visibility === "private"
+          ? "Copied — publish it so fans can open it"
+          : "Link copied"
+      );
+      setTimeout(() => setShareNote(""), 2600);
+    } catch {
+      window.prompt("Copy this link", link);
+    }
+  };
+
+  // A visitor who is not signed in gets asked in: after a little while, or
+  // the moment they reach for something that needs an account.
+  const joinPrompt = useJoinPrompt({
+    enabled: !user && !owner && Boolean(character?.id),
+  });
+
   const liking = useRef(false);
   const toggleLike = async () => {
     if (!character?.id || liking.current) return;
+    // Not signed in: ask them in where they are, rather than sending them
+    // away from the character they came to look at.
     if (!user) {
-      navigate("/signin");
+      joinPrompt.invite();
       return;
     }
 
@@ -232,6 +274,21 @@ export default function CharacterView({ owner = false }) {
     <div className="min-h-screen bg-[#1b2233]">
       <DashboardNav active="Creators’ Hub" />
 
+      {shareNote && (
+        <p
+          aria-live="polite"
+          className="fixed inset-x-0 top-4 z-50 mx-auto w-fit rounded-full bg-[#2b3547] px-5 py-2.5 font-ui text-sm font-bold text-white shadow-lg ring-1 ring-white/20"
+        >
+          {shareNote}
+        </p>
+      )}
+
+      <JoinPrompt
+        open={joinPrompt.open}
+        onClose={joinPrompt.close}
+        creator={character.creator}
+      />
+
       <div className="px-4 py-5 sm:px-6 sm:py-6 lg:px-10">
         <div className="mx-auto w-full max-w-[640px] lg:max-w-none">
           <div className="flex flex-wrap items-center justify-between gap-4">
@@ -260,6 +317,7 @@ export default function CharacterView({ owner = false }) {
               )}
               <button
                 type="button"
+                onClick={share}
                 className="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#7b3fe4] to-[#a855f7] px-4 py-2 font-ui text-sm font-bold text-white hover:opacity-90 sm:px-6 sm:py-2.5 sm:text-base"
               >
                 <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -267,6 +325,15 @@ export default function CharacterView({ owner = false }) {
                 </svg>
                 Share
               </button>
+
+              {/* Beside Share, and only on someone else's character. */}
+              {!owner && character.id && (
+                <ReportCreator
+                  target={{ characterId: character.id }}
+                  signedIn={Boolean(user)}
+                  onNeedsAccount={joinPrompt.invite}
+                />
+              )}
             </div>
           </div>
 

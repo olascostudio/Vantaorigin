@@ -182,3 +182,25 @@ export const characterLikes = pgTable(
     characterIdx: index("character_likes_character_id_idx").on(table.characterId),
   })
 );
+
+// A report raised against a creator, from a character page or a Realm. The
+// reason is one of a short list the screen offers; the message is optional.
+export const reports = pgTable(
+  "reports",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    reporterId: uuid("reporter_id").references(() => users.id, { onDelete: "set null" }),
+    subjectUserId: uuid("subject_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    characterId: uuid("character_id").references(() => characters.id, { onDelete: "set null" }),
+    reason: text("reason").notNull(),
+    message: text("message").default("").notNull(),
+    status: text("status").default("open").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    subjectIdx: index("reports_subject_idx").on(table.subjectUserId),
+    reporterIdx: index("reports_reporter_idx").on(table.reporterId),
+  })
+);

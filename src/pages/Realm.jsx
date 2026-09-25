@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../data/api";
 import Loading from "../components/Loading.jsx";
+import ReportCreator from "../components/ReportCreator.jsx";
+import JoinPrompt, { useJoinPrompt } from "../components/JoinPrompt.jsx";
+import { useAuth } from "../data/AuthContext.jsx";
 import logoMark from "../assets/landing/hero/logo-mark.svg";
 import logoWordmark from "../assets/landing/hero/logo-wordmark.svg";
 import characterCover from "../assets/creator/character-cover.svg";
@@ -60,10 +63,15 @@ function PostView({ post, onClose }) {
 
 export default function Realm() {
   const { username } = useParams();
+  const { user } = useAuth();
   const [realm, setRealm] = useState(null);
   const [problem, setProblem] = useState("");
   const [tab, setTab] = useState("Characters");
   const [openPost, setOpenPost] = useState(null);
+
+  // This is the page a creator's link lands on, so it is where someone who
+  // likes what they see is asked to make a Realm of their own.
+  const joinPrompt = useJoinPrompt({ enabled: !user && Boolean(realm) });
 
   useEffect(() => {
     let cancelled = false;
@@ -247,7 +255,16 @@ export default function Realm() {
           )}
         </main>
 
-        <footer className="mt-12 flex flex-col items-center gap-2 px-5">
+        <div className="mt-10 flex justify-center px-5">
+          <ReportCreator
+            target={{ username }}
+            signedIn={Boolean(user)}
+            onNeedsAccount={joinPrompt.invite}
+            className="border-white/20 text-neutral-400 hover:text-white"
+          />
+        </div>
+
+        <footer className="mt-8 flex flex-col items-center gap-2 px-5">
           <Link to="/" className="flex items-center gap-2 opacity-70 transition-opacity hover:opacity-100">
             <img src={logoMark} alt="" className="h-6 w-auto" />
             <img src={logoWordmark} alt="VantaOrigin" className="h-3.5 w-auto" />
@@ -259,6 +276,8 @@ export default function Realm() {
       </div>
 
       {openPost && <PostView post={openPost} onClose={() => setOpenPost(null)} />}
+
+      <JoinPrompt open={joinPrompt.open} onClose={joinPrompt.close} creator={creator.name} />
     </div>
   );
 }
