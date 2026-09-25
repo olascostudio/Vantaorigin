@@ -2,9 +2,9 @@
 // so ownership is enforced in the API, not by database rules that would not
 // survive a move off a particular provider.
 import { z } from "zod";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { categories, characterAssets, characters, users } from "../db/schema.js";
+import { categories, characterAssets, characterLikes, characters, users } from "../db/schema.js";
 import { authenticate } from "../auth/auth.js";
 
 const detailsSchema = z
@@ -32,16 +32,60 @@ const characterBody = z.object({
   details: detailsSchema.optional(),
 });
 
-const withAssets = async (character) => ({
-  ...character,
-  assets: (
+const assetsFor = async (characterId) =>
+  (
     await db
       .select()
       .from(characterAssets)
-      .where(eq(characterAssets.characterId, character.id))
+      .where(eq(characterAssets.characterId, characterId))
       .orderBy(asc(characterAssets.position))
-  ).map((asset) => ({ id: asset.id, url: asset.url })),
-});
+  ).map((asset) => ({ id: asset.id, url: asset.url }));
+
+// How many people liked each of these characters, and whether this viewer is
+// one of them. Two queries whatever the number of characters, so a long page
+// costs the same as a short one.
+async function likeInfo(ids, viewerId) {
+  const info = new Map(ids.map((id) => [id, { likes: 0, liked: false }]));
+  if (!ids.length) return info;
+
+  const counts = await db
+    .select({ characterId: characterLikes.characterId, total: sql`count(*)::int` })
+    .from(characterLikes)
+    .where(inArray(characterLikes.characterId, ids))
+    .groupBy(characterLikes.characterId);
+  for (const row of counts) {
+    info.get(row.characterId).likes = Number(row.total);
+  }
+
+  if (viewerId) {
+    const mine = await db
+      .select({ characterId: characterLikes.characterId })
+      .from(characterLikes)
+      .where(and(eq(characterLikes.userId, viewerId), inArray(characterLikes.characterId, ids)));
+    for (const row of mine) {
+      info.get(row.characterId).liked = true;
+    }
+  }
+
+  return info;
+}
+
+// A character as the pages read it: its artwork and its likes alongside it.
+async function decorate(rows, viewerId) {
+  const info = await likeInfo(
+    rows.map((row) => row.id),
+    viewerId
+  );
+  return Promise.all(
+    rows.map(async (row) => ({
+      ...row,
+      assets: await assetsFor(row.id),
+      ...info.get(row.id),
+    }))
+  );
+}
+
+const decorateOne = async (row, viewerId) => (await decorate([row], viewerId))[0];
 
 // Loads a character the signed-in user owns, or null.
 async function ownedCharacter(userId, id) {
@@ -85,7 +129,7 @@ export default async function characterRoutes(app) {
       .from(characters)
       .where(eq(characters.userId, request.user.id))
       .orderBy(desc(characters.createdAt));
-    return Promise.all(rows.map(withAssets));
+    return decorate(rows, request.user.id);
   });
 
   app.post("/characters", { preHandler: authenticate() }, async (request, reply) => {
@@ -94,7 +138,7 @@ export default async function characterRoutes(app) {
       .insert(characters)
       .values({ ...body, userId: request.user.id })
       .returning();
-    return reply.code(201).send(await withAssets(character));
+    return reply.code(201).send(await decorateOne(character, request.user.id));
   });
 
   app.patch("/characters/:id", { preHandler: authenticate() }, async (request, reply) => {
@@ -106,7 +150,7 @@ export default async function characterRoutes(app) {
       .returning();
 
     if (!character) return reply.code(404).send({ error: "Character not found" });
-    return withAssets(character);
+    return decorateOne(character, request.user.id);
   });
 
   app.delete("/characters/:id", { preHandler: authenticate() }, async (request, reply) => {
@@ -141,37 +185,98 @@ export default async function characterRoutes(app) {
     return reply.code(204).send();
   });
 
-  // ---- what visitors can see, no sign-in needed ----
-  app.get("/public/characters", async (request) => {
-    const limit = Math.min(Number(request.query.limit) || 24, 60);
-    const rows = await db
-      .select({
-        character: characters,
-        creator: { username: users.username, avatarUrl: users.avatarUrl },
-      })
+  // ---- likes ----
+  // Signing in is required, so the number under a character stands for that
+  // many people. Liking your own work would not, so it is turned away.
+  const likeable = async (request, reply) => {
+    const [character] = await db
+      .select()
       .from(characters)
-      .innerJoin(users, eq(users.id, characters.userId))
-      .where(eq(characters.isPublic, true))
-      .orderBy(desc(characters.createdAt))
-      .limit(limit);
-
-    return Promise.all(
-      rows.map(async ({ character, creator }) => ({ ...(await withAssets(character)), creator }))
-    );
-  });
-
-  app.get("/public/characters/:id", async (request, reply) => {
-    const [row] = await db
-      .select({
-        character: characters,
-        creator: { username: users.username, avatarUrl: users.avatarUrl },
-      })
-      .from(characters)
-      .innerJoin(users, eq(users.id, characters.userId))
-      .where(and(eq(characters.id, request.params.id), eq(characters.isPublic, true)))
+      .where(eq(characters.id, request.params.id))
       .limit(1);
 
-    if (!row) return reply.code(404).send({ error: "Character not found" });
-    return { ...(await withAssets(row.character)), creator: row.creator };
+    if (!character || !character.isPublic) {
+      reply.code(404).send({ error: "Character not found" });
+      return null;
+    }
+    if (character.userId === request.user.id) {
+      reply.code(400).send({ error: "You cannot like your own character" });
+      return null;
+    }
+    return character;
+  };
+
+  const likeState = async (characterId, viewerId) =>
+    (await likeInfo([characterId], viewerId)).get(characterId);
+
+  app.post("/characters/:id/like", { preHandler: authenticate() }, async (request, reply) => {
+    const character = await likeable(request, reply);
+    if (!character) return reply;
+
+    await db
+      .insert(characterLikes)
+      .values({ characterId: character.id, userId: request.user.id })
+      .onConflictDoNothing();
+
+    return likeState(character.id, request.user.id);
   });
+
+  app.delete("/characters/:id/like", { preHandler: authenticate() }, async (request, reply) => {
+    const character = await likeable(request, reply);
+    if (!character) return reply;
+
+    await db
+      .delete(characterLikes)
+      .where(
+        and(eq(characterLikes.characterId, character.id), eq(characterLikes.userId, request.user.id))
+      );
+
+    return likeState(character.id, request.user.id);
+  });
+
+  // ---- what visitors can see, no sign-in needed ----
+  // A visitor who happens to be signed in also learns which of these they
+  // have already liked, so the sword can show as pressed.
+  app.get(
+    "/public/characters",
+    { preHandler: authenticate({ required: false }) },
+    async (request) => {
+      const limit = Math.min(Number(request.query.limit) || 24, 60);
+      const rows = await db
+        .select({
+          character: characters,
+          creator: { username: users.username, avatarUrl: users.avatarUrl },
+        })
+        .from(characters)
+        .innerJoin(users, eq(users.id, characters.userId))
+        .where(eq(characters.isPublic, true))
+        .orderBy(desc(characters.createdAt))
+        .limit(limit);
+
+      const decorated = await decorate(
+        rows.map((row) => row.character),
+        request.user?.id
+      );
+      return decorated.map((character, index) => ({ ...character, creator: rows[index].creator }));
+    }
+  );
+
+  app.get(
+    "/public/characters/:id",
+    { preHandler: authenticate({ required: false }) },
+    async (request, reply) => {
+      const [row] = await db
+        .select({
+          character: characters,
+          creator: { username: users.username, avatarUrl: users.avatarUrl },
+        })
+        .from(characters)
+        .innerJoin(users, eq(users.id, characters.userId))
+        .where(and(eq(characters.id, request.params.id), eq(characters.isPublic, true)))
+        .limit(1);
+
+      if (!row) return reply.code(404).send({ error: "Character not found" });
+      return { ...(await decorateOne(row.character, request.user?.id)), creator: row.creator };
+    }
+  );
 }

@@ -162,3 +162,23 @@ export const characterAssets = pgTable(
     characterIdx: index("character_assets_character_id_idx").on(table.characterId),
   })
 );
+
+// A like on a character. One row per person per character: the unique index
+// makes a second tap a no-op rather than a second like.
+export const characterLikes = pgTable(
+  "character_likes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    characterId: uuid("character_id")
+      .notNull()
+      .references(() => characters.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    oneEach: uniqueIndex("character_likes_character_user_key").on(table.characterId, table.userId),
+    characterIdx: index("character_likes_character_id_idx").on(table.characterId),
+  })
+);

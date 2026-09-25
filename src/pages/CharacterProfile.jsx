@@ -319,7 +319,7 @@ export default function CharacterProfile() {
           <div className="mt-8 flex flex-col gap-10 lg:hidden">
             <SectionPill>Characters</SectionPill>
             <Stacked className="mx-auto">
-              <CharacterCard alias={data.alias} power={data.power} cover={data.cover} showViewMore />
+              <CharacterCard alias={data.alias} likes={data.likes} cover={data.cover} showViewMore />
             </Stacked>
 
             <section
@@ -462,7 +462,7 @@ export default function CharacterProfile() {
             </div>
 
             <div className="relative flex flex-row gap-6 p-6">
-              <CharacterCard alias={data.alias} power={data.power} cover={data.cover} showViewMore />
+              <CharacterCard alias={data.alias} likes={data.likes} cover={data.cover} showViewMore />
 
               <div className="min-w-0 flex-1">
                 <div className="flex flex-col gap-2 xl:flex-row xl:items-start xl:gap-4">

@@ -7,8 +7,21 @@ import sword from "../../assets/creator/sword.svg";
 const WINDOW =
   "M132.639 10.2549C131.127 10.2549 129.671 10.8221 128.558 11.8447L109.7 29.1729C108.587 30.1955 107.131 30.7627 105.619 30.7627H41.0156C37.6843 30.7627 34.9834 33.4636 34.9834 36.7949V110.567C34.9834 112.698 33.8596 114.67 32.0273 115.756L13.8115 126.555C11.9792 127.641 10.8556 129.613 10.8555 131.743V462.047C10.8555 472.041 18.9572 480.142 28.9512 480.143H345.025C355.019 480.142 363.121 472.041 363.121 462.047V131.421C363.121 129.468 362.175 127.635 360.583 126.504L342.135 113.395C340.543 112.263 339.597 110.431 339.597 108.478V36.7949C339.597 33.4636 336.896 30.7627 333.564 30.7627H277.075C275.376 30.7627 273.756 30.0467 272.613 28.79L257.547 12.2275C256.404 10.9709 254.784 10.2549 253.085 10.2549H132.639Z";
 
-export default function CharacterCard({ alias, power, cover, showViewMore = false, onViewMore }) {
+// 1_300 reads as 1.3K on a card this size.
+const readable = (count) =>
+  typeof count === "number" ? new Intl.NumberFormat("en", { notation: "compact" }).format(count) : count;
+
+export default function CharacterCard({
+  alias,
+  likes = 0,
+  liked = false,
+  onLike,
+  cover,
+  showViewMore = false,
+  onViewMore,
+}) {
   const id = useId().replace(/:/g, "");
+  const count = readable(likes);
 
   // containerType lets the text below scale with the card, not the screen.
   return (
@@ -58,13 +71,35 @@ export default function CharacterCard({ alias, power, cover, showViewMore = fals
         >
           {alias}
         </p>
-        <p
-          style={{ fontSize: "clamp(11px, 5.4cqw, 18px)" }}
-          className="flex items-center gap-[0.4em] font-ui font-bold text-white"
-        >
-          <img src={sword} alt="" className="h-[1.1em] w-auto" />
-          {power}
-        </p>
+
+        {/* The sword is the like: a count on its own where nobody can press it. */}
+        {onLike ? (
+          <button
+            type="button"
+            onClick={onLike}
+            aria-pressed={liked}
+            aria-label={liked ? `Unlike ${alias}` : `Like ${alias}`}
+            style={{ fontSize: "clamp(11px, 5.4cqw, 18px)" }}
+            className={`flex items-center gap-[0.4em] rounded-full px-[0.8em] py-[0.25em] font-ui font-bold transition-transform hover:bg-white/10 active:scale-90 ${
+              liked ? "text-[#f5af32]" : "text-white"
+            }`}
+          >
+            <img
+              src={sword}
+              alt=""
+              className={`h-[1.1em] w-auto transition-opacity ${liked ? "" : "opacity-70"}`}
+            />
+            {count}
+          </button>
+        ) : (
+          <p
+            style={{ fontSize: "clamp(11px, 5.4cqw, 18px)" }}
+            className="flex items-center gap-[0.4em] font-ui font-bold text-white"
+          >
+            <img src={sword} alt="" className="h-[1.1em] w-auto" />
+            {count}
+          </p>
+        )}
       </div>
     </div>
   );

@@ -24,6 +24,8 @@ export const DEFAULT_CHARACTER = {
   banner: null,
   visibility: "private",
   power: "1.3M",
+  likes: 1300000,
+  liked: false,
   creator: "Joseph Marine",
   tagline: "The One Who Becomes Anyone.",
   backstory:
@@ -61,6 +63,8 @@ function toClient(row, creatorName = "") {
     tagline: row.tagline || "",
     backstory: row.backstory || "",
     power: row.power || "0",
+    likes: row.likes ?? 0,
+    liked: Boolean(row.liked),
     cover: row.coverUrl || null,
     banner: row.bannerUrl || null,
     visibility: row.isPublic ? "public" : "private",
@@ -170,3 +174,10 @@ export async function uploadImage(file, folder = "covers") {
   const { url } = await api.upload(`/uploads?folder=${folder}`, file);
   return url;
 }
+
+// ---- likes ----
+
+// Hands back the new count and whether this reader is one of the likes, so
+// the card can settle on what the API says rather than on a guess.
+export const likeCharacter = (id, liked) =>
+  liked ? api.delete(`/characters/${id}/like`) : api.post(`/characters/${id}/like`);

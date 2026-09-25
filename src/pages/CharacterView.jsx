@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import CharacterCard from "../components/creator/CharacterCard";
-import { DEFAULT_CHARACTER, loadCharacter, loadPublicCharacter } from "../data/character";
+import { DEFAULT_CHARACTER, likeCharacter, loadCharacter, loadPublicCharacter } from "../data/character";
+import { useAuth } from "../data/AuthContext.jsx";
 import Loading from "../components/Loading.jsx";
 import heroBanner from "../assets/creator/hero-banner.webp";
 import mobileBanner from "../assets/creator/profile-mobile-bg.webp";
@@ -123,6 +124,7 @@ function AssetRail({ assets }) {
 
 export default function CharacterView({ owner = false }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [params] = useSearchParams();
   const id = params.get("id");
   // Owners read their own character; visitors read the published one. With no
@@ -163,6 +165,39 @@ export default function CharacterView({ owner = false }) {
   const [storyOpen, setStoryOpen] = useState(false);
   // Which extra core ability is expanded; null shows the main description.
   const [openExtra, setOpenExtra] = useState(null);
+
+  // The sword under the name is the like. A tap answers straight away and the
+  // count the API sends back replaces the guess; the ref stops a double tap
+  // from sending two requests.
+  const liking = useRef(false);
+  const toggleLike = async () => {
+    if (!character?.id || liking.current) return;
+    if (!user) {
+      navigate("/signin");
+      return;
+    }
+
+    liking.current = true;
+    const was = character.liked;
+    setCharacter((current) => ({
+      ...current,
+      liked: !was,
+      likes: Math.max(0, current.likes + (was ? -1 : 1)),
+    }));
+
+    try {
+      const state = await likeCharacter(character.id, was);
+      setCharacter((current) => ({ ...current, ...state }));
+    } catch {
+      setCharacter((current) => ({
+        ...current,
+        liked: was,
+        likes: Math.max(0, current.likes + (was ? 1 : -1)),
+      }));
+    } finally {
+      liking.current = false;
+    }
+  };
 
   if (!character) {
     return (
@@ -241,7 +276,9 @@ export default function CharacterView({ owner = false }) {
             <Stacked className="mx-auto">
               <CharacterCard
                 alias={character.alias}
-                power={character.power}
+                likes={character.likes}
+                liked={character.liked}
+                onLike={owner || !character.id ? undefined : toggleLike}
                 cover={character.cover}
                 showViewMore={owner}
                 onViewMore={() => navigate(`/creators-hub/character/profile?id=${character.id}`)}
@@ -320,7 +357,9 @@ export default function CharacterView({ owner = false }) {
             <div className="relative flex flex-row gap-6 p-6">
               <CharacterCard
                 alias={character.alias}
-                power={character.power}
+                likes={character.likes}
+                liked={character.liked}
+                onLike={owner || !character.id ? undefined : toggleLike}
                 cover={character.cover}
                 showViewMore={owner}
                 onViewMore={() => navigate(`/creators-hub/character/profile?id=${character.id}`)}
