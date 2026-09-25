@@ -4,7 +4,8 @@ import { AuthShell, GRADIENT, PILL } from "./authUi";
 import { useAuth } from "../../data/AuthContext.jsx";
 
 const CODE_LENGTH = 4;
-const RESEND_SECONDS = 39;
+// The API allows another code every 30 seconds; the button waits with it.
+const RESEND_SECONDS = 30;
 
 const format = (total) =>
   `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
@@ -95,6 +96,8 @@ export default function VerifyEmail({
       setSecondsLeft(RESEND_SECONDS);
     } catch (problem) {
       setError(problem.message);
+      // Asked too soon: sit out the rest of the wait the API named.
+      if (problem.data?.retryAfter) setSecondsLeft(problem.data.retryAfter);
     }
   };
 

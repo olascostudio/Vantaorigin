@@ -15,9 +15,12 @@ function apiBase() {
 const BASE = apiBase().replace(/\/$/, "");
 
 export class ApiError extends Error {
-  constructor(message, status) {
+  // The whole answer is kept, so a caller can read anything the API added
+  // alongside the message -- how long to wait before asking again, say.
+  constructor(message, status, data = {}) {
     super(message);
     this.status = status;
+    this.data = data;
   }
 }
 
@@ -45,7 +48,7 @@ async function request(path, { method = "GET", body, headers } = {}) {
   if (response.status === 204) return null;
 
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new ApiError(data.error || "Something went wrong", response.status);
+  if (!response.ok) throw new ApiError(data.error || "Something went wrong", response.status, data);
   return data;
 }
 

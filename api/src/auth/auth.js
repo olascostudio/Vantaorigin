@@ -58,6 +58,9 @@ export async function destroySession(token) {
 // five guesses, one live code per person per purpose, plus the API rate limit.
 const MAX_ATTEMPTS = 5;
 const CODE_TTL_MINUTES = 15;
+// Asking again straight away only sends a second message that makes the first
+// one wrong, so there is a wait between codes.
+export const RESEND_COOLDOWN_SECONDS = 30;
 
 const codeHash = (userId, kind, code) => sha256(`${userId}:${kind}:${code}`);
 
@@ -72,6 +75,20 @@ export async function issueCode(userId, kind) {
     expiresAt: new Date(Date.now() + CODE_TTL_MINUTES * 60_000),
   });
   return code;
+}
+
+// Seconds left before this person may ask for another code of this kind;
+// 0 when they may ask now.
+export async function codeCooldown(userId, kind) {
+  const [row] = await db
+    .select({ createdAt: tokens.createdAt })
+    .from(tokens)
+    .where(and(eq(tokens.userId, userId), eq(tokens.kind, kind)))
+    .limit(1);
+
+  if (!row) return 0;
+  const secondsSince = (Date.now() - new Date(row.createdAt).getTime()) / 1000;
+  return Math.max(0, Math.ceil(RESEND_COOLDOWN_SECONDS - secondsSince));
 }
 
 // Returns "ok", "invalid" or "too_many". Only consumes the code when asked,

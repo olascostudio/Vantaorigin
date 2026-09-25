@@ -14,6 +14,8 @@ const { migrate } = await import("../src/db/migrate.js");
 const { endConnection } = await import("../src/db/client.js");
 
 let app;
+// The code sign-up sent: asking for another one straight away is refused.
+let signUpCode;
 const account = { email: "creator@vantaorigin.test", password: "supersecret1", username: "creator" };
 
 before(async () => {
@@ -42,6 +44,7 @@ test("sign up creates an account and signs the creator in", async () => {
   assert.equal(body.user.username, "@creator");
   assert.equal(body.user.emailVerified, false);
   assert.match(body.devCode, /^\d{4}$/);
+  signUpCode = body.devCode;
 
   const me = await app.inject({
     method: "GET",
@@ -64,8 +67,16 @@ test("a wrong code is refused and the right one verifies the email", async () =>
   });
   const cookie = cookieFrom(signIn);
 
-  const resend = await app.inject({ method: "POST", url: "/auth/resend-code", headers: { cookie } });
-  const code = resend.json().devCode;
+  // Another code cannot be had yet, so the one from sign-up is the live one.
+  const tooSoon = await app.inject({
+    method: "POST",
+    url: "/auth/resend-code",
+    headers: { cookie },
+  });
+  assert.equal(tooSoon.statusCode, 429);
+  assert.ok(tooSoon.json().retryAfter > 0);
+
+  const code = signUpCode;
 
   const wrong = await app.inject({
     method: "POST",

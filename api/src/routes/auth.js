@@ -25,6 +25,7 @@ import {
   SESSION_COOKIE,
   authenticate,
   checkCode,
+  codeCooldown,
   clearSessionCookie,
   createSession,
   destroySession,
@@ -142,6 +143,15 @@ export default async function authRoutes(app) {
   });
 
   app.post("/auth/resend-code", { preHandler: authenticate() }, async (request, reply) => {
+    // Without this, four taps send four codes and only the last one works.
+    const wait = await codeCooldown(request.user.id, "verify_email");
+    if (wait) {
+      return reply.code(429).send({
+        error: `Your code is on its way. You can ask for another in ${wait} seconds.`,
+        retryAfter: wait,
+      });
+    }
+
     const code = await issueCode(request.user.id, "verify_email");
     const sent = await trySend(app, {
       to: request.user.email,
@@ -166,7 +176,9 @@ export default async function authRoutes(app) {
       .limit(1);
 
     let sentCode = null;
-    if (user) {
+    // The same wait as above. The answer is the same either way, so asking
+    // twice quickly simply sends nothing the second time.
+    if (user && !(await codeCooldown(user.id, "reset_password"))) {
       const code = await issueCode(user.id, "reset_password");
       sentCode = code;
       await trySend(app, {
