@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { sessions, users } from "../db/schema.js";
 import { mailer } from "../adapters/email.js";
+import { resetEmail, verificationEmail, welcomeEmail } from "../emails/templates.js";
 // While emails only print to the terminal (local development), the code is
 // also returned so you can finish the flow without an inbox. Never in
 // production, where EMAIL_DRIVER is "resend".
@@ -23,6 +24,7 @@ async function trySend(app, message) {
 
 import {
   SESSION_COOKIE,
+  CODE_TTL_MINUTES,
   authenticate,
   checkCode,
   codeCooldown,
@@ -90,8 +92,15 @@ export default async function authRoutes(app) {
     const code = await issueCode(user.id, "verify_email");
     const sent = await trySend(app, {
       to: email,
-      subject: "Your VantaOrigin verification code",
-      html: `<p>Welcome to VantaOrigin.</p><p>Your code is <b>${code}</b>. It lasts 15 minutes.</p>`,
+      ...verificationEmail({ user, code, minutes: CODE_TTL_MINUTES }),
+    });
+
+    // The welcome letter is its own message: it is not urgent, and it must
+    // not hold up the answer to a sign-up, so it goes without being waited on.
+    trySend(app, {
+      to: email,
+      replyTo: config.EMAIL_REPLY_TO,
+      ...welcomeEmail({ user }),
     });
 
     const session = await createSession(user.id);
@@ -155,8 +164,7 @@ export default async function authRoutes(app) {
     const code = await issueCode(request.user.id, "verify_email");
     const sent = await trySend(app, {
       to: request.user.email,
-      subject: "Your VantaOrigin verification code",
-      html: `<p>Your code is ${code}. It lasts 15 minutes.</p>`,
+      ...verificationEmail({ user: request.user, code, minutes: CODE_TTL_MINUTES }),
     });
     if (!sent) {
       return reply.code(502).send({
@@ -183,8 +191,7 @@ export default async function authRoutes(app) {
       sentCode = code;
       await trySend(app, {
         to: user.email,
-        subject: "Your VantaOrigin reset code",
-        html: `<p>Your password reset code is <b>${code}</b>. It lasts 15 minutes.</p>`,
+        ...resetEmail({ user, code, minutes: CODE_TTL_MINUTES }),
       });
     }
     // Always the same reply, so the form cannot reveal who has an account.

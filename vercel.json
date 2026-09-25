@@ -1,4 +1,33 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "redirects": [
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "studio.vantaorigin.com"
+        }
+      ],
+      "destination": "/marketplace",
+      "permanent": false
+    },
+    {
+      "source": "/:path((?!marketplace|assets/)[^.]*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "studio.vantaorigin.com"
+        }
+      ],
+      "destination": "https://vantaorigin.com/:path",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }

@@ -57,7 +57,7 @@ export async function destroySession(token) {
 // the screens. Short codes are only safe with the guards below: 15 minutes,
 // five guesses, one live code per person per purpose, plus the API rate limit.
 const MAX_ATTEMPTS = 5;
-const CODE_TTL_MINUTES = 15;
+export const CODE_TTL_MINUTES = 15;
 // Asking again straight away only sends a second message that makes the first
 // one wrong, so there is a wait between codes.
 export const RESEND_COOLDOWN_SECONDS = 30;

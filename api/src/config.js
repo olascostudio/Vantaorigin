@@ -40,6 +40,10 @@ const schema = z.object({
   EMAIL_DRIVER: z.enum(["resend", "console"]).default("console"),
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().default("VantaOrigin <noreply@vantaorigin.com>"),
+  // The welcome letter asks for a reply, so replies must reach a person.
+  EMAIL_REPLY_TO: z.string().default("hello@vantaorigin.com"),
+  // Defaults to the app itself, which serves /emails/banner.jpg.
+  EMAIL_BANNER_URL: z.string().optional(),
 
   SESSION_TTL_DAYS: z.coerce.number().default(30),
 });
