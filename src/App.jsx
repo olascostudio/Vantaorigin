@@ -10,6 +10,7 @@ import CharacterView from "./pages/CharacterView";
 import Settings from "./pages/Settings";
 import Community from "./pages/Community";
 import About from "./pages/About";
+import Admin from "./pages/Admin";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Contact from "./pages/Contact";
@@ -54,6 +55,8 @@ export default function App() {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/help" element={<Help />} />
+        {/* Only opens for an account named in the API setting. */}
+        <Route path="/admin" element={<RequireAuth><Admin /></RequireAuth>} />
         <Route path="/realm/:username" element={<Realm />} />
         <Route path="/settings" element={<RequireAuth><Settings /></RequireAuth>} />
         <Route path="/settings/:tab" element={<RequireAuth><Settings /></RequireAuth>} />

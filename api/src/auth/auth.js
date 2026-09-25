@@ -54,10 +54,10 @@ export async function destroySession(token) {
 }
 
 // One-time 4-digit codes for email verification and password resets, to match
-// the screens. Short codes are only safe with the guards below: 15 minutes,
+// the screens. Short codes are only safe with the guards below: ten minutes,
 // five guesses, one live code per person per purpose, plus the API rate limit.
 const MAX_ATTEMPTS = 5;
-export const CODE_TTL_MINUTES = 15;
+export const CODE_TTL_MINUTES = 10;
 // Asking again straight away only sends a second message that makes the first
 // one wrong, so there is a wait between codes.
 export const RESEND_COOLDOWN_SECONDS = 30;

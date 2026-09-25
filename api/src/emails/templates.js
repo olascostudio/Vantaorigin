@@ -114,7 +114,7 @@ export function welcomeEmail({ user }) {
   `;
 
   return {
-    subject: "Welcome to VantaOrigin — Where Stories Become Realms",
+    subject: "Welcome to VantaOrigin",
     html: shell({
       preview: "A place for your characters, and one link to share them.",
       body,

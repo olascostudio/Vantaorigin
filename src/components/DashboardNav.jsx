@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import logoMark from "../assets/landing/hero/logo-mark.svg";
 import logoWordmark from "../assets/landing/hero/logo-wordmark.svg";
 import { useAuth } from "../data/AuthContext.jsx";
+import { amIAdmin } from "../data/admin";
 import VerifyBanner from "./VerifyBanner.jsx";
 
 const LINKS = [
@@ -12,7 +13,10 @@ const LINKS = [
   { label: "Community", to: "/community" },
 ];
 
+// Asked once per page load, and only while signed in: an ordinary creator
+// gets false and never sees the link.
 export default function DashboardNav({ active = "Discover" }) {
+  const [admin, setAdmin] = useState(false);
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -20,6 +24,18 @@ export default function DashboardNav({ active = "Discover" }) {
   const name = user?.firstName || user?.username || "A";
   const initial = name.replace("@", "").charAt(0).toUpperCase();
   const avatar = user?.avatarUrl;
+
+  useEffect(() => {
+    if (!user) {
+      setAdmin(false);
+      return undefined;
+    }
+    let cancelled = false;
+    amIAdmin().then((yes) => !cancelled && setAdmin(yes));
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   // Close the menu after navigating, and on Escape.
   useEffect(() => setOpen(false), [pathname]);
@@ -51,6 +67,17 @@ export default function DashboardNav({ active = "Discover" }) {
                 </NavLink>
               </li>
             ))}
+            {admin && (
+              <li>
+                <NavLink
+                  to="/admin"
+                  className={active === "Admin" ? "font-medium text-primary" : "text-white hover:opacity-80"}
+                  aria-current={active === "Admin" ? "page" : undefined}
+                >
+                  Activity
+                </NavLink>
+              </li>
+            )}
           </ul>
         </nav>
 
@@ -110,6 +137,17 @@ export default function DashboardNav({ active = "Discover" }) {
                 </NavLink>
               </li>
             ))}
+            {admin && (
+              <li>
+                <Link
+                  to="/admin"
+                  onClick={() => setOpen(false)}
+                  className="block rounded-lg px-3 py-4 text-white hover:bg-white/5"
+                >
+                  Activity
+                </Link>
+              </li>
+            )}
             <li>
               <Link
                 to="/settings"

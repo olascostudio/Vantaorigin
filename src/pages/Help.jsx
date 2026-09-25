@@ -19,7 +19,7 @@ const SECTIONS = [
         q: "How do I create an account?",
         a: [
           "Choose Sign up, then enter a username, your email address and a password of at least 8 characters, and confirm that you are 18 or over.",
-          "We email you a 4-digit code. Enter it on the next screen to verify your email. The code lasts 15 minutes, allows five attempts, and can be resent.",
+          "We email you a 4-digit code. Enter it on the next screen to verify your email. The code lasts 10 minutes, allows five attempts, and can be resent once every 30 seconds.",
           "You are signed in as soon as the account is created, so you can start straight away and verify afterwards. Staying signed in lasts 30 days on that device.",
         ],
       },
@@ -100,7 +100,7 @@ const SECTIONS = [
       {
         q: "I forgot my password.",
         a: [
-          "Choose “Forgot Password?” on the login screen and enter your email address. We send a 4-digit code that lasts 15 minutes and allows five attempts.",
+          "Choose “Forgot Password?” on the login screen and enter your email address. We send a 4-digit code that lasts 10 minutes and allows five attempts.",
           "Enter the code, then choose a new password of at least 8 characters. Resetting signs you out everywhere, so anyone using your account on another device is signed out too.",
           "For security, the reset screen gives the same response whether or not an email address has an account, so it can't be used to find out who is registered.",
         ],
@@ -207,8 +207,8 @@ const SECTIONS = [
         q: "I didn't receive an email from VantaOrigin.",
         a: [
           "Check your spam folder and that the address you entered is right.",
-          "While we finish verifying our sending domain, verification and reset emails only reach a limited set of addresses. If you're expecting a code and nothing arrives, email hello@vantaorigin.com and we'll verify your account manually.",
-          "Codes last 15 minutes. If yours has expired, request a new one — the old code stops working as soon as a new one is sent.",
+          "Only the newest code works, and another can be asked for every 30 seconds. If several arrived at once, use the one from the most recent email.",
+          "Codes last 10 minutes. If yours has expired, request a new one — the old code stops working as soon as a new one is sent. If nothing arrives at all, email hello@vantaorigin.com and we will verify your account by hand.",
         ],
       },
     ],
