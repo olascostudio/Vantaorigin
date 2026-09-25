@@ -13,10 +13,13 @@ const PINK = "#df1871";
 const PAGE = "#0e1320";
 const PANEL = "#151c2c";
 
+// Icon, where it goes, and how wide it is at 26px tall: each is drawn from
+// the same artwork as the site, in pink. The alt text is what someone sees
+// when their mail app refuses to load pictures, so it names the place.
 const SOCIALS = [
-  ["Discord", "https://discord.gg/4E5dFcaEAa"],
-  ["X", "https://x.com/vantaorigin"],
-  ["Instagram", "https://www.instagram.com/vantaoriginstudio/"],
+  ["Discord", "https://discord.gg/4E5dFcaEAa", "discord.png", 34],
+  ["X", "https://x.com/vantaorigin", "x.png", 24],
+  ["Instagram", "https://www.instagram.com/vantaoriginstudio/", "instagram.png", 26],
 ];
 
 // Hosted beside the app, so the address holds wherever the API runs. Several
@@ -72,9 +75,9 @@ export const button = (text, href) => `
 export function shell({ preview = "", body }) {
   const year = new Date().getFullYear();
   const socials = SOCIALS.map(
-    ([label, href]) =>
-      `<a href="${href}" style="color:${PINK};font-weight:bold;text-decoration:none;padding:0 10px;">${label}</a>`
-  ).join(`<span style="color:${MUTED};">·</span>`);
+    ([label, href, file, width]) =>
+      `<a href="${href}" style="text-decoration:none;padding:0 9px;"><img src="${appOrigin()}/emails/${file}" width="${width}" height="26" alt="${label}" style="border:0;vertical-align:middle;color:${PINK};font-size:13px;font-weight:bold;" /></a>`
+  ).join("");
 
   return `<!doctype html>
 <html lang="en">
