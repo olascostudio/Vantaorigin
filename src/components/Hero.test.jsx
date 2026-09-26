@@ -33,11 +33,11 @@ describe("Hero", () => {
     render(<Hero />, { wrapper: MemoryRouter });
     const cards = screen.getAllByTestId("showcase-card");
     expect(cards.map((card) => card.dataset.card)).toEqual([
-      "ashake",
-      "obaalu",
-      "urukojin",
-      "eganon",
-      "iyanu",
+      "vtuber",
+      "knife-dancer",
+      "ink-centaur",
+      "hooded-gunman",
+      "winged-wolf",
     ]);
   });
 

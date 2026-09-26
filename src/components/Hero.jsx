@@ -7,11 +7,11 @@ import gridLine from "../assets/landing/hero/grid-line.svg";
 import glowEllipse from "../assets/landing/hero/glow-ellipse.svg";
 import bottomFade from "../assets/landing/hero/bottom-fade.png";
 import cardBadge from "../assets/landing/hero/card-badge.svg";
-import cardAshake from "../assets/landing/hero/card-ashake.webp";
-import cardObaalu from "../assets/landing/hero/card-obaalu.webp";
-import cardUrukojin from "../assets/landing/hero/card-urukojin.webp";
-import cardEganon from "../assets/landing/hero/card-eganon.webp";
-import cardIyanu from "../assets/landing/hero/card-iyanu.jpg";
+import artVtuber from "../assets/landing/hero/card-vtuber.webp";
+import artKnifeDancer from "../assets/landing/hero/card-knife-dancer.webp";
+import artInkCentaur from "../assets/landing/hero/card-ink-centaur.webp";
+import artHoodedGunman from "../assets/landing/hero/card-hooded-gunman.webp";
+import artWingedWolf from "../assets/landing/hero/card-winged-wolf.webp";
 import curve802 from "../assets/landing/hero/curve-802.svg";
 import curve803 from "../assets/landing/hero/curve-803.svg";
 import curve804 from "../assets/landing/hero/curve-804.svg";
@@ -103,96 +103,48 @@ const FLIPPED = (deg) => `rotate(${deg}deg) scaleY(-1)`;
 // Figma (last = on top).
 const SHOWCASE_CARDS = [
   {
-    id: "ashake",
+    id: "vtuber",
     x: 408.5,
     box: [156, 490.106, 541.786],
     transform: FLIPPED(-162.55),
-    bg: "#cb4646",
-    image: (
-      <Rotated
-        box={["calc(50% - 8.03px)", -45.88, 401.11, 579.559]}
-        className="-translate-x-1/2"
-        size={[375, 562.5]}
-        transform={FLIPPED(177.3)}
-      >
-        <img src={cardAshake} alt="" className="absolute inset-0 size-full max-w-none object-cover" />
-      </Rotated>
-    ),
+    bg: "#3a2a6b",
+    art: artVtuber,
     badge: { box: [21.01, 29.3, 52.317, 53.051], transform: FLIPPED(-176.98) },
   },
   {
-    id: "obaalu",
+    id: "knife-dancer",
     x: 198.83,
     box: [37, 466.77, 525.208],
     transform: FLIPPED(-166.54),
-    bg: "#31b513",
-    image: (
-      <Rotated
-        box={["calc(100% + 3.44px - 379.144px)", "calc(50% + 5.99px - 251.55px)", 379.144, 503.1]}
-        size={[375, 500]}
-        transform="rotate(0.48deg)"
-      >
-        <img src={cardObaalu} alt="" className="absolute inset-0 size-full max-w-none object-cover" />
-      </Rotated>
-    ),
+    bg: "#5e1a1a",
+    art: artKnifeDancer,
     badge: { box: [17.75, 19.65, 50.567, 51.329], transform: FLIPPED(179.04) },
   },
   {
-    id: "urukojin",
+    id: "ink-centaur",
     x: -408.5,
     box: [156, 490.106, 541.786],
     transform: "rotate(-17.45deg)",
-    bg: "#974242",
-    image: (
-      <Rotated box={[-320.79, -213.09, 1014.367, 877.645]} size={[859, 650]} transform="rotate(17.45deg)">
-        <div className="absolute inset-0 overflow-hidden">
-          <img
-            src={cardUrukojin}
-            alt=""
-            className="absolute top-0 h-full max-w-none"
-            style={{ left: "0.02%", width: "99.98%" }}
-          />
-        </div>
-      </Rotated>
-    ),
+    bg: "#c08a5c",
+    art: artInkCentaur,
     badge: { box: [10.61, 25.74, 50.284, 51.051], transform: "rotate(-0.64deg)" },
   },
   {
-    id: "eganon",
+    id: "hooded-gunman",
     x: -220.63,
     box: [37.96, 490.106, 541.786],
     transform: "rotate(-17.45deg)",
-    bg: "#45453b",
-    image: (
-      <Rotated box={[-146.34, -106.33, 685.511, 731.303]} size={[530, 600]} transform="rotate(17.45deg)">
-        <div className="absolute inset-0 overflow-hidden rounded-tr-[30px]">
-          <img
-            src={cardEganon}
-            alt=""
-            className="absolute max-w-none"
-            style={{ left: "-23.47%", top: "18.29%", width: "131.65%", height: "93.72%" }}
-          />
-        </div>
-      </Rotated>
-    ),
+    bg: "#1b3a63",
+    art: artHoodedGunman,
     badge: { box: [35.21, 22.53, 50.284, 51.051], transform: "rotate(-0.64deg)" },
   },
   {
-    id: "iyanu",
+    id: "winged-wolf",
     x: -13.55,
     box: [0, 372, 451],
     transform: "none",
-    bg: "#3f13b9",
-    image: (
-      <div className="absolute left-0 top-0 h-[539px] w-[372px] overflow-hidden rounded-t-[28px]">
-        <img
-          src={cardIyanu}
-          alt=""
-          className="absolute max-w-none"
-          style={{ left: "-24.19%", top: "-54.13%", width: "148.39%", height: "182.28%" }}
-        />
-      </div>
-    ),
+    bg: "#2a2f5e",
+    art: artWingedWolf,
     badge: { box: [23.5, 23.5, 49.724, 50.5], transform: "none" },
   },
 ];
@@ -207,7 +159,7 @@ function CardBadge({ box, transform }) {
   );
 }
 
-function ShowcaseCard({ id, x, box, transform, bg, image, badge }) {
+function ShowcaseCard({ id, x, box, transform, bg, art, badge }) {
   const [top, width, height] = box;
   return (
     <div
@@ -221,7 +173,8 @@ function ShowcaseCard({ id, x, box, transform, bg, image, badge }) {
           className="relative h-[451px] w-[372px] overflow-hidden rounded-t-[40px] shadow-card"
           style={{ backgroundColor: bg }}
         >
-          {image}
+          {/* The artwork fills the card and tilts with it, as a card would */}
+          <img src={art} alt="" className="absolute inset-0 size-full object-cover" />
           <CardBadge {...badge} />
         </div>
       </div>
