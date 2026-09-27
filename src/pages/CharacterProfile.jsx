@@ -247,6 +247,25 @@ export default function CharacterProfile() {
 
       <div className="px-4 py-5 sm:px-6 sm:py-6 lg:px-10">
         <div className="mx-auto w-full max-w-[640px] lg:max-w-none">
+          {/* Nothing here needs saving by hand, so the way out is just a door */}
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={() => navigate("/creators-hub", { state: { tab: "Character" } })}
+              className="flex shrink-0 items-center gap-2 whitespace-nowrap font-ui text-base text-white hover:opacity-80 sm:text-lg"
+            >
+              <svg viewBox="0 0 24 24" className="size-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <path d="M19 12H5M11 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Creators&rsquo; Hub
+            </button>
+
+            {/* The desktop header carries this; on a phone it belongs here */}
+            <span aria-live="polite" className="truncate text-right font-ui text-xs text-neutral-400 sm:hidden">
+              {problem ? problem : savedAt ? `Saved ${savedAt.toLocaleTimeString()}` : "Saves as you type"}
+            </span>
+          </div>
+
           {/* Header: who made it, visibility, and the (coming) challenge */}
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
             <p className="min-w-0 truncate font-ui text-lg text-white sm:text-2xl">
@@ -742,6 +761,23 @@ export default function CharacterProfile() {
                 </table>
               </div>
             </section>
+
+            {/* Finishing the stats leaves you here, at the foot of the page */}
+            <div className="mt-12 flex flex-col items-center gap-2">
+              <button
+                type="button"
+                onClick={() => navigate("/creators-hub", { state: { tab: "Character" } })}
+                className="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#c2185b] to-[#a855f7] px-8 py-3.5 font-ui text-base font-bold text-white hover:opacity-90"
+              >
+                <svg viewBox="0 0 24 24" className="size-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <path d="M19 12H5M11 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+                Done — back to Creators&rsquo; Hub
+              </button>
+              <p className="font-ui text-xs text-neutral-400">
+                {problem ? problem : savedAt ? `Saved ${savedAt.toLocaleTimeString()}` : "Everything on this page saves itself"}
+              </p>
+            </div>
           </div>
         </div>
       </div>

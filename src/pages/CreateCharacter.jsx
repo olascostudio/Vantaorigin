@@ -336,6 +336,10 @@ export default function CreateCharacter() {
     creator: user?.username || "",
   }));
   const [modal, setModal] = useState(null); // "privacy" | "success"
+  const [saving, setSaving] = useState(false);
+  // React state arrives a beat too late to stop a second press; the ref does
+  // not, and a second press here made a second character.
+  const creating = useRef(false);
   const [created, setCreated] = useState(null);
   const [createError, setCreateError] = useState("");
   const [params] = useSearchParams();
@@ -383,8 +387,12 @@ export default function CreateCharacter() {
 
       <PrivacyModal
         open={modal === "privacy"}
-        onClose={() => setModal(null)}
+        saving={saving}
+        onClose={() => !saving && setModal(null)}
         onSave={async ({ visibility }) => {
+          if (creating.current) return;
+          creating.current = true;
+          setSaving(true);
           try {
             const character = await createCharacter({
               categoryId: await categoryId(),
@@ -403,6 +411,9 @@ export default function CreateCharacter() {
           } catch (error) {
             setCreateError(error.message);
             setModal(null);
+          } finally {
+            creating.current = false;
+            setSaving(false);
           }
         }}
       />

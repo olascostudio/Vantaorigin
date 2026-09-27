@@ -38,7 +38,7 @@ function Toggle({ label, checked, onChange }) {
   );
 }
 
-export function PrivacyModal({ open, onClose, onSave }) {
+export function PrivacyModal({ open, onClose, onSave, saving = false }) {
   const [isPrivate, setIsPrivate] = useState(true);
   const [agreed, setAgreed] = useState(false);
 
@@ -76,23 +76,26 @@ export function PrivacyModal({ open, onClose, onSave }) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border-2 border-white px-10 py-3 font-ui text-lg font-bold text-white hover:bg-white/10"
+            disabled={saving}
+            className="rounded-full border-2 border-white px-10 py-3 font-ui text-lg font-bold text-white hover:bg-white/10 disabled:opacity-40"
           >
             Go Back
           </button>
           <button
             type="button"
-            disabled={!agreed}
+            disabled={!agreed || saving}
             onClick={() => onSave({ visibility: isPrivate ? "private" : "public" })}
             className={`flex items-center gap-3 rounded-full px-10 py-3 font-ui text-lg font-bold text-white transition-opacity ${
-              agreed ? "bg-gradient-to-r from-[#7b3fe4] to-[#a855f7] hover:opacity-90" : "cursor-not-allowed bg-[#4a5168]"
+              agreed && !saving
+                ? "bg-gradient-to-r from-[#7b3fe4] to-[#a855f7] hover:opacity-90"
+                : "cursor-not-allowed bg-[#4a5168]"
             }`}
           >
             <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
               <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
               <path d="M17 21v-8H7v8M7 3v5h8" />
             </svg>
-            Save Character
+            {saving ? "Saving…" : "Save Character"}
           </button>
         </div>
       </div>
