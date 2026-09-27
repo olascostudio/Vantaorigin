@@ -110,19 +110,28 @@ export default function PortfolioGrid({ albumId, artist, query, albumUrl }) {
   const [visible, setVisible] = useState(PAGE_SIZE);
   const [open, setOpen] = useState(null);
 
-  const projects = useMemo(() => {
-    const term = query.trim().toLowerCase();
-    return portfolio.projects.filter((project) => {
-      const matchesAlbum = !albumId || project.albumId === albumId;
-      const matchesArtist = !artist || project.artist === artist;
-      const matchesTerm =
-        !term ||
-        project.title.toLowerCase().includes(term) ||
-        project.artist.toLowerCase().includes(term) ||
-        project.description.toLowerCase().includes(term);
-      return matchesAlbum && matchesArtist && matchesTerm;
-    });
-  }, [albumId, artist, query]);
+  const term = query.trim().toLowerCase();
+  // Typing searches the whole studio. Looking only inside the album someone
+  // happens to be standing in hides the very thing they asked for.
+  const searching = term.length > 0;
+
+  const projects = useMemo(
+    () =>
+      portfolio.projects.filter((project) => {
+        if (searching) {
+          return (
+            project.title.toLowerCase().includes(term) ||
+            project.artist.toLowerCase().includes(term) ||
+            project.album.toLowerCase().includes(term) ||
+            project.description.toLowerCase().includes(term)
+          );
+        }
+        return (
+          (!albumId || project.albumId === albumId) && (!artist || project.artist === artist)
+        );
+      }),
+    [albumId, artist, searching, term]
+  );
 
   useEffect(() => setVisible(PAGE_SIZE), [albumId, artist, query]);
 
@@ -141,6 +150,13 @@ export default function PortfolioGrid({ albumId, artist, query, albumUrl }) {
 
   return (
     <div className="px-5 pb-10">
+      {searching && (
+        <p className="mb-4 font-ui text-sm text-neutral-400">
+          {projects.length} {projects.length === 1 ? "piece" : "pieces"} matching{" "}
+          <span className="text-white">&ldquo;{query.trim()}&rdquo;</span>, across every album.
+        </p>
+      )}
+
       <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {projects.slice(0, visible).map((project) => (
           <Card key={project.id} project={project} onOpen={setOpen} />
@@ -169,7 +185,7 @@ export default function PortfolioGrid({ albumId, artist, query, albumUrl }) {
         >
           ArtStation
         </a>{" "}
-        · {new Date(portfolio.syncedAt).toLocaleString()}
+        · last updated {new Date(portfolio.syncedAt).toLocaleDateString()}
       </p>
 
       {open && <Lightbox project={open} onClose={() => setOpen(null)} />}
