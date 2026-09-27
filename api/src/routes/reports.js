@@ -6,6 +6,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { characters, reports, users } from "../db/schema.js";
 import { authenticate } from "../auth/auth.js";
+import { userByHandle } from "../db/handles.js";
 
 // The reasons the screen offers, plus room to say more.
 const REASONS = ["copyright", "inappropriate", "harassment", "spam", "other"];
@@ -41,13 +42,7 @@ export default async function reportRoutes(app) {
       subjectId = character.userId;
       characterId = character.id;
     } else {
-      const handle = body.username.replace(/^@+/, "").toLowerCase();
-      const [creator] = await db
-        .select({ id: users.id })
-        .from(users)
-        .where(eq(users.username, `@${handle}`))
-        .limit(1);
-
+      const creator = await userByHandle(body.username, { id: users.id });
       if (!creator) return reply.code(404).send({ error: "That creator does not exist" });
       subjectId = creator.id;
     }

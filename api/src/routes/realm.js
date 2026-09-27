@@ -3,13 +3,12 @@
 import { and, asc, desc, eq } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { characterAssets, characters, highlights, users } from "../db/schema.js";
+import { userByHandle } from "../db/handles.js";
 
 export default async function realmRoutes(app) {
   app.get("/public/realms/:username", async (request, reply) => {
-    // Links are written without the @, and people paste them with it.
-    const handle = request.params.username.replace(/^@+/, "").toLowerCase();
-
-    const [creator] = await db.select().from(users).limit(1).where(eq(users.username, `@${handle}`));
+    // Written without the @, pasted with it, and typed in any capitals.
+    const creator = await userByHandle(request.params.username);
     if (!creator) return reply.code(404).send({ error: "That Realm doesn't exist" });
 
     const published = await db

@@ -8,6 +8,7 @@ import characterCover from "../assets/creator/character-cover.svg";
 import {
   addCategory,
   deleteCategory,
+  renameCategory,
   deleteCharacter,
   loadLibrary,
 } from "../data/character";
@@ -503,6 +504,8 @@ export default function CreatorHub() {
   const [libraryLoading, setLibraryLoading] = useState(true);
   const [addingCategory, setAddingCategory] = useState(false);
   const [problem, setProblem] = useState("");
+  // The category being renamed, and the name being typed for it.
+  const [renaming, setRenaming] = useState(null);
 
   const refreshLibrary = () =>
     loadLibrary()
@@ -633,12 +636,62 @@ export default function CreatorHub() {
                   return (
                     <section key={category.id} aria-label={category.name}>
                       <div className="mb-4 flex items-center justify-between gap-4">
-                        <h3 className="break-words font-ui text-xl font-bold text-white sm:text-2xl">
-                          {category.name}
-                        </h3>
+                        {renaming?.id === category.id ? (
+                          <form
+                            className="flex min-w-0 flex-1 items-center gap-2"
+                            onSubmit={async (event) => {
+                              event.preventDefault();
+                              const name = renaming.name.trim();
+                              setRenaming(null);
+                              if (!name || name === category.name) return;
+
+                              // Show the new name at once; the API follows.
+                              setLibrary((current) => ({
+                                ...current,
+                                categories: current.categories.map((c) =>
+                                  c.id === category.id ? { ...c, name } : c
+                                ),
+                              }));
+
+                              try {
+                                await renameCategory(category.id, name);
+                              } catch (error) {
+                                setProblem(error.message);
+                                await refreshLibrary();
+                              }
+                            }}
+                          >
+                            <input
+                              autoFocus
+                              value={renaming.name}
+                              maxLength={60}
+                              aria-label={`Rename ${category.name}`}
+                              onChange={(event) =>
+                                setRenaming({ id: category.id, name: event.target.value })
+                              }
+                              onBlur={(event) => event.target.form.requestSubmit()}
+                              onKeyDown={(event) => event.key === "Escape" && setRenaming(null)}
+                              className="min-w-0 flex-1 rounded-lg border border-[#a855f7] bg-[#1e2637] px-3 py-1.5 font-ui text-xl font-bold text-white outline-none sm:text-2xl"
+                            />
+                            <button
+                              type="submit"
+                              className="shrink-0 rounded-full bg-[#3ecf6a] px-4 py-1.5 font-ui text-sm font-bold text-white hover:opacity-90"
+                            >
+                              Save
+                            </button>
+                          </form>
+                        ) : (
+                          <h3 className="break-words font-ui text-xl font-bold text-white sm:text-2xl">
+                            {category.name}
+                          </h3>
+                        )}
                         <PostMenu
                           label={`${category.name} options`}
                           items={[
+                            {
+                              label: "Rename Category",
+                              onSelect: () => setRenaming({ id: category.id, name: category.name }),
+                            },
                             {
                               label: "Delete Category",
                               danger: true,

@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { sessions, users } from "../db/schema.js";
 import { mailer } from "../adapters/email.js";
+import { userByHandle } from "../db/handles.js";
 import { resetEmail, verificationEmail, welcomeEmail } from "../emails/templates.js";
 // While emails only print to the terminal (local development), the code is
 // also returned so you can finish the flow without an inbox. Never in
@@ -67,10 +68,9 @@ export default async function authRoutes(app) {
       });
     }
 
-    const [byUsername] = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.username, username));
+    // @Obaalu and @obaalu would share a Realm address, so one of them has
+    // to pick again.
+    const byUsername = await userByHandle(username, { id: users.id });
     if (byUsername) {
       return reply.code(409).send({ error: "That username is taken. Try another.", field: "username" });
     }

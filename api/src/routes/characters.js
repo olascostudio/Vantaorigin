@@ -116,6 +116,19 @@ export default async function characterRoutes(app) {
     return reply.code(201).send(category);
   });
 
+  app.patch("/categories/:id", { preHandler: authenticate() }, async (request, reply) => {
+    const { name } = z.object({ name: z.string().min(1).max(60) }).parse(request.body);
+    const [category] = await db
+      .update(categories)
+      .set({ name: name.trim() })
+      .where(and(eq(categories.id, request.params.id), eq(categories.userId, request.user.id)))
+      .returning();
+
+    // Someone else owning it reads the same as it not existing.
+    if (!category) return reply.code(404).send({ error: "Category not found" });
+    return category;
+  });
+
   app.delete("/categories/:id", { preHandler: authenticate() }, async (request, reply) => {
     await db
       .delete(categories)

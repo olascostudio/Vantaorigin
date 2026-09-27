@@ -111,6 +111,7 @@ export async function loadLibrary() {
 }
 
 export const addCategory = (name) => api.post("/categories", { name });
+export const renameCategory = (id, name) => api.patch(`/categories/${id}`, { name });
 export const deleteCategory = (id) => api.delete(`/categories/${id}`);
 export const deleteCharacter = (id) => api.delete(`/characters/${id}`);
 
