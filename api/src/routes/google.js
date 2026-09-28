@@ -75,8 +75,41 @@ export async function usernameFrom(email, name) {
 }
 
 export default async function googleRoutes(app) {
-  // Lets the sign-in screen show the button only when it will work.
-  app.get("/auth/google/available", async () => ({ available: googleReady() }));
+  // Lets the sign-in screen show the button only when it will work — and,
+  // when it will not, says which setting is wrong in terms that can be acted
+  // on without reading a server log.
+  //
+  // Values are never echoed back. A client id is public, but a secret pasted
+  // into the wrong box would not be, so both are described rather than
+  // shown: enough to recognise "that is my secret, in the wrong field", not
+  // enough to use.
+  app.get("/auth/google/available", async () => {
+    const describe = (value) => {
+      if (!value) return { set: false };
+      const text = String(value);
+      return {
+        set: true,
+        length: text.length,
+        startsWith: text.slice(0, 7),
+        hasSpacesOrBrackets: /[\s<>"']/.test(text),
+      };
+    };
+
+    return {
+      available: googleReady(),
+      reason: googleConfigNote(),
+      settings: {
+        GOOGLE_CLIENT_ID: {
+          ...describe(config.GOOGLE_CLIENT_ID),
+          endsWithGoogleSuffix: String(config.GOOGLE_CLIENT_ID || "").trim().endsWith(
+            ".apps.googleusercontent.com"
+          ),
+        },
+        GOOGLE_CLIENT_SECRET: describe(config.GOOGLE_CLIENT_SECRET),
+        API_PUBLIC_URL: config.API_PUBLIC_URL || null,
+      },
+    };
+  });
 
   app.get("/auth/google", async (request, reply) => {
     if (!googleReady()) {
