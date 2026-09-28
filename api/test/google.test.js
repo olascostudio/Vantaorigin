@@ -32,9 +32,20 @@ after(async () => {
   await rm(dataDir, { recursive: true, force: true });
 });
 
-test("the button knows whether it will work", async () => {
+test("the button knows whether it will work, and why not when it will not", async () => {
   const res = await app.inject({ method: "GET", url: "/auth/google/available" });
-  assert.deepEqual(res.json(), { available: true });
+  const body = res.json();
+
+  assert.equal(body.available, true);
+  assert.equal(body.reason, null);
+
+  // The settings are described, never echoed: a secret in the wrong box must
+  // not be handed out by the very endpoint meant to catch that.
+  assert.equal(body.settings.GOOGLE_CLIENT_ID.endsWithGoogleSuffix, true);
+  assert.equal(body.settings.GOOGLE_CLIENT_ID.hasSpacesOrBrackets, false);
+  assert.equal(body.settings.GOOGLE_CLIENT_SECRET.set, true);
+  assert.ok(!JSON.stringify(body).includes(process.env.GOOGLE_CLIENT_SECRET));
+  assert.ok(!JSON.stringify(body).includes(process.env.GOOGLE_CLIENT_ID));
 });
 
 test("starting sends you to Google, with a state we remember", async () => {
