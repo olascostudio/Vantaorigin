@@ -30,8 +30,10 @@ export default function SignIn() {
   const [remember, setRemember] = useState(true);
   const [account, setAccount] = useState("");
   const [password, setPassword] = useState("");
+  // A Google sign-in that could not be finished sends the reason back here.
+  const googleProblem = new URLSearchParams(location.search).get("error");
   const [error, setError] = useState(null);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(googleProblem || "");
   const [busy, setBusy] = useState(false);
 
   const submit = async (event) => {

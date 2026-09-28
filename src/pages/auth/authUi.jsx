@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import authArt from "../../assets/auth/banner.webp";
+import { API_BASE } from "../../data/api";
 
 export const PILL =
   "flex items-center justify-center gap-3 rounded-full font-ui text-lg font-bold transition-transform hover:-translate-y-0.5";
@@ -61,14 +62,30 @@ export function AppleIcon() {
   );
 }
 
-export function SocialButtons({ label = "Sign up" }) {
+// Google sign-in is a journey, not a fetch: the browser leaves for Google and
+// comes back to the API, which sets the session cookie and returns us here.
+// So this is a plain link, not a button with JavaScript behind it.
+export function SocialButtons({ label = "Sign up", next = "/creators-hub" }) {
+  const google = `${API_BASE}/auth/google?next=${encodeURIComponent(next)}`;
+
   return (
     <>
-      <button type="button" className={`${PILL} h-[60px] w-full max-w-[324px] bg-white text-black`}>
+      <a
+        href={google}
+        className={`${PILL} h-[60px] w-full max-w-[324px] bg-white text-black hover:opacity-90`}
+      >
         <GoogleIcon />
         {label} with Google
-      </button>
-      <button type="button" className={`${PILL} h-[60px] w-full max-w-[324px] bg-white text-black`}>
+      </a>
+
+      {/* Apple is not set up yet, and a button that does nothing is worse
+          than one that says so. */}
+      <button
+        type="button"
+        disabled
+        title="Apple sign-in is coming soon"
+        className={`${PILL} h-[60px] w-full max-w-[324px] cursor-not-allowed bg-white/60 text-black/60`}
+      >
         <AppleIcon />
         {label} with Apple
       </button>

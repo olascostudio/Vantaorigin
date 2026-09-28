@@ -14,6 +14,10 @@ function apiBase() {
 
 const BASE = apiBase().replace(/\/$/, "");
 
+// Signing in with Google leaves the app entirely, so that link needs the
+// API's address as a string rather than a fetch.
+export const API_BASE = BASE;
+
 export class ApiError extends Error {
   // The whole answer is kept, so a caller can read anything the API added
   // alongside the message -- how long to wait before asking again, say.

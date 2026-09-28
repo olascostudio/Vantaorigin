@@ -36,6 +36,11 @@ const schema = z.object({
   S3_SECRET_ACCESS_KEY: z.string().optional(),
   S3_PUBLIC_URL: z.string().optional(), // CDN/base URL files are served from
 
+  // Signing in with Google. Leave these out and that button simply says it
+  // is not set up, rather than failing halfway through.
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+
   // Email: Resend for now, SMTP or anything else later.
   EMAIL_DRIVER: z.enum(["resend", "console"]).default("console"),
   RESEND_API_KEY: z.string().optional(),
