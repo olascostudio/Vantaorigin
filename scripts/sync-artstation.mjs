@@ -113,6 +113,37 @@ async function fetchAlbumProjects(album) {
 }
 
 // hash id -> large image urls, scraped from the RSS feed
+// Every post in the feed, not only its pictures: the newest fifty, which is
+// all ArtStation puts there. Used on its own when the JSON is refused.
+async function fetchFeed() {
+  const xml = await get(`https://www.artstation.com/${USER}.rss`);
+  const posts = [];
+
+  for (const chunk of xml.split("<item>").slice(1)) {
+    const link = (chunk.match(/<link>([^<]+)<\/link>/) || [])[1] || "";
+    const hash = (link.match(/artwork\/([A-Za-z0-9]+)/) || [])[1];
+    if (!hash) continue;
+
+    const rawTitle = decode((chunk.match(/<title>([^]*?)<\/title>/) || [])[1] || "");
+    // The feed appends " by <studio>" to every title; the site does not.
+    const title = rawTitle.replace(/\s+by\s+Vantaorigin\s+Ent\.?$/i, "").trim() || rawTitle;
+    const published = (chunk.match(/<pubDate>([^<]+)<\/pubDate>/) || [])[1];
+    const images = [
+      ...new Set([...chunk.matchAll(/https:\/\/cdn[a-z]?\.artstation\.com[^"'\s<)]+/g)].map((m) => m[0])),
+    ].filter((url) => /\/(large|original|medium)\//.test(url));
+
+    posts.push({
+      hash,
+      title,
+      permalink: link,
+      images,
+      publishedAt: published ? new Date(published).toISOString() : new Date().toISOString(),
+    });
+  }
+
+  return posts;
+}
+
 async function fetchImages() {
   const xml = await get(`https://www.artstation.com/${USER}.rss`);
   const byHash = new Map();
@@ -175,13 +206,124 @@ async function readExisting() {
   }
 }
 
+// ArtStation answers the JSON endpoints only for addresses it likes: both
+// GitHub's runners and our own host get a 403 challenge page, while the feed
+// is served to either without complaint. So when the JSON is refused we take
+// what the feed gives — the newest work, its pictures and when it was posted —
+// and leave everything an earlier full run learned exactly as it was.
+//
+// The feed says nothing about which album a piece belongs to, so new work
+// arrives under "Latest Work" and is filed properly by the next full run.
+const LATEST_ALBUM = {
+  id: 0,
+  title: "Latest Work",
+  slug: "latest-work",
+  url: `https://www.artstation.com/${USER}`,
+  count: 0,
+};
+
+async function syncFromFeed(previous, reason) {
+  console.log(`ArtStation refused the album data (${reason}); reading the feed instead.`);
+  if (!previous) throw new Error("Nothing to build on: no earlier sync to keep.");
+
+  const posts = await fetchFeed();
+  if (!posts.length) throw new Error("The feed came back empty.");
+
+  const known = new Map((previous.projects || []).map((project) => [project.id, project]));
+  const added = [];
+
+  for (const post of posts) {
+    const existing = known.get(post.hash);
+    if (existing) {
+      // Keep it where it is; only fill in pictures it never had.
+      if (!existing.images?.length && post.images.length) existing.images = post.images;
+      continue;
+    }
+
+    added.push({
+      id: post.hash,
+      title: post.title,
+      artist: artistFor(post.title),
+      albumId: LATEST_ALBUM.id,
+      album: LATEST_ALBUM.title,
+      description: "",
+      permalink: post.permalink,
+      cover: post.images[0] ? atSize(post.images[0], "small_square") : null,
+      images: post.images,
+      publishedAt: post.publishedAt,
+      likes: 0,
+    });
+  }
+
+  const projects = [...added, ...known.values()].sort(
+    (a, b) => new Date(b.publishedAt) - new Date(a.publishedAt)
+  );
+
+  const albums = (previous.albums || []).filter((album) => album.id !== LATEST_ALBUM.id);
+  const waiting = projects.filter((project) => project.albumId === LATEST_ALBUM.id).length;
+  if (waiting) albums.unshift({ ...LATEST_ALBUM, count: waiting });
+
+  // The other albums keep the counts ArtStation gave them. A piece can sit in
+  // several albums there while living in one here, so counting our own rows
+  // would quietly shrink every category.
+
+  await writeWhenChanged({ albums, projects, previous });
+  console.log(`Feed sync: ${added.length} new, ${projects.length} in total.`);
+}
+
+// Shared by both paths: the file is only rewritten when the work changed, so
+// a scheduled run that finds nothing new makes no commit.
+async function writeWhenChanged({ albums, projects, previous }) {
+  const unchanged =
+    previous &&
+    JSON.stringify({ albums: previous.albums, projects: previous.projects }) ===
+      JSON.stringify({ albums, projects });
+
+  if (unchanged) {
+    console.log("Nothing new on ArtStation; the file stands as it is.");
+    return false;
+  }
+
+  await writeFile(
+    OUT,
+    `${JSON.stringify(
+      {
+        source: `artstation:${USER}`,
+        profile: `https://www.artstation.com/${USER}`,
+        syncedAt: new Date().toISOString(),
+        albums,
+        totalCount: projects.length,
+        projects,
+      },
+      null,
+      2
+    )}\n`
+  );
+  return true;
+}
+
 async function main() {
-  const [albums, images, previousFile] = await Promise.all([
-    fetchAlbums(),
-    fetchImages().catch(() => new Map()), // RSS is a bonus, not a blocker
-    readExisting(),
-  ]);
+  const previousFile = await readExisting();
   const existing = previousFile.byId;
+
+  // ArtStation refuses the JSON to datacenter addresses, so the scheduled
+  // run skips straight to the feed rather than spending a minute being told
+  // no three times.
+  if (process.env.ARTSTATION_FEED_ONLY === "1") {
+    return syncFromFeed(previousFile.payload, "asked for feed-only");
+  }
+
+  let albums;
+  let images;
+  try {
+    [albums, images] = await Promise.all([
+      fetchAlbums(),
+      fetchImages().catch(() => new Map()), // the feed is a bonus here, not a blocker
+    ]);
+  } catch (error) {
+    // Refused the JSON: take what the feed gives rather than nothing at all.
+    return syncFromFeed(previousFile.payload, error.message);
+  }
 
   if (!albums.length) throw new Error("No albums returned — leaving the existing file alone.");
 
@@ -221,29 +363,7 @@ async function main() {
 
   projects.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
 
-  const previous = previousFile.payload;
-  const unchanged =
-    previous &&
-    JSON.stringify({ albums: previous.albums, projects: previous.projects }) ===
-      JSON.stringify({ albums, projects });
-
-  // syncedAt says when the work last changed, not when we last looked: a
-  // timestamp that always moves would mean a commit every run.
-  const payload = {
-    source: `artstation:${USER}`,
-    profile: `https://www.artstation.com/${USER}`,
-    syncedAt: unchanged ? previous.syncedAt : new Date().toISOString(),
-    albums,
-    totalCount: projects.length,
-    projects,
-  };
-
-  if (unchanged) {
-    console.log("Nothing new on ArtStation; the file stands as it is.");
-    return;
-  }
-
-  await writeFile(OUT, `${JSON.stringify(payload, null, 2)}\n`);
+  await writeWhenChanged({ albums, projects, previous: previousFile.payload });
   console.log(`Synced ${albums.length} albums, ${projects.length} projects:`);
   for (const album of albums) console.log(`  ${String(album.count).padStart(3)}  ${album.title}`);
 }

@@ -27,6 +27,16 @@ jobs:
         run: node scripts/sync-artstation.mjs
         env:
           ARTSTATION_USER: vantaoriginstudio
+          # ArtStation answers its JSON endpoints only for addresses it likes.
+          # GitHub runners get a 403 challenge page, and so does our own host,
+          # while the feed is served to both without complaint — so read the
+          # feed and skip a minute of being told no.
+          #
+          # The feed carries the newest fifty posts but not which album they
+          # belong to, so new work lands under "Latest Work" until someone
+          # runs "npm run sync:artstation" from a machine ArtStation trusts,
+          # which files everything properly again.
+          ARTSTATION_FEED_ONLY: "1"
 
       - name: Commit when something changed
         run: |
