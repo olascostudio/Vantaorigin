@@ -50,6 +50,10 @@ const schema = z.object({
   // needs neither a deploy nor a migration.
   ADMIN_EMAILS: z.string().default(""),
 
+  // Where the public site lives. Every link a crawler is handed points here,
+  // never at the API's own address.
+  SITE_URL: z.string().default("https://www.vantaorigin.com"),
+
   SESSION_TTL_DAYS: z.coerce.number().default(30),
 });
 

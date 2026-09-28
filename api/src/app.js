@@ -11,6 +11,7 @@ import adminRoutes from "./routes/admin.js";
 import authRoutes from "./routes/auth.js";
 import characterRoutes from "./routes/characters.js";
 import highlightRoutes from "./routes/highlights.js";
+import previewRoutes from "./routes/preview.js";
 import realmRoutes from "./routes/realm.js";
 import reportRoutes from "./routes/reports.js";
 import uploadRoutes from "./routes/uploads.js";
@@ -80,6 +81,7 @@ export async function buildApp() {
   await app.register(authRoutes);
   await app.register(characterRoutes);
   await app.register(highlightRoutes);
+  await app.register(previewRoutes);
   await app.register(realmRoutes);
   await app.register(reportRoutes);
   await app.register(uploadRoutes);

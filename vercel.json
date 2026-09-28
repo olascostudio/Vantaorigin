@@ -3,31 +3,43 @@
   "redirects": [
     {
       "source": "/",
-      "has": [
-        {
-          "type": "host",
-          "value": "studio.vantaorigin.com"
-        }
-      ],
+      "has": [{ "type": "host", "value": "studio.vantaorigin.com" }],
       "destination": "/marketplace",
       "permanent": false
     },
     {
       "source": "/:path((?!marketplace|assets/)[^.]*)",
-      "has": [
-        {
-          "type": "host",
-          "value": "studio.vantaorigin.com"
-        }
-      ],
+      "has": [{ "type": "host", "value": "studio.vantaorigin.com" }],
       "destination": "https://vantaorigin.com/:path",
       "permanent": false
     }
   ],
   "rewrites": [
+    { "source": "/sitemap.xml", "destination": "https://api.vantaorigin.com/sitemap.xml" },
+    { "source": "/llms.txt", "destination": "https://api.vantaorigin.com/llms.txt" },
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
+      "source": "/character",
+      "has": [
+        { "type": "query", "key": "id", "value": "(?<characterId>[0-9a-fA-F-]+)" },
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(facebookexternalhit|facebookcatalog|twitterbot|linkedinbot|slackbot|slack-imgproxy|discordbot|telegrambot|whatsapp|pinterest|redditbot|embedly|quora link preview|skypeuripreview|vkshare|nuzzel|applebot|bingbot|googlebot|google-extended|duckduckbot|yandex|baiduspider|gptbot|oai-searchbot|chatgpt-user|claudebot|claude-web|anthropic-ai|perplexitybot|perplexity-user|youbot|bytespider|amazonbot|ccbot|diffbot|cohere-ai|meta-externalagent|moonshot|kimi|bot|crawler|spider|preview).*"
+        }
+      ],
+      "destination": "https://api.vantaorigin.com/preview/character/:characterId"
+    },
+    {
+      "source": "/realm/:username",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(facebookexternalhit|facebookcatalog|twitterbot|linkedinbot|slackbot|slack-imgproxy|discordbot|telegrambot|whatsapp|pinterest|redditbot|embedly|quora link preview|skypeuripreview|vkshare|nuzzel|applebot|bingbot|googlebot|google-extended|duckduckbot|yandex|baiduspider|gptbot|oai-searchbot|chatgpt-user|claudebot|claude-web|anthropic-ai|perplexitybot|perplexity-user|youbot|bytespider|amazonbot|ccbot|diffbot|cohere-ai|meta-externalagent|moonshot|kimi|bot|crawler|spider|preview).*"
+        }
+      ],
+      "destination": "https://api.vantaorigin.com/preview/realm/:username"
+    },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
