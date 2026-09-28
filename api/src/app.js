@@ -6,12 +6,12 @@ import cors from "@fastify/cors";
 import multipart from "@fastify/multipart";
 import rateLimit from "@fastify/rate-limit";
 import { ZodError } from "zod";
-import { config, isProduction } from "./config.js";
+import { config, isProduction, placeholders } from "./config.js";
 import adminRoutes from "./routes/admin.js";
 import authRoutes from "./routes/auth.js";
 import characterRoutes from "./routes/characters.js";
 import highlightRoutes from "./routes/highlights.js";
-import googleRoutes from "./routes/google.js";
+import googleRoutes, { googleConfigNote } from "./routes/google.js";
 import previewRoutes from "./routes/preview.js";
 import realmRoutes from "./routes/realm.js";
 import reportRoutes from "./routes/reports.js";
@@ -60,6 +60,17 @@ export async function buildApp() {
   if (isProduction && config.STORAGE_DRIVER === "memory") {
     app.log.warn("STORAGE_DRIVER=memory: uploads are lost on restart. Set up S3/R2.");
   }
+
+  // Settings still wearing the angle brackets from the instructions, and any
+  // that are set but unusable. Better said here than discovered by someone
+  // pressing a button.
+  if (placeholders.length) {
+    app.log.warn(
+      `Ignoring settings that still hold example text: ${placeholders.join(", ")}. Paste the real values.`
+    );
+  }
+  const googleNote = googleConfigNote();
+  if (googleNote) app.log.warn(googleNote);
 
   app.get("/health", async () => {
     await ping();

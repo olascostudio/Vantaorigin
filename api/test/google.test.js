@@ -16,7 +16,8 @@ process.env.APP_ORIGIN = "https://www.vantaorigin.com";
 const { buildApp } = await import("../src/app.js");
 const { migrate } = await import("../src/db/migrate.js");
 const { endConnection } = await import("../src/db/client.js");
-const { usernameFrom } = await import("../src/routes/google.js");
+const { usernameFrom, looksLikeClientId } = await import("../src/routes/google.js");
+const { looksLikePlaceholder } = await import("../src/config.js");
 
 let app;
 
@@ -115,4 +116,40 @@ test("a username is made from the email, and never taken twice", async () => {
   // Even a name of one character comes out usable.
   const short = await usernameFrom("a@gmail.com", "");
   assert.match(short, /^@a00/);
+});
+
+
+// What actually happened live: the client id on the server was still the
+// example from the instructions — "<the client id>", angle brackets and all —
+// so the browser was sent to Google with nonsense and came back with
+// "invalid client". A setting like that is worse than a missing one, because
+// everything carries on as though it were real.
+test("example text is not mistaken for a client id", () => {
+  for (const wrong of [
+    "<the client id>",
+    "<account-id>",
+    "<GOOGLE_CLIENT_ID>",
+    "not-a-client-id",
+    "123-abc.apps.googleusercontent.com extra",
+    "",
+    undefined,
+  ]) {
+    assert.equal(looksLikeClientId(wrong), false, JSON.stringify(wrong));
+  }
+
+  for (const right of [
+    "123456-abc123.apps.googleusercontent.com",
+    "  123456-abc123.apps.googleusercontent.com  ",
+  ]) {
+    assert.equal(looksLikeClientId(right), true, JSON.stringify(right));
+  }
+});
+
+test("anything still in angle brackets is treated as unset", () => {
+  for (const placeholder of ["<the client id>", "<account-id>", "  <whatever>  "]) {
+    assert.equal(looksLikePlaceholder(placeholder), true, placeholder);
+  }
+  for (const real of ["abc", "<not closed", "a<b>c", ""]) {
+    assert.equal(looksLikePlaceholder(real), false, JSON.stringify(real));
+  }
 });

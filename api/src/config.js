@@ -64,11 +64,32 @@ const schema = z.object({
 
 // Values typed into a hosting dashboard often arrive wrapped in quotes or
 // with stray spaces. Clean them before anything else reads them.
+//
+// They also arrive, now and then, as the example from the instructions:
+// "<the client id>", "<account-id>". A setting like that is worse than a
+// missing one, because everything carries on as though it were real and the
+// failure surfaces somewhere else entirely — Google answering "invalid
+// client", a storage endpoint refusing to parse. Anything still wearing
+// angle brackets is treated as not set, and said so out loud.
+export const placeholders = [];
+
+const clean = (value) => {
+  if (typeof value !== "string") return value;
+  const trimmed = value.trim().replace(/^["']|["']$/g, "");
+  return trimmed;
+};
+
+export const looksLikePlaceholder = (value) =>
+  typeof value === "string" && /^<.*>$/.test(value.trim());
+
 const cleaned = Object.fromEntries(
-  Object.entries(process.env).map(([key, value]) => [
-    key,
-    typeof value === "string" ? value.trim().replace(/^["']|["']$/g, "") : value,
-  ])
+  Object.entries(process.env)
+    .map(([key, value]) => [key, clean(value)])
+    .filter(([key, value]) => {
+      if (!looksLikePlaceholder(value)) return true;
+      placeholders.push(key);
+      return false; // as good as unset, and the warning below says why
+    })
 );
 
 const parsed = schema.safeParse(cleaned);

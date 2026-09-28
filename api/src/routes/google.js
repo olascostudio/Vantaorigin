@@ -24,8 +24,33 @@ const PROFILE_URL = "https://openidconnect.googleapis.com/v1/userinfo";
 // the person is away at Google.
 const HANDOFF_COOKIE = "vo_oauth";
 
+// Google's client ids all end the same way. Checking the shape here means a
+// wrong value shows as "not set up yet" on our own screen, rather than as
+// Google's "invalid client" after the browser has already left the site.
+export const looksLikeClientId = (value) =>
+  typeof value === "string" &&
+  /^[^\s<>"']+\.apps\.googleusercontent\.com$/.test(value.trim());
+
 export const googleReady = () =>
-  Boolean(config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET && config.API_PUBLIC_URL);
+  Boolean(
+    looksLikeClientId(config.GOOGLE_CLIENT_ID) &&
+      config.GOOGLE_CLIENT_SECRET &&
+      !/[\s<>]/.test(config.GOOGLE_CLIENT_SECRET) &&
+      config.API_PUBLIC_URL
+  );
+
+// Said once at boot, where whoever set the value will see it.
+export const googleConfigNote = () => {
+  if (googleReady()) return null;
+  if (!config.GOOGLE_CLIENT_ID && !config.GOOGLE_CLIENT_SECRET) return null; // simply off
+  if (!looksLikeClientId(config.GOOGLE_CLIENT_ID)) {
+    return "GOOGLE_CLIENT_ID does not look like a Google client id (it should end in .apps.googleusercontent.com). Google sign-in stays off.";
+  }
+  if (!config.API_PUBLIC_URL) {
+    return "API_PUBLIC_URL is not set, so the Google redirect address cannot be built. Google sign-in stays off.";
+  }
+  return "GOOGLE_CLIENT_SECRET looks wrong. Google sign-in stays off.";
+};
 
 const appOrigin = () => config.APP_ORIGIN.split(",")[0].trim().replace(/\/$/, "");
 const redirectUri = () => `${config.API_PUBLIC_URL.replace(/\/$/, "")}/auth/google/callback`;
