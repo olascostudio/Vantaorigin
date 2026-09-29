@@ -182,3 +182,134 @@ test("a creator cannot settle a report either", async () => {
   });
   assert.equal(res.statusCode, 404);
 });
+
+// The newsletter list, on the same terms as the rest of the dashboard.
+
+test("the numbers include how many people are on the newsletter", async () => {
+  const res = await app.inject({ method: "GET", url: "/admin/overview", headers: { cookie: boss } });
+  const numbers = res.json();
+
+  // Three accounts were made in before(), and each one joined.
+  assert.equal(numbers.newsletter.subscribed, 3);
+  assert.equal(numbers.newsletter.thisWeek, 3);
+});
+
+test("the list is closed to an ordinary creator", async () => {
+  const res = await app.inject({ method: "GET", url: "/admin/newsletter", headers: { cookie: fan } });
+  assert.equal(res.statusCode, 404);
+});
+
+test("the list says who is on it, where they came from, and who has an account", async () => {
+  await app.inject({
+    method: "POST",
+    url: "/newsletter/subscribe",
+    payload: { email: "reader-only@example.com" },
+  });
+
+  const res = await app.inject({ method: "GET", url: "/admin/newsletter", headers: { cookie: boss } });
+  assert.equal(res.statusCode, 200);
+  const { rows, counts, matching } = res.json();
+
+  assert.equal(counts.subscribed, 4);
+  assert.equal(counts.unsubscribed, 0);
+  assert.equal(matching, 4);
+
+  const reader = rows.find((row) => row.email === "reader-only@example.com");
+  assert.equal(reader.source, "footer");
+  assert.equal(reader.hasAccount, false);
+
+  const withAccount = rows.find((row) => row.email === "boss@vantaorigin.test");
+  assert.equal(withAccount.source, "signup");
+  assert.equal(withAccount.hasAccount, true);
+
+  // The unsubscribe token is somebody's key. It never leaves the server.
+  assert.ok(rows.every((row) => !("token" in row)));
+});
+
+test("searching finds an address without listing everyone", async () => {
+  const res = await app.inject({
+    method: "GET",
+    url: "/admin/newsletter?q=READER-ONLY",
+    headers: { cookie: boss },
+  });
+
+  const { rows, matching, counts } = res.json();
+  assert.equal(matching, 1);
+  assert.equal(rows[0].email, "reader-only@example.com");
+  // The totals still describe the whole list, not the search.
+  assert.equal(counts.subscribed, 4);
+});
+
+test("the list can be narrowed to who is still on it", async () => {
+  const before = await app.inject({ method: "GET", url: "/admin/newsletter", headers: { cookie: boss } });
+  const reader = before.json().rows.find((row) => row.email === "reader-only@example.com");
+
+  const off = await app.inject({
+    method: "PATCH",
+    url: `/admin/newsletter/${reader.id}`,
+    headers: { cookie: boss },
+    payload: { status: "unsubscribed" },
+  });
+  assert.equal(off.statusCode, 200);
+
+  const subscribed = await app.inject({
+    method: "GET",
+    url: "/admin/newsletter?status=subscribed",
+    headers: { cookie: boss },
+  });
+  assert.equal(subscribed.json().matching, 3);
+
+  const gone = await app.inject({
+    method: "GET",
+    url: "/admin/newsletter?status=unsubscribed",
+    headers: { cookie: boss },
+  });
+  assert.equal(gone.json().matching, 1);
+  assert.ok(gone.json().rows[0].unsubscribedAt);
+});
+
+test("a row can be erased outright, and then the address may join again", async () => {
+  const list = await app.inject({ method: "GET", url: "/admin/newsletter", headers: { cookie: boss } });
+  const reader = list.json().rows.find((row) => row.email === "reader-only@example.com");
+
+  const res = await app.inject({
+    method: "DELETE",
+    url: `/admin/newsletter/${reader.id}`,
+    headers: { cookie: boss },
+  });
+  assert.equal(res.statusCode, 200);
+
+  const after = await app.inject({ method: "GET", url: "/admin/newsletter", headers: { cookie: boss } });
+  assert.equal(after.json().counts.total, 3);
+
+  // Nothing left behind, so joining again starts clean.
+  await app.inject({
+    method: "POST",
+    url: "/newsletter/subscribe",
+    payload: { email: "reader-only@example.com" },
+  });
+  const again = await app.inject({
+    method: "GET",
+    url: "/admin/newsletter?q=reader-only",
+    headers: { cookie: boss },
+  });
+  assert.equal(again.json().rows[0].status, "subscribed");
+  assert.notEqual(again.json().rows[0].id, reader.id);
+});
+
+test("the list downloads as a file of the people still on it", async () => {
+  const res = await app.inject({
+    method: "GET",
+    url: "/admin/newsletter.csv",
+    headers: { cookie: boss },
+  });
+
+  assert.equal(res.statusCode, 200);
+  assert.match(res.headers["content-type"], /text\/csv/);
+  assert.match(res.headers["content-disposition"], /attachment; filename="vantaorigin-newsletter-\d{4}-\d{2}-\d{2}\.csv"/);
+
+  const lines = res.body.trim().split("\n");
+  assert.equal(lines[0], "email,status,source,joined");
+  assert.equal(lines.length, 5); // heading plus four subscribed
+  assert.ok(lines.every((line, index) => index === 0 || line.includes(",subscribed,")));
+});

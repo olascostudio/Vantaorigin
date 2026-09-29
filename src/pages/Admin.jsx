@@ -4,11 +4,15 @@ import DashboardNav from "../components/DashboardNav";
 import Loading, { Skeleton } from "../components/Loading.jsx";
 import {
   amIAdmin,
+  forgetSubscriber,
   loadCreators,
   loadOverview,
   loadReports,
+  loadSubscribers,
   loadTopCharacters,
+  setSubscriberStatus,
   settleReport,
+  subscribersFileUrl,
 } from "../data/admin";
 import characterCover from "../assets/creator/character-cover.svg";
 
@@ -23,7 +27,7 @@ const REASONS = {
   other: "Other",
 };
 
-const TABS = ["Reports", "Creators", "Characters"];
+const TABS = ["Reports", "Creators", "Characters", "Newsletter"];
 
 const day = (value) =>
   value ? new Date(value).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "—";
@@ -112,6 +116,229 @@ function ReportCard({ report, onSettle, busy }) {
         )}
       </div>
     </article>
+  );
+}
+
+// Who hears from VantaOrigin. The useful question is usually "is this person
+// on it?", so the search box comes before the list.
+function NewsletterPanel({ onTrouble }) {
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("all");
+  const [answer, setAnswer] = useState(null);
+  const [busyId, setBusyId] = useState("");
+  // Which row is waiting for a second press before it is erased.
+  const [confirming, setConfirming] = useState("");
+
+  // Typing should not send a request per keystroke.
+  const [query, setQuery] = useState("");
+  useEffect(() => {
+    const timer = setTimeout(() => setQuery(search.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const refresh = async () => {
+    try {
+      setAnswer(await loadSubscribers({ q: query, status }));
+    } catch (error) {
+      onTrouble(error.message);
+    }
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    loadSubscribers({ q: query, status })
+      .then((next) => {
+        if (!cancelled) setAnswer(next);
+      })
+      .catch((error) => {
+        if (!cancelled) onTrouble(error.message);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, status]);
+
+  const act = async (id, work) => {
+    setBusyId(id);
+    try {
+      await work();
+      await refresh();
+    } catch (error) {
+      onTrouble(error.message);
+    } finally {
+      setBusyId("");
+      setConfirming("");
+    }
+  };
+
+  const counts = answer?.counts;
+
+  return (
+    <section className="mt-5">
+      <div className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-[#222b3c] p-5">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="font-ui text-base font-bold text-white">
+              {counts ? `${counts.subscribed} on the list` : "Counting…"}
+            </p>
+            <p className="mt-1 font-ui text-sm text-neutral-400">
+              {counts
+                ? `${counts.unsubscribed} ${counts.unsubscribed === 1 ? "has" : "have"} left. Every new account joins, and can leave from any email we send.`
+                : " "}
+            </p>
+          </div>
+
+          {/* A file, so the list can be carried to whatever sends the mail. */}
+          <a
+            href={subscribersFileUrl("subscribed")}
+            className="rounded-full border border-white/30 px-5 py-2.5 font-ui text-sm text-white hover:bg-white/10"
+          >
+            Download as CSV
+          </a>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="min-w-[200px] flex-1">
+            <span className="sr-only">Search addresses</span>
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search an address…"
+              className="h-11 w-full rounded-full border border-white/15 bg-black/25 px-5 font-ui text-sm text-white outline-none placeholder:text-neutral-500 focus:border-[#6b8ff5]"
+            />
+          </label>
+
+          <div className="flex flex-wrap gap-2">
+            {["all", "subscribed", "unsubscribed"].map((name) => (
+              <button
+                key={name}
+                type="button"
+                onClick={() => setStatus(name)}
+                aria-pressed={status === name}
+                className={`rounded-full px-4 py-1.5 font-ui text-sm transition-colors ${
+                  status === name ? "bg-[#2b3547] text-white" : "text-neutral-400 hover:text-white"
+                }`}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {!answer && <Skeleton className="mt-4 h-[220px] rounded-2xl" />}
+
+      {answer?.rows.length === 0 && (
+        <p className="mt-4 rounded-2xl border border-dashed border-white/15 px-6 py-12 text-center font-ui text-base text-neutral-400">
+          {query ? `Nobody matching “${query}”.` : "Nobody on the list yet."}
+        </p>
+      )}
+
+      {answer && answer.rows.length > 0 && (
+        <div className="mt-4 overflow-hidden rounded-2xl border border-white/10">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] border-collapse text-left">
+              <thead>
+                <tr className="bg-[#222b3c] font-ui text-sm text-neutral-400">
+                  <th className="px-5 py-3 font-normal">Address</th>
+                  <th className="px-5 py-3 font-normal">Joined by</th>
+                  <th className="px-5 py-3 font-normal">Account</th>
+                  <th className="px-5 py-3 font-normal">State</th>
+                  <th className="px-5 py-3 font-normal">Since</th>
+                  <th className="px-5 py-3 font-normal">
+                    <span className="sr-only">Actions</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {answer.rows.map((row) => (
+                  <tr key={row.id} className="border-t border-white/5 bg-[#1e2637]">
+                    <td className="px-5 py-3 font-ui text-sm text-white">{row.email}</td>
+                    <td className="px-5 py-3 font-ui text-sm text-neutral-400">
+                      {row.source === "signup"
+                        ? "signing up"
+                        : row.source === "google"
+                          ? "Google sign-up"
+                          : "the footer"}
+                    </td>
+                    <td className="px-5 py-3 font-ui text-sm">
+                      <span className={row.hasAccount ? "text-[#5fdc8a]" : "text-neutral-500"}>
+                        {row.hasAccount ? "Yes" : "No"}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3 font-ui text-sm">
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-bold ${
+                          row.status === "subscribed"
+                            ? "bg-white/10 text-neutral-200"
+                            : "bg-[#3a2030] text-[#ffb4c4]"
+                        }`}
+                      >
+                        {row.status}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3 font-ui text-sm text-neutral-400">
+                      {day(row.unsubscribedAt || row.createdAt)}
+                    </td>
+                    <td className="px-5 py-3">
+                      <div className="flex flex-wrap justify-end gap-2">
+                        {row.status === "subscribed" ? (
+                          <button
+                            type="button"
+                            disabled={busyId === row.id}
+                            onClick={() => act(row.id, () => setSubscriberStatus(row.id, "unsubscribed"))}
+                            className="rounded-full border border-white/25 px-4 py-1.5 font-ui text-sm text-neutral-300 hover:bg-white/10 disabled:opacity-50"
+                          >
+                            Take off
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={busyId === row.id}
+                            onClick={() => act(row.id, () => setSubscriberStatus(row.id, "subscribed"))}
+                            className="rounded-full border border-white/25 px-4 py-1.5 font-ui text-sm text-neutral-300 hover:bg-white/10 disabled:opacity-50"
+                          >
+                            Put back
+                          </button>
+                        )}
+
+                        {/* Erasing leaves nothing behind, so it asks twice. */}
+                        {confirming === row.id ? (
+                          <button
+                            type="button"
+                            disabled={busyId === row.id}
+                            onClick={() => act(row.id, () => forgetSubscriber(row.id))}
+                            className="rounded-full bg-[#c2185b] px-4 py-1.5 font-ui text-sm font-bold text-white hover:opacity-90 disabled:opacity-50"
+                          >
+                            Erase for good?
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setConfirming(row.id)}
+                            className="rounded-full px-3 py-1.5 font-ui text-sm text-neutral-500 hover:text-[#ffb4c4]"
+                          >
+                            Erase
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {answer.matching > answer.rows.length && (
+            <p className="border-t border-white/5 bg-[#222b3c] px-5 py-3 font-ui text-sm text-neutral-400">
+              Showing the newest {answer.rows.length} of {answer.matching}. Search to narrow it down.
+            </p>
+          )}
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -239,7 +466,7 @@ export default function Admin() {
         )}
 
         {/* The numbers */}
-        <div className="mt-7 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
+        <div className="mt-7 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-6">
           {overview ? (
             <>
               <Figure
@@ -263,9 +490,14 @@ export default function Admin() {
                 value={overview.openReports}
                 note={overview.openReports ? "needs a look" : "all clear"}
               />
+              <Figure
+                label="Newsletter"
+                value={overview.newsletter?.subscribed ?? 0}
+                note={`${overview.newsletter?.thisWeek ?? 0} this week`}
+              />
             </>
           ) : (
-            Array.from({ length: 5 }).map((_, index) => (
+            Array.from({ length: 6 }).map((_, index) => (
               <Skeleton key={index} className="h-[104px] rounded-2xl" />
             ))
           )}
@@ -384,6 +616,8 @@ export default function Admin() {
             )}
           </section>
         )}
+
+        {tab === "Newsletter" && <NewsletterPanel onTrouble={setProblem} />}
 
         {tab === "Characters" && (
           <section className="mt-5">
