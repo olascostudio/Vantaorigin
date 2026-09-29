@@ -22,7 +22,7 @@ const detailsSchema = z
 const characterBody = z.object({
   name: z.string().min(1).max(80),
   categoryId: z.string().uuid().nullable().optional(),
-  realm: z.string().max(80).optional(),
+  universe: z.string().max(80).optional(),
   tagline: z.string().max(120).optional(),
   backstory: z.string().max(4000).optional(),
   power: z.string().max(20).optional(),

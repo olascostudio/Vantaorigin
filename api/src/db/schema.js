@@ -103,7 +103,7 @@ export const characters = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     categoryId: uuid("category_id").references(() => categories.id, { onDelete: "set null" }),
     name: text("name").notNull(),
-    realm: text("realm").default("").notNull(),
+    universe: text("universe").default("").notNull(),
     tagline: text("tagline").default("").notNull(),
     backstory: text("backstory").default("").notNull(),
     power: text("power").default("0").notNull(),
@@ -183,7 +183,7 @@ export const characterLikes = pgTable(
   })
 );
 
-// A report raised against a creator, from a character page or a Realm. The
+// A report raised against a creator, from a character page or a creator page. The
 // reason is one of a short list the screen offers; the message is optional.
 export const reports = pgTable(
   "reports",

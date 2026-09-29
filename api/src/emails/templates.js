@@ -94,16 +94,16 @@ export function welcomeEmail({ user }) {
       )}. You'll be able to tell us about your project, share your social media and shop links, Kickstarter or other project pages, and provide a description of your work.`
     )}
     ${p(
-      "VantaOrigin gives you a place to create your own Realm, build character profiles, showcase your creative work, and share everything through one simple link."
+      "VantaOrigin gives you a place to create your own page, build character profiles, showcase your creative work, and share everything through one simple link."
     )}
     ${p(strong("Here are 3 things you can do to get started:"), { top: 26 })}
     <ol style="margin:10px 0 0;padding-left:22px;color:#e8ecf5;font-size:16px;line-height:1.7;">
-      <li>Create your Realm</li>
+      <li>Create your page</li>
       <li>Add your characters and build their profiles</li>
-      <li>Share your Realm with your audience</li>
+      <li>Share your page with your audience</li>
     </ol>
     ${p(
-      "You can also explore other creators, discover their Realms, and find creative services through VantaOrigin Studios."
+      "You can also explore other creators, discover their characters, and find creative services through VantaOrigin Studios."
     )}
     ${p(
       `${strong("P.S.")} Why did you sign up for VantaOrigin? What are you hoping to create, showcase, or discover here? Just hit "Reply" and let me know. I'd genuinely love to hear from you.`,
@@ -135,14 +135,14 @@ export function welcomeEmail({ user }) {
       `If you'd like to be part of this network, you can submit your creative work for free here: ${SUBMIT_WORK}`,
       "You'll be able to tell us about your project, share your social media and shop links, Kickstarter or other project pages, and provide a description of your work.",
       "",
-      "VantaOrigin gives you a place to create your own Realm, build character profiles, showcase your creative work, and share everything through one simple link.",
+      "VantaOrigin gives you a place to create your own page, build character profiles, showcase your creative work, and share everything through one simple link.",
       "",
       "Here are 3 things you can do to get started:",
-      "  1. Create your Realm",
+      "  1. Create your page",
       "  2. Add your characters and build their profiles",
-      "  3. Share your Realm with your audience",
+      "  3. Share your page with your audience",
       "",
-      "You can also explore other creators, discover their Realms, and find creative services through VantaOrigin Studios.",
+      "You can also explore other creators, discover their characters, and find creative services through VantaOrigin Studios.",
       "",
       'P.S. Why did you sign up for VantaOrigin? What are you hoping to create, showcase, or discover here? Just hit "Reply" and let me know. I\'d genuinely love to hear from you.',
       "",

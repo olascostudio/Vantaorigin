@@ -50,7 +50,7 @@ before(async () => {
     headers: { cookie },
     payload: {
       name: "Urokojin",
-      realm: "The Vantaverse",
+      universe: "The Vantaverse",
       tagline: "The Thunder Judge",
       backstory: "Born under a sky that would not stop screaming, he was named by the storm itself.",
       isPublic: true,
@@ -127,8 +127,8 @@ test("a private character is not served to crawlers", async () => {
   assert.match(res.body, /noindex/);
 });
 
-test("a Realm page lists the creator and their characters", async () => {
-  const res = await app.inject({ method: "GET", url: "/preview/realm/vtgshadowscribe" });
+test("a creator page lists their characters", async () => {
+  const res = await app.inject({ method: "GET", url: "/preview/creator/vtgshadowscribe" });
   assert.equal(res.statusCode, 200);
 
   const html = res.body;
@@ -143,12 +143,12 @@ test("a Realm page lists the creator and their characters", async () => {
   assert.equal(jsonLd.hasPart[0].name, "Urokojin");
 });
 
-test("the sitemap lists every public character and Realm", async () => {
+test("the sitemap lists every public character and creator", async () => {
   const res = await app.inject({ method: "GET", url: "/sitemap.xml" });
   assert.equal(res.statusCode, 200);
   assert.match(res.headers["content-type"], /xml/);
   assert.match(res.body, new RegExp(`character\\?id=${characterId}`));
-  assert.match(res.body, /realm\/Vtgshadowscribe/);
+  assert.match(res.body, /creator\/Vtgshadowscribe/);
   assert.ok(!res.body.includes(privateId), "private work stays out of the sitemap");
 });
 
@@ -162,14 +162,36 @@ test("llms.txt reads as a list an agent can use", async () => {
   assert.ok(!res.body.includes("Work In Progress"));
 });
 
-test("an unknown character or Realm says so without being indexed", async () => {
+test("an unknown character or creator says so without being indexed", async () => {
   const missing = await app.inject({
     method: "GET",
     url: "/preview/character/00000000-0000-0000-0000-000000000000",
   });
   assert.equal(missing.statusCode, 404);
 
-  const noRealm = await app.inject({ method: "GET", url: "/preview/realm/nobody-at-all" });
-  assert.equal(noRealm.statusCode, 404);
-  assert.match(noRealm.body, /noindex/);
+  const noCreator = await app.inject({ method: "GET", url: "/preview/creator/nobody-at-all" });
+  assert.equal(noCreator.statusCode, 404);
+  assert.match(noCreator.body, /noindex/);
+});
+
+// Discovery is the way in: a crawler that lands there must be able to walk to
+// every character without running the app.
+test("the discovery page lists every published character in plain HTML", async () => {
+  const res = await app.inject({ method: "GET", url: "/preview/discover" });
+  assert.equal(res.statusCode, 200);
+
+  const html = res.body;
+  assert.match(html, /<h1>Discover characters on VantaOrigin<\/h1>/);
+  assert.match(html, /Urokojin/);
+  assert.match(html, /of The Vantaverse/);
+  assert.match(html, /The Thunder Judge/);
+  assert.match(html, /Ola Oriola \(@Vtgshadowscribe\)/);
+  assert.ok(html.includes(`/character?id=${characterId}`), "links straight to the character");
+  assert.ok(!html.includes("Work In Progress"), "private work stays private");
+
+  const jsonLd = JSON.parse(html.match(/<script type="application\/ld\+json">(.+?)<\/script>/s)[1]);
+  assert.equal(jsonLd["@type"], "CollectionPage");
+  assert.equal(jsonLd.mainEntity["@type"], "ItemList");
+  assert.equal(jsonLd.mainEntity.itemListElement[0].name, "Urokojin");
+  assert.equal(jsonLd.mainEntity.itemListElement[0].author.alternateName, "@Vtgshadowscribe");
 });

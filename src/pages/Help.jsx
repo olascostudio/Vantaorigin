@@ -26,13 +26,13 @@ const SECTIONS = [
     ],
   },
   {
-    title: "Realms and characters",
+    title: "Pages and characters",
     items: [
       {
-        q: "What is a Realm?",
+        q: "What is my page?",
         a: [
-          "Your Realm is your space on VantaOrigin: the Creator's Hub, where your categories, characters and highlights live.",
-          "A single public link for a whole Realm isn't live yet. Today each published character has its own page that you can share, and published characters appear on the Discovery page.",
+          "Your page is your space on VantaOrigin: the Creator's Hub, where your categories, characters and highlights live.",
+          "Your public page lives at vantaorigin.com/creator/yourname, and each published character also has its own page that you can share, and published characters appear on the Discovery page.",
         ],
       },
       {

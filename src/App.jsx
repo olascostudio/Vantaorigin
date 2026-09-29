@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import Footer from "./components/Footer";
 import RequireAuth from "./components/RequireAuth.jsx";
 import Landing from "./pages/Landing";
@@ -15,7 +15,7 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Contact from "./pages/Contact";
 import Help from "./pages/Help";
-import Realm from "./pages/Realm";
+import CreatorPage from "./pages/CreatorPage";
 import Marketplace from "./pages/Marketplace";
 import MarketplaceHowItWorks from "./pages/MarketplaceHowItWorks";
 import ProjectRequest from "./pages/ProjectRequest";
@@ -25,6 +25,15 @@ import SignIn from "./pages/auth/SignIn";
 import VerifyEmail from "./pages/auth/VerifyEmail";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
+
+// Links shared before the rename carry /realm/ in them. They are somebody
+// else's post, out of our hands, so they land on the same page rather than a
+// dead end.
+function OldRealmLink() {
+  const { username } = useParams();
+  const { search } = useLocation();
+  return <Navigate to={`/creator/${username}${search}`} replace />;
+}
 
 // studio.vantaorigin.com is the marketplace's own address: visiting its root
 // lands on the marketplace rather than the marketing home page. Every other
@@ -40,7 +49,9 @@ export default function App() {
     <div className="min-h-screen overflow-x-hidden bg-background">
       <Routes>
         <Route path="/" element={<StudioHome />} />
-        <Route path="/discover" element={<RequireAuth><Discover /></RequireAuth>} />
+        {/* Open to anyone. Discovery is how a character is found, and asking
+            a stranger to sign in first is asking them not to look. */}
+        <Route path="/discover" element={<Discover />} />
         <Route path="/creators-hub" element={<RequireAuth><CreatorHub /></RequireAuth>} />
         <Route path="/creators-hub/character/new" element={<RequireAuth><CreateCharacter /></RequireAuth>} />
         <Route path="/creators-hub/character" element={<RequireAuth><CharacterView owner /></RequireAuth>} />
@@ -57,7 +68,11 @@ export default function App() {
         <Route path="/help" element={<Help />} />
         {/* Only opens for an account named in the API setting. */}
         <Route path="/admin" element={<RequireAuth><Admin /></RequireAuth>} />
-        <Route path="/realm/:username" element={<Realm />} />
+        {/* The page a creator shares. It used to be called a Realm, and links
+            with that word in them are already out in the world, so they keep
+            working. */}
+        <Route path="/creator/:username" element={<CreatorPage />} />
+        <Route path="/realm/:username" element={<OldRealmLink />} />
         <Route path="/settings" element={<RequireAuth><Settings /></RequireAuth>} />
         <Route path="/settings/:tab" element={<RequireAuth><Settings /></RequireAuth>} />
         <Route path="/auth" element={<AuthLanding />} />

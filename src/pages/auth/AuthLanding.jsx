@@ -51,7 +51,7 @@ export default function AuthLanding() {
           Welcome to VantaOrigin
         </h1>
         <p className="mt-[10px] text-center font-ui text-lg leading-[27px] text-[#f5f5f5] sm:text-[22px]">
-          Create your Realm, showcase your characters, and share your world with one link.
+          Create character cards, organize your characters, and share one page with one link.
         </p>
 
         <div className="mt-[46.5px] flex flex-col items-center">

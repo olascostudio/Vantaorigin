@@ -83,10 +83,10 @@ function ReportCard({ report, onSettle, busy }) {
         )}
         {report.subject?.username && (
           <Link
-            to={`/realm/${report.subject.username.replace(/^@/, "")}`}
+            to={`/creator/${report.subject.username.replace(/^@/, "")}`}
             className="rounded-full border border-white/30 px-4 py-2 font-ui text-sm text-white hover:bg-white/10"
           >
-            See the Realm
+            See their page
           </Link>
         )}
 
@@ -355,7 +355,7 @@ export default function Admin() {
                       <tr key={creator.id} className="border-t border-white/5 bg-[#1e2637]">
                         <td className="px-5 py-3">
                           <Link
-                            to={`/realm/${creator.username.replace(/^@/, "")}`}
+                            to={`/creator/${creator.username.replace(/^@/, "")}`}
                             className="font-ui text-base font-bold text-white hover:text-[#6b8ff5]"
                           >
                             {creator.username}

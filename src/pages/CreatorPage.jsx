@@ -61,23 +61,23 @@ function PostView({ post, onClose }) {
   );
 }
 
-export default function Realm() {
+export default function CreatorPage() {
   const { username } = useParams();
   const { user } = useAuth();
-  const [realm, setRealm] = useState(null);
+  const [page, setPage] = useState(null);
   const [problem, setProblem] = useState("");
   const [tab, setTab] = useState("Characters");
   const [openPost, setOpenPost] = useState(null);
 
   // This is the page a creator's link lands on, so it is where someone who
-  // likes what they see is asked to make a Realm of their own.
-  const joinPrompt = useJoinPrompt({ enabled: !user && Boolean(realm) });
+  // likes what they see is asked to make a page of their own.
+  const joinPrompt = useJoinPrompt({ enabled: !user && Boolean(page) });
 
   useEffect(() => {
     let cancelled = false;
     api
-      .get(`/public/realms/${encodeURIComponent(username)}`)
-      .then((data) => !cancelled && setRealm(data))
+      .get(`/public/creators/${encodeURIComponent(username)}`)
+      .then((data) => !cancelled && setPage(data))
       .catch((error) => !cancelled && setProblem(error.message));
     return () => {
       cancelled = true;
@@ -88,7 +88,7 @@ export default function Realm() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-5 bg-background px-6 text-center">
         <img src={logoMark} alt="" className="h-12 w-auto" />
-        <h1 className="font-ui text-3xl font-bold text-white">Realm not found</h1>
+        <h1 className="font-ui text-3xl font-bold text-white">Page not found</h1>
         <p className="max-w-[420px] font-ui text-lg text-neutral-300">
           Nobody is using <b className="break-all">{username}</b> on VantaOrigin, or the link is
           wrong.
@@ -103,15 +103,15 @@ export default function Realm() {
     );
   }
 
-  if (!realm) {
+  if (!page) {
     return (
       <div className="min-h-screen bg-background">
-        <Loading label="Opening this Realm" className="min-h-screen" />
+        <Loading label="Opening this page" className="min-h-screen" />
       </div>
     );
   }
 
-  const { creator, characters, highlights } = realm;
+  const { creator, characters, highlights } = page;
   const showing = tab === "Characters" ? characters : highlights;
 
   return (

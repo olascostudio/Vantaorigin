@@ -1,15 +1,15 @@
-// A creator's public Realm: everything a visitor may see about one creator,
+// A creator's public page: everything a visitor may see about one creator,
 // in a single request. Reuses the existing tables — no new concepts.
 import { and, asc, desc, eq } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { characterAssets, characters, highlights, users } from "../db/schema.js";
 import { userByHandle } from "../db/handles.js";
 
-export default async function realmRoutes(app) {
-  app.get("/public/realms/:username", async (request, reply) => {
+export default async function creatorRoutes(app) {
+  app.get("/public/creators/:username", async (request, reply) => {
     // Written without the @, pasted with it, and typed in any capitals.
     const creator = await userByHandle(request.params.username);
-    if (!creator) return reply.code(404).send({ error: "That Realm doesn't exist" });
+    if (!creator) return reply.code(404).send({ error: "That page doesn't exist" });
 
     const published = await db
       .select()

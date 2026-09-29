@@ -47,7 +47,7 @@ export default function SignUp() {
         Start Creating with VantaOrigin
       </h1>
       <p className="mt-[38px] text-center font-ui text-lg leading-[27px] text-[#f5f5f5] sm:text-[22px]">
-        Create your Realm, add your characters, and build a public home for your creative
+        Create your page, add your characters, and build a public home for your creative
         work.
       </p>
 

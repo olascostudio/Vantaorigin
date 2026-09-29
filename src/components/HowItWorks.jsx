@@ -4,7 +4,7 @@ import journeyCurve from "../assets/landing/how/journey-curve.svg";
 // x/y place each step along the curve on the 1376px desktop stage.
 const STEPS = [
   {
-    title: "Create Your Realm",
+    title: "Create your page",
     text: "Set up your personal character hub and make it yours.",
     x: "245px",
     y: "495.8px",
@@ -17,13 +17,13 @@ const STEPS = [
   },
   {
     title: "Organize Your Characters",
-    text: "Manage your characters and keep your Realm updated as your creative work grows.",
+    text: "Manage your characters and keep your page updated as your creative work grows.",
     x: "837px",
     y: "197.8px",
   },
   {
     title: "Share Your Link",
-    text: "Get your public Realm link and put it on Instagram, TikTok, X, Discord, or anywhere your audience finds you.",
+    text: "Get your public link and put it on Instagram, TikTok, X, Discord, or anywhere your audience finds you.",
     x: "1096px",
     y: "109.8px",
   },
@@ -36,8 +36,8 @@ export default function HowItWorks() {
       className="flex flex-col items-center gap-[3px] overflow-hidden bg-background px-4 pb-[60px] pt-[61px] sm:px-8"
     >
       <SectionHeading
-        title="How Your Realm Works"
-        subtitle="Create your Realm, add your characters, keep them organised, and share one link with your audience."
+        title="How It Works"
+        subtitle="Create your page, add your characters, keep them organised, and share one link with your audience."
       />
 
       {/* Below lg the steps are a plain timeline; from lg up they sit on the

@@ -16,17 +16,17 @@ export default function FinalCta() {
 
       <div className="relative flex max-w-[900px] flex-col items-center gap-6">
         <h2 className="font-display text-4xl text-white sm:text-[56px]">
-          Your Characters. Your Realm. One Link.
+          Your characters. One link.
         </h2>
         <p className="font-ui text-lg text-white sm:text-2xl">
-          Create your Realm, showcase your characters, and give your audience one place to discover
+          Create character cards, organize your characters, and give your audience one place to discover
           your work.
         </p>
         <Link
           to="/auth"
           className="mt-2 rounded-[44px] border-[3px] border-[#c687ff] bg-secondary px-12 py-4 font-pill text-xl font-bold text-white transition-opacity hover:opacity-90"
         >
-          Create Your Realm
+          Create your page
         </Link>
       </div>
     </section>

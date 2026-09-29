@@ -390,8 +390,8 @@ export default function CharacterProfile() {
                     —
                   </span>
                   <EditableText
-                    value={data.realm}
-                    onChange={setField("realm")}
+                    value={data.universe}
+                    onChange={setField("universe")}
                     label="universe"
                     placeholder="Their universe"
                     className="!w-auto !px-2 !py-1 text-center font-ui text-2xl font-medium text-white"
@@ -498,8 +498,8 @@ export default function CharacterProfile() {
                       —
                     </span>
                     <EditableText
-                      value={data.realm}
-                      onChange={setField("realm")}
+                      value={data.universe}
+                      onChange={setField("universe")}
                       label="universe"
                       placeholder="Their universe"
                       className="!w-auto min-w-0 break-words !px-2 font-ui text-lg font-bold text-white"

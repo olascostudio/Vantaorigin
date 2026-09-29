@@ -29,11 +29,11 @@ function ObaaluArt() {
   );
 }
 
-const REALMS = [
+const PAGES = [
   {
     id: "iron-inferno-1",
     color: "#fc590b",
-    title: "Obaalu’s Realm",
+    title: "Obaalu’s characters",
     creator: "Arinola",
     characters: 12,
     tags: "Fantasy • Action • Mythology",
@@ -48,7 +48,7 @@ const REALMS = [
   {
     id: "iron-inferno-2",
     color: "#f5af32",
-    title: "Emberforge Realm",
+    title: "Emberforge characters",
     creator: "Carlos Idrobo",
     characters: 9,
     tags: "Fantasy • Concept Art",
@@ -57,7 +57,7 @@ const REALMS = [
   {
     id: "iyanu-etere",
     color: "#6687cd",
-    title: "Iyanu-Etere Realm",
+    title: "Iyanu-Etere characters",
     creator: "Meyimeyi",
     characters: 7,
     tags: "Myth • Illustration",
@@ -78,7 +78,7 @@ const REALMS = [
   {
     id: "iron-inferno-3",
     color: "#96307e",
-    title: "Urukojin Realm",
+    title: "Urukojin characters",
     creator: "Bruno Diaz",
     characters: 14,
     tags: "3D • Props • Environments",
@@ -97,12 +97,12 @@ const REALMS = [
   },
 ];
 
-function RealmCard({ color, title, creator, characters, tags, art, titleWidth = "w-[300px]", authorColor = "text-accent" }) {
+function CreatorCard({ color, title, creator, characters, tags, art, titleWidth = "w-[300px]", authorColor = "text-accent" }) {
   return (
     <article
       className="flex w-[calc(100vw-48px)] max-w-[500px] shrink-0 snap-center flex-col items-center gap-[18px] overflow-hidden rounded-[25px] border-[1.667px] p-4 sm:w-[500px] sm:p-[25px]"
       style={{ borderColor: color, backgroundColor: `${color}0d` }}
-      data-testid="realm-card"
+      data-testid="creator-card"
     >
       <div className="relative h-[360px] w-full overflow-hidden rounded-xl bg-[#888787]">{art}</div>
 
@@ -126,7 +126,7 @@ function RealmCard({ color, title, creator, characters, tags, art, titleWidth = 
           to="/character"
           className="flex items-center gap-[5px] font-ui text-base font-medium text-white underline"
         >
-          View Realm
+          View page
           <img src={arrowUpRight} alt="" className="size-5" />
         </Link>
       </div>
@@ -164,8 +164,8 @@ export default function CommunityWorlds() {
     <section id="explore" className="flex flex-col items-center gap-[50px] overflow-hidden py-[61px]">
       <div className="px-4">
         <SectionHeading
-          title="Explore Creator Realms"
-          subtitle="Discover characters, creative work, and Realms built by creators across VantaOrigin."
+          title="Explore creator pages"
+          subtitle="Discover characters, creative work, and pages built by creators across VantaOrigin."
         />
       </div>
 
@@ -174,19 +174,19 @@ export default function CommunityWorlds() {
           ref={trackRef}
           className="scrollbar-none flex snap-x snap-mandatory gap-[30px] overflow-x-auto px-6 min-[2090px]:justify-center"
         >
-          {REALMS.map(({ id, ...realm }) => (
-            <RealmCard key={id} {...realm} />
+          {PAGES.map(({ id, ...page }) => (
+            <CreatorCard key={id} {...page} />
           ))}
         </div>
 
         <ArrowButton
-          label="Previous realms"
+          label="Previous pages"
           icon={chevronLeft}
           onClick={() => scroll(-1)}
           className="left-3 lg:left-[42px]"
         />
         <ArrowButton
-          label="Next realms"
+          label="Next pages"
           icon={chevronRight}
           onClick={() => scroll(1)}
           className="right-3 lg:right-[41.2px]"

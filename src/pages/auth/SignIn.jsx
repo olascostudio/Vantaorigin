@@ -61,7 +61,7 @@ export default function SignIn() {
         Welcome Back to VantaOrigin
       </h1>
       <p className="mt-[38px] text-center font-ui text-lg leading-[27px] text-[#f5f5f5] sm:text-[22px]">
-        Log in to manage your Realm, update your characters, and keep your creative hub up to
+        Log in to manage your page, update your characters, and keep your creative hub up to
         date.
       </p>
 
@@ -131,7 +131,7 @@ export default function SignIn() {
           <a href="#codes" className="font-bold text-primary hover:underline">
             codes
           </a>{" "}
-          of the realms.
+          of the universes.
         </p>
       </form>
 

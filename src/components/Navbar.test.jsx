@@ -11,14 +11,14 @@ describe("Navbar", () => {
 
   it("navigates around the current product", () => {
     render(<Navbar />, { wrapper: MemoryRouter });
-    ["Explore", "Characters", "Marketplace", "My Realm"].forEach((label) => {
+    ["Explore", "Characters", "Marketplace", "My characters"].forEach((label) => {
       expect(screen.getByRole("link", { name: label })).toBeInTheDocument();
     });
-    expect(screen.getByRole("link", { name: "My Realm" })).toHaveAttribute("href", "/creators-hub");
+    expect(screen.getByRole("link", { name: "My characters" })).toHaveAttribute("href", "/creators-hub");
   });
 
-  it("renders the Create Your Realm CTA", () => {
+  it("renders the Create your page CTA", () => {
     render(<Navbar />, { wrapper: MemoryRouter });
-    expect(screen.getByRole("link", { name: "Create Your Realm" })).toHaveAttribute("href", "/auth");
+    expect(screen.getByRole("link", { name: "Create your page" })).toHaveAttribute("href", "/auth");
   });
 });

@@ -34,7 +34,7 @@ async function publicCharacters() {
   const characters = await loadPublicCharacters(24).catch(() => []);
   return characters.map((character) => ({
       id: character.id,
-      title: character.realm ? `${character.alias} — ${character.realm}` : character.alias,
+      title: character.universe ? `${character.alias} — ${character.universe}` : character.alias,
       author: character.creator,
       colour: "#f5af32",
       art: character.cover || characterCover,
@@ -43,7 +43,7 @@ async function publicCharacters() {
         body: character.backstory,
       },
       to: `/character?id=${character.id}`,
-      searchText: [character.alias, character.realm, character.tagline, character.creator]
+      searchText: [character.alias, character.universe, character.tagline, character.creator]
         .filter(Boolean)
         .join(" "),
   }));

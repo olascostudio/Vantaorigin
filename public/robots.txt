@@ -1,9 +1,17 @@
 # VantaOrigin is a place creators share their characters from, so everything
 # public here is meant to be found — by search engines and by AI assistants
-# alike. Nothing is fenced off.
+# alike. Only the dashboard and the sign-in screens are held back.
 
 User-agent: *
 Allow: /
+# The dashboard and the sign-in screens are nobody else's business, and an
+# indexed sign-in page helps no one.
+Disallow: /admin
+Disallow: /creators-hub
+Disallow: /settings
+Disallow: /signin
+Disallow: /signup
+Disallow: /forgot-password
 
 # Named outright, because several of these look for their own token first and
 # we would rather they read the work than skip it.

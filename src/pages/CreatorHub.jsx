@@ -72,16 +72,16 @@ function LightningDivider() {
   );
 }
 
-// The public address of this creator's Realm, ready to paste anywhere.
-function realmLink(username) {
-  return `${window.location.origin}/realm/${String(username || "").replace(/^@+/, "")}`;
+// The public address of this creator's page, ready to paste anywhere.
+function pageLink(username) {
+  return `${window.location.origin}/creator/${String(username || "").replace(/^@+/, "")}`;
 }
 
-async function copyRealmLink(username) {
-  const link = realmLink(username);
+async function copyPageLink(username) {
+  const link = pageLink(username);
   try {
     await navigator.clipboard.writeText(link);
-    return `Realm link copied — paste it anywhere: ${link}`;
+    return `Link copied — paste it anywhere: ${link}`;
   } catch {
     return link;
   }
@@ -148,7 +148,7 @@ function ProfileHeader() {
             </Link>
             <button
               type="button"
-              onClick={async () => setShared(await copyRealmLink(settings.username))}
+              onClick={async () => setShared(await copyPageLink(settings.username))}
               className="rounded-full bg-[#a855f7] px-5 py-1.5 font-ui text-sm font-bold text-white hover:opacity-90"
             >
               Share
@@ -221,8 +221,8 @@ function CharacterCard({ character, onEdit, onView, onDelete }) {
         <h3 className="mt-2 line-clamp-2 break-words font-ui text-base font-black leading-tight text-white sm:mt-3 sm:text-lg">
           {character.alias}
         </h3>
-        {character.realm && (
-          <p className="mt-0.5 truncate font-ui text-xs font-bold text-neutral-300">{character.realm}</p>
+        {character.universe && (
+          <p className="mt-0.5 truncate font-ui text-xs font-bold text-neutral-300">{character.universe}</p>
         )}
         <p className="mt-1 truncate font-ui text-xs font-medium text-accent">By: {creator}</p>
         <p className="mt-2 line-clamp-2 font-ui text-xs text-neutral-300">

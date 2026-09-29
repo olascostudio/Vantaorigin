@@ -32,7 +32,7 @@ const SECTIONS = [
   {
     title: "3. Creator content",
     body: [
-      "VantaOrigin allows creators to create Realms, upload characters, showcase creative projects, and share related creative work.",
+      "VantaOrigin allows creators to create pages, upload characters, showcase creative projects, and share related creative work.",
       "You remain responsible for the content you upload. You must have the necessary rights or permissions to upload and display anything you publish on VantaOrigin.",
       "You may only publish content relating to your own creative projects or projects you are authorised to represent.",
       "By uploading content, you grant VantaOrigin the limited permission necessary to host, display, distribute, and operate that content as part of the VantaOrigin platform and its features.",
@@ -185,7 +185,7 @@ export default function Terms() {
         <div className="mt-6 flex flex-col gap-4 font-ui text-lg leading-relaxed text-neutral-200">
           <p>
             These Terms govern your access to and use of VantaOrigin, including our website,
-            creator tools, Realms, character profiles, discovery features, VantaOrigin Studios,
+            creator tools, creator pages, character profiles, discovery features, VantaOrigin Studios,
             marketplace services, and related services.
           </p>
           <p>

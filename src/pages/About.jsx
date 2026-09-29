@@ -4,10 +4,10 @@ import Navbar from "../components/Navbar";
 // Plain language, short lines, one idea per paragraph: this page is read by
 // creators, parents and partners alike, so it avoids inside language.
 const CAN_DO = [
-  "Create your own Realm",
+  "Create your own page",
   "Build and manage character profiles",
   "Showcase your creative work",
-  "Share your Realm through one public link",
+  "Share your characters through one public link",
   "Discover other creators",
   "Get creative services through VantaOrigin Studios",
 ];
@@ -83,7 +83,7 @@ export default function About() {
             to="/auth"
             className="rounded-full bg-gradient-to-r from-[#c2185b] to-[#a855f7] px-8 py-3.5 font-ui text-lg font-bold text-white transition-opacity hover:opacity-90"
           >
-            Create Your Realm
+            Create your page
           </Link>
           <Link
             to="/marketplace"

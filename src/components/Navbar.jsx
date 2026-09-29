@@ -6,7 +6,7 @@ const NAV_LINKS = [
   { label: "Explore", href: "#explore" },
   { label: "Characters", href: "#characters" },
   { label: "Marketplace", to: "/marketplace" },
-  { label: "My Realm", to: "/creators-hub" },
+  { label: "My characters", to: "/creators-hub" },
 ];
 
 export default function Navbar() {
@@ -45,7 +45,7 @@ export default function Navbar() {
           to="/auth"
           className="mb-[5px] ml-[5px] shrink-0 bg-primary px-6 py-4 font-ui text-sm font-semibold text-white shadow-block transition-transform hover:-translate-y-0.5"
         >
-          Create Your Realm
+          Create your page
         </Link>
       </div>
     </nav>

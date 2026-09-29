@@ -4,10 +4,10 @@ import { MemoryRouter } from "react-router-dom";
 import Hero from "./Hero";
 
 describe("Hero", () => {
-  it("leads with creating a character Realm", () => {
+  it("leads with creating character cards", () => {
     render(<Hero />, { wrapper: MemoryRouter });
     expect(
-      screen.getByRole("heading", { level: 1, name: /create your character realm/i })
+      screen.getByRole("heading", { level: 1, name: /create your character cards/i })
     ).toBeInTheDocument();
     expect(
       screen.getByText(/Create a home for your characters, organize their profiles/i)
@@ -17,10 +17,10 @@ describe("Hero", () => {
   it("renders both primary CTAs", () => {
     render(<Hero />, { wrapper: MemoryRouter });
     // the navbar lives inside the hero, so its CTA matches the same name
-    const signUp = screen.getAllByRole("link", { name: "Create Your Realm" });
+    const signUp = screen.getAllByRole("link", { name: "Create your page" });
     expect(signUp.length).toBeGreaterThan(0);
     signUp.forEach((link) => expect(link).toHaveAttribute("href", "/auth"));
-    expect(screen.getByRole("link", { name: "Explore Realms" })).toHaveAttribute("href", "#explore");
+    expect(screen.getByRole("link", { name: "Explore characters" })).toHaveAttribute("href", "#explore");
   });
 
   it("announces the character hub rather than a story chapter", () => {

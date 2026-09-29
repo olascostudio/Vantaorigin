@@ -14,14 +14,14 @@ const SOCIALS = [
   { label: "TikTok", icon: tiktokIcon, url: "https://www.tiktok.com/@vantaorigin" },
 ];
 
-// Only what is live today. Event & Realm Wars, Leaderboards and Explore
+// Only what is live today. Events, Leaderboards and Explore
 // Comics are held back until they exist.
 const LINK_COLUMNS = [
   {
     title: "Platform",
     width: "sm:w-[133.2px]",
     links: [
-      { label: "Explore Realms", to: "/discover" },
+      { label: "Explore characters", to: "/discover" },
       { label: "Creator Studio", to: "/marketplace" },
     ],
   },

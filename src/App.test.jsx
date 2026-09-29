@@ -15,7 +15,7 @@ describe("App routing", () => {
     const { container } = renderAt("/");
     const ids = [...container.querySelectorAll("section[id]")].map((section) => section.id);
     expect(ids).toEqual([
-      "realms",
+      "pages",
       "explore",
       "how-it-works",
       "characters",

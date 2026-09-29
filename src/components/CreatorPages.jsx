@@ -38,13 +38,13 @@ function EganonArt() {
   );
 }
 
-const REALMS = [
+const PAGES = [
   {
     id: "obaalu",
     title: "Obaalu — The Emberforge of Creation",
     creator: "Arinola",
-    lead: "A Realm showcasing a creator’s characters, artwork and creative work. ",
-    body: "Every character has its own profile with art, details and links, all kept in one place and shared from a single Realm link.",
+    lead: "A page showcasing a creator’s characters, artwork and creative work. ",
+    body: "Every character has its own profile with art, details and links, all kept in one place and shared from a single link.",
     art: <MaskArt src={obaaluMask} />,
     icon: obaaluIcon,
     iconInset: "calc(10% - 0.84px) calc(81.71% + 0.67px) calc(81.67% + 0.67px) calc(10.88% - 0.82px)",
@@ -60,7 +60,7 @@ const REALMS = [
       </>
     ),
     creator: "Meyimeyi",
-    lead: "A Realm built around one creator’s cast of characters and the art behind them. ",
+    lead: "A page built around one creator’s cast of characters and the art behind them. ",
     body: "Character profiles sit side by side with the artwork behind them, so visitors can see the whole cast at a glance.",
     art: <MaskArt src={iyanuMask} />,
     icon: iyanuIcon,
@@ -71,7 +71,7 @@ const REALMS = [
     id: "urukojin",
     title: "Urukojin — The Celestial Drift",
     creator: "Bruno Diaz",
-    lead: "A Realm collecting a creator’s characters, props and concept work in one place. ",
+    lead: "A page collecting a creator’s characters, props and concept work in one place. ",
     body: "Characters, props and concept pieces stay organised as the creator’s body of work grows.",
     art: <MaskArt src={urukojinMask} />,
     icon: urukojinIcon,
@@ -82,8 +82,8 @@ const REALMS = [
     id: "eganon",
     title: "Eganon — The Core of Eternity",
     creator: "Yan",
-    lead: "A Realm where a creator keeps every character profile up to date. ",
-    body: "New characters are added as they are made, and the Realm link stays the same wherever it is shared.",
+    lead: "A page where a creator keeps every character profile up to date. ",
+    body: "New characters are added as they are made, and the link stays the same wherever it is shared.",
     art: <EganonArt />,
     icon: eganonIcon,
     iconInset: "calc(11.81% - 0.8px) calc(78.18% + 0.59px) calc(79.86% + 0.63px) calc(10.91% - 0.82px)",
@@ -91,7 +91,7 @@ const REALMS = [
   },
 ];
 
-function RealmCard({ title, creator, lead, body, art, icon, iconInset, cardBg }) {
+function PageCard({ title, creator, lead, body, art, icon, iconInset, cardBg }) {
   return (
     <article
       className={`relative flex min-h-[560px] w-[85vw] max-w-[578.947px] shrink-0 snap-center flex-col lg:w-full overflow-hidden rounded-[42.105px] border-[1.053px] border-primary px-6 pb-[43px] pt-[180px] sm:h-[631.579px] sm:pl-[44px] sm:pr-[45px] ${cardBg}`}
@@ -112,7 +112,7 @@ function RealmCard({ title, creator, lead, body, art, icon, iconInset, cardBg })
           to="/character"
           className="rounded-[52.632px] bg-secondary px-[36.842px] py-[18.947px] font-ui text-[21.053px] font-bold text-white transition-opacity hover:opacity-90"
         >
-          View Realm
+          View page
         </Link>
         <p className="whitespace-nowrap font-ui text-[24.211px] text-white">
           <span className="font-medium">by</span> <span className="font-black">{creator}</span>
@@ -122,21 +122,21 @@ function RealmCard({ title, creator, lead, body, art, icon, iconInset, cardBg })
   );
 }
 
-export default function Realms() {
+export default function CreatorPages() {
   return (
-    <section id="realms" className="px-4 pb-[18px] pt-[60px] sm:px-8 xl:px-[117px]">
+    <section id="pages" className="px-4 pb-[18px] pt-[60px] sm:px-8 xl:px-[117px]">
       <div className="mx-auto flex max-w-[1200px] flex-col items-center gap-[65px]">
         <SectionHeading
-          title="Create Your Realm"
-          subtitle="Your Realm is your personal space for your characters. Create it, customize it, add your characters, and share it with your audience."
+          title="Create your page"
+          subtitle="Your page is your personal space for your characters. Create it, customize it, add your characters, and share it with your audience."
           subtitleClassName="text-lg tracking-[-0.115px] sm:text-[23px]"
         />
 
         <div className="flex w-full flex-col items-center gap-[60px]">
           {/* Swipeable row on phones and tablets, two-up grid on desktop */}
           <div className="scrollbar-none -mx-4 flex w-[calc(100%+32px)] snap-x snap-mandatory gap-5 overflow-x-auto px-4 sm:-mx-8 sm:w-[calc(100%+64px)] sm:gap-[30px] sm:px-8 lg:mx-0 lg:grid lg:w-full lg:grid-cols-2 lg:justify-items-center lg:gap-[42.105px] lg:overflow-visible lg:px-0">
-            {REALMS.map(({ id, ...realm }) => (
-              <RealmCard key={id} {...realm} />
+            {PAGES.map(({ id, ...page }) => (
+              <PageCard key={id} {...page} />
             ))}
           </div>
 
@@ -144,7 +144,7 @@ export default function Realms() {
             href="#explore"
             className="rounded-[20px] border-[5px] border-[#d2d2d2] bg-white px-12 py-8 font-ui text-[28px] font-bold text-black transition-colors hover:bg-neutral-100"
           >
-            See More Realms
+            See more pages
           </a>
         </div>
       </div>

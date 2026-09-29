@@ -25,9 +25,9 @@ import creator18 from "../assets/landing/features/creator-18.webp";
 const BUILDERS = [
   {
     title: "Character Profiles",
-    text: "Create dedicated profiles for every character in your Realm.",
+    text: "Create dedicated profiles for every one of your characters.",
   },
-  { title: "Your Realm", text: "Bring your characters together in one customizable public space." },
+  { title: "Your page", text: "Bring your characters together in one customizable public space." },
   {
     title: "One Shareable Link",
     text: "Give your audience one link to discover all your characters and creative work.",
@@ -159,7 +159,7 @@ function FeaturedCreators() {
           Discover Creators
         </h3>
         <p className="max-w-[1000px] font-ui text-lg leading-[1.6] text-neutral-300 sm:text-2xl lg:w-[1000px]">
-          Explore Realms built by creators and discover the characters behind their worlds.
+          Explore pages built by creators and discover the characters behind them.
         </p>
         <Link
           to="/discover"

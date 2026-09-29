@@ -3,7 +3,7 @@
 // The app itself is a single page that draws everything in the browser, so a
 // crawler that does not run JavaScript sees an empty shell. Facebook, X,
 // WhatsApp, Discord and every AI crawler are exactly that kind of reader, so
-// each character and each Realm also exists here as plain HTML: the tags a
+// each character and each creator page also exists here as plain HTML: the tags a
 // preview needs, the same words a visitor reads, and schema.org notes saying
 // who made what.
 //
@@ -133,9 +133,9 @@ export default async function previewRoutes(app) {
 
     const handle = creator.username.replace(/^@/, "");
     const canonical = `${SITE}/character?id=${character.id}`;
-    const realmUrl = `${SITE}/realm/${handle}`;
+    const creatorUrl = `${SITE}/creator/${handle}`;
     const maker = fullName(creator);
-    const title = `${character.name}${character.realm ? ` — ${character.realm}` : ""} | VantaOrigin`;
+    const title = `${character.name}${character.universe ? ` — ${character.universe}` : ""} | VantaOrigin`;
     const description = summarise(
       character.tagline
         ? `${character.tagline} A character by ${maker} (${creator.username}) on VantaOrigin. ${character.backstory}`
@@ -153,20 +153,20 @@ export default async function previewRoutes(app) {
       dateCreated: character.createdAt,
       dateModified: character.updatedAt,
       inLanguage: "en",
-      isPartOf: character.realm
-        ? { "@type": "CreativeWorkSeries", name: character.realm }
+      isPartOf: character.universe
+        ? { "@type": "CreativeWorkSeries", name: character.universe }
         : undefined,
       author: {
         "@type": "Person",
         name: maker,
         alternateName: creator.username,
-        url: realmUrl,
+        url: creatorUrl,
       },
       creator: {
         "@type": "Person",
         name: maker,
         alternateName: creator.username,
-        url: realmUrl,
+        url: creatorUrl,
       },
       publisher: { "@type": "Organization", name: "VantaOrigin", url: SITE },
     };
@@ -175,9 +175,9 @@ export default async function previewRoutes(app) {
     <article>
       <h1>${escape(character.name)}</h1>
       ${character.tagline ? `<p><em>${escape(character.tagline)}</em></p>` : ""}
-      <p>Created by <a href="${escape(realmUrl)}">${escape(maker)} (${escape(
+      <p>Created by <a href="${escape(creatorUrl)}">${escape(maker)} (${escape(
         creator.username
-      )})</a>${character.realm ? ` · Realm: ${escape(character.realm)}` : ""}</p>
+      )})</a>${character.universe ? ` · Universe: ${escape(character.universe)}` : ""}</p>
       ${character.coverUrl ? `<img src="${escape(character.coverUrl)}" alt="${escape(character.name)}" width="400" />` : ""}
       ${character.backstory ? `<h2>Origin story</h2>\n<p>${escape(character.backstory)}</p>` : ""}
       ${detailsHtml(character.details)}
@@ -200,10 +200,10 @@ export default async function previewRoutes(app) {
       .send(page({ title, description, canonical, image: character.coverUrl, jsonLd, body }));
   });
 
-  // ---- one creator's Realm ----
-  app.get("/preview/realm/:username", async (request, reply) => {
+  // ---- one creator's page ----
+  app.get("/preview/creator/:username", async (request, reply) => {
     const creator = await userByHandle(request.params.username);
-    if (!creator) return reply.code(404).type("text/html").send(notFound("Realm"));
+    if (!creator) return reply.code(404).type("text/html").send(notFound("page"));
 
     const [published, posts] = await Promise.all([
       db
@@ -220,7 +220,7 @@ export default async function previewRoutes(app) {
     ]);
 
     const handle = creator.username.replace(/^@/, "");
-    const canonical = `${SITE}/realm/${handle}`;
+    const canonical = `${SITE}/creator/${handle}`;
     const maker = fullName(creator);
     const title = `${maker} (${creator.username}) | VantaOrigin`;
     const description = summarise(
@@ -265,7 +265,7 @@ export default async function previewRoutes(app) {
                   `<li><a href="${SITE}/character?id=${escape(character.id)}">${escape(
                     character.name
                   )}</a>${character.tagline ? ` — ${escape(character.tagline)}` : ""}${
-                    character.realm ? ` (${escape(character.realm)})` : ""
+                    character.universe ? ` (${escape(character.universe)})` : ""
                   }</li>`
               )
               .join("")}</ul>`
@@ -283,7 +283,7 @@ export default async function previewRoutes(app) {
               .join("")}</ul>`
           : ""
       }
-      <p><a href="${escape(canonical)}">Visit this Realm on VantaOrigin</a></p>
+      <p><a href="${escape(canonical)}">Visit this page on VantaOrigin</a></p>
     </main>`;
 
     return reply
@@ -299,6 +299,79 @@ export default async function previewRoutes(app) {
           body,
         })
       );
+  });
+
+  // ---- the discovery page, as a crawler reads it ----
+  //
+  // The way in. A crawler that lands here should be able to walk to every
+  // published character without running a line of JavaScript, which is what
+  // turns "who is Urokojin?" into a page it can actually quote.
+  app.get("/preview/discover", async (request, reply) => {
+    const rows = await db
+      .select({ character: characters, creator: users })
+      .from(characters)
+      .innerJoin(users, eq(users.id, characters.userId))
+      .where(eq(characters.isPublic, true))
+      .orderBy(desc(characters.createdAt))
+      .limit(500);
+
+    const canonical = `${SITE}/discover`;
+    const names = rows.slice(0, 12).map(({ character }) => character.name);
+    const description = summarise(
+      rows.length
+        ? `Discover ${rows.length} character${rows.length === 1 ? "" : "s"} published by creators on VantaOrigin${
+            names.length ? `, including ${names.join(", ")}` : ""
+          }.`
+        : "Characters published by creators on VantaOrigin."
+    );
+
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: "Discover characters on VantaOrigin",
+      url: canonical,
+      description,
+      mainEntity: {
+        "@type": "ItemList",
+        numberOfItems: rows.length,
+        itemListElement: rows.map(({ character, creator }, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          url: `${SITE}/character?id=${character.id}`,
+          name: character.name,
+          author: { "@type": "Person", name: fullName(creator), alternateName: creator.username },
+        })),
+      },
+    };
+
+    const body = `
+    <main>
+      <h1>Discover characters on VantaOrigin</h1>
+      <p>Every character below is published by the creator who made it. Each one has a page of its own.</p>
+      ${
+        rows.length
+          ? `<ul>${rows
+              .map(({ character, creator }) => {
+                const handle = creator.username.replace(/^@/, "");
+                return `<li>
+        <a href="${SITE}/character?id=${escape(character.id)}">${escape(character.name)}</a>${
+                  character.universe ? ` of ${escape(character.universe)}` : ""
+                }${character.tagline ? ` — ${escape(character.tagline)}` : ""}, created by
+        <a href="${SITE}/creator/${escape(handle)}">${escape(fullName(creator))} (${escape(
+          creator.username
+        )})</a>.${character.backstory ? ` ${escape(summarise(character.backstory, 240))}` : ""}
+      </li>`;
+              })
+              .join("\n")}</ul>`
+          : "<p>No characters published yet.</p>"
+      }
+      <p><a href="${escape(canonical)}">Browse discovery on VantaOrigin</a></p>
+    </main>`;
+
+    return reply
+      .type("text/html; charset=utf-8")
+      .header("cache-control", "public, max-age=60, s-maxage=300")
+      .send(page({ title: "Discover characters | VantaOrigin", description, canonical, jsonLd, body }));
   });
 
   // ---- how a crawler finds all of it ----
@@ -318,7 +391,7 @@ export default async function previewRoutes(app) {
       { loc: `${SITE}/marketplace`, priority: "0.6" },
       { loc: `${SITE}/about`, priority: "0.4" },
       ...creators.map((creator) => ({
-        loc: `${SITE}/realm/${creator.username.replace(/^@/, "")}`,
+        loc: `${SITE}/creator/${creator.username.replace(/^@/, "")}`,
         lastmod: creator.updatedAt,
         priority: "0.7",
       })),
@@ -361,8 +434,8 @@ ${urls
     const lines = [
       "# VantaOrigin",
       "",
-      "> A home for characters. Creators build a Realm, add their characters,",
-      "> and share everything with one link.",
+      "> A home for characters. Creators make character cards, organise them,",
+      "> and share one page with anyone who wants to discover them.",
       "",
       `Site: ${SITE}`,
       `Sitemap: ${SITE}/sitemap.xml`,
@@ -373,7 +446,7 @@ ${urls
         const maker = fullName(creator);
         const about = summarise(character.backstory || character.tagline, 220);
         return `- [${character.name}](${SITE}/character?id=${character.id}): created by ${maker} (${creator.username})${
-          character.realm ? `, of ${character.realm}` : ""
+          character.universe ? `, of ${character.universe}` : ""
         }${about ? `. ${about}` : ""}`;
       }),
     ];

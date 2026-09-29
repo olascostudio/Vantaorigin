@@ -248,12 +248,12 @@ export default function Hero() {
                   Create <span className="text-white">Your</span>
                 </span>{" "}
                 <span className="block text-[48px] leading-[1.2] sm:text-[73px] lg:text-[103.68px] lg:leading-[120px]">
-                  <span className="text-white">Character</span> Realm
+                  <span className="text-white">Character</span> Cards
                 </span>
               </h1>
               <p className="mx-auto mt-1 max-w-[700px] font-body text-base tracking-[-0.1px] text-subtext sm:text-xl">
                 Create a home for your characters, organize their profiles, and share your
-                Realm with one link.
+                characters with one link.
               </p>
             </div>
           </div>
@@ -263,13 +263,13 @@ export default function Hero() {
               to="/auth"
               className="mb-[5px] ml-[5px] bg-secondary px-6 py-4 font-ui text-sm font-bold text-white shadow-block transition-transform hover:-translate-y-0.5"
             >
-              Create Your Realm
+              Create your page
             </Link>
             <a
               href="#explore"
               className="border-2 border-white px-6 py-4 font-ui text-sm font-bold text-white transition-colors hover:bg-white/10"
             >
-              Explore Realms
+              Explore characters
             </a>
           </div>
         </div>

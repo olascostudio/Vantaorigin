@@ -369,7 +369,7 @@ export default function CharacterView({ owner = false }) {
 
                 <h1 className="mt-4 font-ui text-2xl text-white">
                   {character.alias}
-                  {character.realm && <> — {character.realm}</>}
+                  {character.universe && <> — {character.universe}</>}
                 </h1>
 
                 {character.tagline && (
@@ -436,7 +436,7 @@ export default function CharacterView({ owner = false }) {
                 <div className="flex flex-col gap-1 xl:flex-row xl:items-start xl:gap-6">
                   <h1 className="max-w-[520px] font-ui text-lg font-bold text-white">
                     {character.alias}
-                    {character.realm && <> — {character.realm}</>}
+                    {character.universe && <> — {character.universe}</>}
                   </h1>
                   {character.tagline && (
                     <p className="font-ui text-lg font-bold text-white">

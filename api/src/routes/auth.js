@@ -68,7 +68,7 @@ export default async function authRoutes(app) {
       });
     }
 
-    // @Obaalu and @obaalu would share a Realm address, so one of them has
+    // @Obaalu and @obaalu would share a page address, so one of them has
     // to pick again.
     const byUsername = await userByHandle(username, { id: users.id });
     if (byUsername) {

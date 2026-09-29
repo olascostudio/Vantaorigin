@@ -1,4 +1,4 @@
-// Reporting a creator. Raised from a character page or a Realm, so the
+// Reporting a creator. Raised from a character page or a creator page, so the
 // request may name either a character or a username; both lead to the person
 // the report is about.
 import { z } from "zod";

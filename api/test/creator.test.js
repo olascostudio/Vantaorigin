@@ -1,9 +1,9 @@
-// A Realm shows a creator's published work to anyone, and nothing private.
+// A creator page shows a creator's published work to anyone, and nothing private.
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { rm } from "node:fs/promises";
 
-const dataDir = ".pglite-realm-test";
+const dataDir = ".pglite-creator-test";
 process.env.DATABASE_URL = `pglite://${dataDir}`;
 process.env.NODE_ENV = "test";
 process.env.EMAIL_DRIVER = "console";
@@ -29,7 +29,7 @@ before(async () => {
     await app.inject({
       method: "POST",
       url: "/auth/signup",
-      payload: { email: "realm@vantaorigin.test", username: "emberforge", password: "supersecret1" },
+      payload: { email: "creator@vantaorigin.test", username: "emberforge", password: "supersecret1" },
     })
   );
 
@@ -71,37 +71,37 @@ after(async () => {
 });
 
 test("a visitor sees the creator, their public characters and their posts", async () => {
-  const res = await app.inject({ method: "GET", url: "/public/realms/emberforge" });
+  const res = await app.inject({ method: "GET", url: "/public/creators/emberforge" });
   assert.equal(res.statusCode, 200);
 
-  const realm = res.json();
-  assert.equal(realm.creator.username, "@emberforge");
-  assert.equal(realm.creator.name, "Ola Studio");
-  assert.equal(realm.creator.bio, "Character creator from Lagos.");
-  assert.equal(realm.characters.length, 1);
-  assert.equal(realm.characters[0].name, "Ember Knight");
-  assert.equal(realm.highlights.length, 1);
+  const page = res.json();
+  assert.equal(page.creator.username, "@emberforge");
+  assert.equal(page.creator.name, "Ola Studio");
+  assert.equal(page.creator.bio, "Character creator from Lagos.");
+  assert.equal(page.characters.length, 1);
+  assert.equal(page.characters[0].name, "Ember Knight");
+  assert.equal(page.highlights.length, 1);
 });
 
 test("private characters stay out of it", async () => {
-  const realm = await app.inject({ method: "GET", url: "/public/realms/emberforge" }).then((r) => r.json());
-  assert.ok(!realm.characters.some((c) => c.name === "Work In Progress"));
+  const page = await app.inject({ method: "GET", url: "/public/creators/emberforge" }).then((r) => r.json());
+  assert.ok(!page.characters.some((c) => c.name === "Work In Progress"));
 });
 
 test("the @ in a pasted link is ignored, and case does not matter", async () => {
   for (const handle of ["@emberforge", "EmberForge", "@EMBERFORGE"]) {
-    const res = await app.inject({ method: "GET", url: `/public/realms/${handle}` });
+    const res = await app.inject({ method: "GET", url: `/public/creators/${handle}` });
     assert.equal(res.statusCode, 200, handle);
   }
 });
 
-test("an unknown Realm says so", async () => {
-  const res = await app.inject({ method: "GET", url: "/public/realms/nobody" });
+test("an unknown page says so", async () => {
+  const res = await app.inject({ method: "GET", url: "/public/creators/nobody" });
   assert.equal(res.statusCode, 404);
 });
 
 // The live bug: a handle typed with capitals was stored with them, while the
-// lookup lowered only the link — so the creator's own Realm said it did not
+// lookup lowered only the link — so the creator own page said it did not
 // exist.
 test("a handle stored with capitals is still found", async () => {
   await app.inject({
@@ -115,7 +115,7 @@ test("a handle stored with capitals is still found", async () => {
   });
 
   for (const handle of ["VtgShadowScribe", "vtgshadowscribe", "@VTGSHADOWSCRIBE", "@vtgShadowscribe"]) {
-    const res = await app.inject({ method: "GET", url: `/public/realms/${handle}` });
+    const res = await app.inject({ method: "GET", url: `/public/creators/${handle}` });
     assert.equal(res.statusCode, 200, handle);
     assert.equal(res.json().creator.username, "@VtgShadowScribe", handle);
   }

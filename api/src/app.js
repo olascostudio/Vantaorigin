@@ -13,7 +13,7 @@ import characterRoutes from "./routes/characters.js";
 import highlightRoutes from "./routes/highlights.js";
 import googleRoutes, { googleConfigNote } from "./routes/google.js";
 import previewRoutes from "./routes/preview.js";
-import realmRoutes from "./routes/realm.js";
+import creatorRoutes from "./routes/creator.js";
 import reportRoutes from "./routes/reports.js";
 import uploadRoutes from "./routes/uploads.js";
 import { ping } from "./db/client.js";
@@ -95,7 +95,7 @@ export async function buildApp() {
   await app.register(googleRoutes);
   await app.register(highlightRoutes);
   await app.register(previewRoutes);
-  await app.register(realmRoutes);
+  await app.register(creatorRoutes);
   await app.register(reportRoutes);
   await app.register(uploadRoutes);
 

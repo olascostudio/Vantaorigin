@@ -101,12 +101,12 @@ export default function JoinPrompt({ open, onClose, creator }) {
         <p className="mx-auto mt-3 max-w-[320px] font-ui text-base leading-relaxed text-neutral-300">
           {creator ? (
             <>
-              Like {creator}&rsquo;s characters, and build a Realm of your own — one link for
+              Like {creator}&rsquo;s characters, and build a page of your own — one link for
               everything you create.
             </>
           ) : (
             <>
-              Create your own Realm, add your characters, and share them all with one link.
+              Create your own page, add your characters, and share them all with one link.
             </>
           )}
         </p>
@@ -115,7 +115,7 @@ export default function JoinPrompt({ open, onClose, creator }) {
           to="/signup"
           className="mt-6 block rounded-full bg-gradient-to-r from-[#c2185b] to-[#a855f7] px-8 py-3.5 font-ui text-base font-bold text-white hover:opacity-90"
         >
-          Create your Realm
+          Create your page
         </Link>
 
         <p className="mt-4 font-ui text-sm text-neutral-400">

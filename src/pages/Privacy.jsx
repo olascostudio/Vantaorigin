@@ -14,7 +14,7 @@ const SECTIONS = [
         "Email address",
         "Username and account information",
         "Profile information",
-        "Realm information",
+        "Page information",
         "Character information and creative content you upload",
         "Information related to services you request or purchase",
         "Communications you send to us",
@@ -30,7 +30,7 @@ const SECTIONS = [
       [
         "Create and manage your VantaOrigin account",
         "Provide and maintain VantaOrigin services",
-        "Let you create and manage your Realm and characters",
+        "Let you create and manage your page and characters",
         "Display information you choose to make public",
         "Provide customer support",
         "Communicate with you about your account and services",
@@ -55,7 +55,7 @@ const SECTIONS = [
     title: "4. Public and private information",
     body: [
       "You decide what creative content you make public.",
-      "Anything you publish publicly, such as a public Realm or character profile, may be seen by other visitors and may be indexed or shared outside VantaOrigin.",
+      "Anything you publish publicly, such as a public page or character profile, may be seen by other visitors and may be indexed or shared outside VantaOrigin.",
       "Private content is not intended to be displayed publicly. Creators are responsible for understanding what they choose to publish.",
     ],
   },

@@ -19,7 +19,7 @@ const BLANK_STATS = [
 export const DEFAULT_CHARACTER = {
   id: null,
   alias: "Switch Face",
-  realm: "The Emberforge of Creation",
+  universe: "The Emberforge of Creation",
   cover: null,
   banner: null,
   visibility: "private",
@@ -59,7 +59,7 @@ function toClient(row, creatorName = "") {
     id: row.id,
     categoryId: row.categoryId,
     alias: row.name,
-    realm: row.realm || "",
+    universe: row.universe || "",
     tagline: row.tagline || "",
     backstory: row.backstory || "",
     power: row.power || "0",
@@ -83,7 +83,7 @@ function toApi(character) {
   return {
     name: character.alias,
     categoryId: character.categoryId ?? null,
-    realm: character.realm,
+    universe: character.universe,
     tagline: character.tagline,
     backstory: character.backstory,
     power: character.power,
@@ -134,11 +134,11 @@ export async function loadPublicCharacters(limit = 24) {
   return rows.map((row) => toClient(row));
 }
 
-export async function createCharacter({ categoryId, name, realm, tagline, origin, cover }) {
+export async function createCharacter({ categoryId, name, universe, tagline, origin, cover }) {
   const row = await api.post("/characters", {
     categoryId,
     name,
-    realm,
+    universe,
     tagline,
     backstory: origin,
     coverUrl: cover,

@@ -25,7 +25,7 @@ function missingFields(form, cover) {
   if (!cover) missing.push("cover");
   if (!form.name.trim()) missing.push("name");
   if (!form.origin.trim()) missing.push("origin");
-  if (!form.realm.trim()) missing.push("realm");
+  if (!form.universe.trim()) missing.push("universe");
   if (!form.tagline.trim()) missing.push("tagline");
   return missing;
 }
@@ -254,17 +254,17 @@ function DetailsStep({ form, setForm, cover, setCover, onSubmit }) {
         </p>
 
         <div className="mb-3 mt-8 flex items-center justify-between gap-4">
-          <label className="block font-ui text-xl font-bold text-white" htmlFor="realm">
-            Which realm do they belong to?
+          <label className="block font-ui text-xl font-bold text-white" htmlFor="universe">
+            Which universe do they belong to?
           </label>
           <span className="rounded-full bg-primary px-3 py-0.5 font-ui text-xs font-bold text-white">
             New
           </span>
         </div>
         <input
-          id="realm"
-          value={form.realm}
-          onChange={(event) => setForm({ ...form, realm: event.target.value })}
+          id="universe"
+          value={form.universe}
+          onChange={(event) => setForm({ ...form, universe: event.target.value })}
           placeholder="e.g. The Vantaverse"
           required
           maxLength={60}
@@ -331,7 +331,7 @@ export default function CreateCharacter() {
   const [form, setForm] = useState(() => ({
     name: "",
     origin: "",
-    realm: "",
+    universe: "",
     tagline: "",
     creator: user?.username || "",
   }));
@@ -397,7 +397,7 @@ export default function CreateCharacter() {
             const character = await createCharacter({
               categoryId: await categoryId(),
               name: form.name.trim(),
-              realm: form.realm.trim(),
+              universe: form.universe.trim(),
               tagline: form.tagline.trim(),
               origin: form.origin.trim(),
               cover,

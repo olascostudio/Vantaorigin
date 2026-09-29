@@ -1,4 +1,4 @@
-// Reporting a creator: from a character or from a Realm handle, once per
+// Reporting a creator: from a character or from a handle, once per
 // open complaint, never against yourself.
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
@@ -88,7 +88,7 @@ test("reporting the same creator again does not stack up", async () => {
   assert.equal(rows.length, 1);
 });
 
-test("a Realm handle names the creator just as well", async () => {
+test("a handle names the creator just as well", async () => {
   const other = await signUp("passerby");
   const res = await app.inject({
     method: "POST",
