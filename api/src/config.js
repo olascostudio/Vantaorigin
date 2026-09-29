@@ -59,6 +59,11 @@ const schema = z.object({
   // never at the API's own address.
   SITE_URL: z.string().default("https://www.vantaorigin.com"),
 
+  // Proves to Bing, Yandex and Seznam that we own the site, so a published
+  // character can be handed to them at once. The same value has to sit in a
+  // file at the site root; without it the pings are simply skipped.
+  INDEXNOW_KEY: z.string().default("2b65c57d946548f247cf5236c4dcf43c"),
+
   SESSION_TTL_DAYS: z.coerce.number().default(30),
 });
 

@@ -13,6 +13,7 @@ process.env.SITE_URL = "https://www.vantaorigin.com";
 const { buildApp } = await import("../src/app.js");
 const { migrate } = await import("../src/db/migrate.js");
 const { endConnection } = await import("../src/db/client.js");
+const { forgetPortfolio } = await import("../src/routes/preview.js");
 
 let app;
 let cookie;
@@ -214,14 +215,24 @@ test("the community page names where creators gather", async () => {
 });
 
 test("the marketplace says so plainly when the portfolio cannot be read", async () => {
-  // Nothing is published at SITE/portfolio.json in a test, so this is the
-  // failure path: it must say so rather than serve an empty shop.
-  const res = await app.inject({ method: "GET", url: "/preview/marketplace" });
-  assert.equal(res.statusCode, 503);
-  assert.match(res.body, /noindex/);
+  forgetPortfolio();
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => {
+    throw new Error("portfolio.json is unreachable");
+  };
+
+  try {
+    const res = await app.inject({ method: "GET", url: "/preview/marketplace" });
+    assert.equal(res.statusCode, 503);
+    assert.match(res.body, /noindex/);
+  } finally {
+    globalThis.fetch = realFetch;
+    forgetPortfolio();
+  }
 });
 
 test("the marketplace lists the studio's work, grouped as the albums are", async () => {
+  forgetPortfolio();
   const realFetch = globalThis.fetch;
   globalThis.fetch = async () => ({
     ok: true,
@@ -254,5 +265,6 @@ test("the marketplace lists the studio's work, grouped as the albums are", async
     assert.equal(jsonLd.mainEntity.itemListElement[0].name, "Cover Art for Iron Inferno");
   } finally {
     globalThis.fetch = realFetch;
+    forgetPortfolio();
   }
 });

@@ -32,6 +32,12 @@ const COMMUNITY = [
 // Held for ten minutes so a crawl of a hundred pages fetches it once.
 let portfolioCache = { at: 0, data: null };
 
+// Held between requests, which is the point — and a thing a test must be
+// able to put back, or one test decides what the next one sees.
+export function forgetPortfolio() {
+  portfolioCache = { at: 0, data: null };
+}
+
 async function studioPortfolio() {
   const fresh = Date.now() - portfolioCache.at < 10 * 60_000;
   if (fresh && portfolioCache.data) return portfolioCache.data;
