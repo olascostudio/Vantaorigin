@@ -223,11 +223,16 @@ export default function Discover() {
   const inputRef = useRef(null);
   // Published characters lead, then the samples.
   const [characters, setCharacters] = useState(SAMPLES);
+  // The real ones on their own, for the list of everything published. Null
+  // until they arrive, so "none yet" is not claimed before we know.
+  const [published, setPublished] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
-    publicCharacters().then((published) => {
-      if (!cancelled) setCharacters([...published, ...SAMPLES]);
+    publicCharacters().then((rows) => {
+      if (cancelled) return;
+      setPublished(rows);
+      setCharacters([...rows, ...SAMPLES]);
     });
     return () => {
       cancelled = true;
@@ -332,6 +337,57 @@ export default function Discover() {
             <CharacterMarquee characters={characters} />
           )}
         </div>
+
+        {/* Everything creators have actually published, all of it, in one
+            place you can look through rather than a row that drifts past.
+            The rail above mixes in examples; this does not. */}
+        {!results && (
+          <section aria-label="Every published character" className="relative px-6 pb-24">
+            <div className="mx-auto max-w-[1200px]">
+              <h2 className="font-ui text-2xl font-bold text-white sm:text-3xl">
+                Every published character
+              </h2>
+              <p className="mt-2 font-ui text-base text-neutral-300">
+                {published === null
+                  ? "Loading what creators have shared…"
+                  : published.length
+                    ? `${published.length} character${published.length === 1 ? "" : "s"} shared by creators so far.`
+                    : "No characters have been published yet. Yours could be the first."}
+              </p>
+
+              {published?.length > 0 && (
+                <ul className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {published.map((character) => (
+                    <li key={character.id}>
+                      <Link
+                        to={character.to}
+                        className="group flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#222b3c] transition-colors hover:border-white/30"
+                      >
+                        <img
+                          src={character.art}
+                          alt=""
+                          loading="lazy"
+                          className="aspect-[3/4] w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                        />
+                        <div className="flex flex-1 flex-col gap-1 p-4">
+                          <p className="font-ui text-base font-bold text-white">{character.title}</p>
+                          {character.excerpt.lead && (
+                            <p className="line-clamp-2 font-ui text-sm text-neutral-300">
+                              {character.excerpt.lead.replace(/\s*—\s*$/, "")}
+                            </p>
+                          )}
+                          <p className="mt-auto pt-2 font-ui text-xs text-accent">
+                            By {character.author}
+                          </p>
+                        </div>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );

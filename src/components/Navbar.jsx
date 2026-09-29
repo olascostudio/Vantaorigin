@@ -8,9 +8,9 @@ import logoWordmark from "../assets/landing/hero/logo-wordmark.svg";
 // who wants to see characters wants the characters.
 const NAV_LINKS = [
   { label: "Explore characters", to: "/discover" },
+  { label: "Creators’ Hub", to: "/creators-hub" },
   { label: "Marketplace", to: "/marketplace" },
   { label: "Community", to: "/community" },
-  { label: "My characters", to: "/creators-hub" },
 ];
 
 export default function Navbar() {
