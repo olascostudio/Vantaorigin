@@ -18,6 +18,34 @@ import { userByHandle } from "../db/handles.js";
 
 const SITE = (config.SITE_URL || "https://www.vantaorigin.com").replace(/\/$/, "");
 
+// The places creators gather. Kept here as well as on the page itself: two
+// short lists that rarely change beat a request to the app for its own copy.
+const COMMUNITY = [
+  ["Discord", "https://discord.gg/4E5dFcaEAa"],
+  ["TikTok", "https://www.tiktok.com/@vantaorigin"],
+  ["Instagram", "https://www.instagram.com/vantaoriginstudio/"],
+  ["Facebook", "https://facebook.com/groups/1640856640355085/"],
+  ["X", "https://x.com/vantaorigin"],
+];
+
+// The studio's portfolio, published by the app's build at /portfolio.json.
+// Held for ten minutes so a crawl of a hundred pages fetches it once.
+let portfolioCache = { at: 0, data: null };
+
+async function studioPortfolio() {
+  const fresh = Date.now() - portfolioCache.at < 10 * 60_000;
+  if (fresh && portfolioCache.data) return portfolioCache.data;
+
+  const response = await fetch(`${SITE}/portfolio.json`, {
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (!response.ok) throw new Error(`portfolio.json came back ${response.status}`);
+
+  const data = await response.json();
+  portfolioCache = { at: Date.now(), data };
+  return data;
+}
+
 const escape = (value = "") =>
   String(value)
     .replace(/&/g, "&amp;")
@@ -389,6 +417,8 @@ export default async function previewRoutes(app) {
       { loc: SITE, priority: "1.0" },
       { loc: `${SITE}/discover`, priority: "0.8" },
       { loc: `${SITE}/marketplace`, priority: "0.6" },
+      { loc: `${SITE}/community`, priority: "0.5" },
+      { loc: `${SITE}/help`, priority: "0.4" },
       { loc: `${SITE}/about`, priority: "0.4" },
       ...creators.map((creator) => ({
         loc: `${SITE}/creator/${creator.username.replace(/^@/, "")}`,
@@ -422,6 +452,109 @@ ${urls
   });
 
   // ---- a plain list for agents that would rather read than crawl ----
+  // ---- the studio's work for hire ----
+  //
+  // The marketplace draws itself from a file bundled into the app, which a
+  // crawler never sees. The same file is published at /portfolio.json, so it
+  // is read from there — once every ten minutes rather than once per crawler.
+  app.get("/preview/marketplace", async (request, reply) => {
+    const portfolio = await studioPortfolio().catch(() => null);
+    if (!portfolio) {
+      return reply.code(503).type("text/html").send(notFound("marketplace"));
+    }
+
+    const albums = portfolio.albums || [];
+    const projects = portfolio.projects || [];
+    const canonical = `${SITE}/marketplace`;
+    const description = summarise(
+      `Character art, 3D, props, covers, cards and comic work by VantaOrigin Studio — ${projects.length} pieces across ${albums.length} kinds of work, made for creators.`
+    );
+
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: "VantaOrigin Studio",
+      url: canonical,
+      description,
+      about: albums.map((album) => ({ "@type": "Thing", name: album.title })),
+      mainEntity: {
+        "@type": "ItemList",
+        numberOfItems: projects.length,
+        itemListElement: projects.slice(0, 100).map((project, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: project.title,
+          url: project.permalink,
+        })),
+      },
+    };
+
+    const byAlbum = albums
+      .map((album) => {
+        const inside = projects.filter((project) => project.albumId === album.id);
+        if (!inside.length) return "";
+        return `<h2>${escape(album.title)}</h2>
+      <ul>${inside
+        .slice(0, 60)
+        .map(
+          (project) =>
+            `<li>${escape(project.title)}${project.artist ? ` — by ${escape(project.artist)}` : ""}</li>`
+        )
+        .join("")}</ul>`;
+      })
+      .filter(Boolean)
+      .join("\n");
+
+    const body = `
+    <main>
+      <h1>VantaOrigin Studio</h1>
+      <p>Creative services for creators: character illustration, 3D characters and assets, prop design, book and cover design, cards and TCG assets, comic art, worldbuilding and brand design.</p>
+      ${byAlbum}
+      <p><a href="${escape(canonical)}">See the studio on VantaOrigin</a></p>
+    </main>`;
+
+    return reply
+      .type("text/html; charset=utf-8")
+      .header("cache-control", "public, max-age=300, s-maxage=3600")
+      .send(page({ title: "VantaOrigin Studio — creative services", description, canonical, jsonLd, body }));
+  });
+
+  // ---- where creators gather ----
+  app.get("/preview/community", async (request, reply) => {
+    const canonical = `${SITE}/community`;
+    const description =
+      "Join the VantaOrigin community of creators on Discord, TikTok, Instagram and Facebook.";
+
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: "VantaOrigin community",
+      url: canonical,
+      description,
+      mainEntity: {
+        "@type": "Organization",
+        name: "VantaOrigin",
+        url: SITE,
+        sameAs: COMMUNITY.map(([, url]) => url),
+      },
+    };
+
+    const body = `
+    <main>
+      <h1>The VantaOrigin community</h1>
+      <p>${escape(description)}</p>
+      <ul>${COMMUNITY.map(
+        ([name, url]) => `<li><a href="${escape(url)}">${escape(name)}</a></li>`
+      ).join("")}</ul>
+      <p><a href="${escape(canonical)}">Open the community page on VantaOrigin</a></p>
+    </main>`;
+
+    return reply
+      .type("text/html; charset=utf-8")
+      .header("cache-control", "public, max-age=300, s-maxage=3600")
+      .send(page({ title: "Community | VantaOrigin", description, canonical, jsonLd, body }));
+  });
+
   app.get("/llms.txt", async (request, reply) => {
     const rows = await db
       .select({ character: characters, creator: users })

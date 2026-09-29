@@ -22,3 +22,6 @@ api/.env
 
 api/.pglite*
 .pglite*
+
+# Copied from src/data at build time by scripts/publish-portfolio.mjs
+public/portfolio.json

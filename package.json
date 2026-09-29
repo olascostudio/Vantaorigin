@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "sync:artstation": "node scripts/sync-artstation.mjs"
+    "sync:artstation": "node scripts/sync-artstation.mjs",
+    "prebuild": "node scripts/publish-portfolio.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

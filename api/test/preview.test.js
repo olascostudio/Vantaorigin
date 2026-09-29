@@ -195,3 +195,64 @@ test("the discovery page lists every published character in plain HTML", async (
   assert.equal(jsonLd.mainEntity.itemListElement[0].name, "Urokojin");
   assert.equal(jsonLd.mainEntity.itemListElement[0].author.alternateName, "@Vtgshadowscribe");
 });
+
+// The studio and the community pages draw themselves in the browser too, so
+// they get the same treatment as discovery.
+test("the community page names where creators gather", async () => {
+  const res = await app.inject({ method: "GET", url: "/preview/community" });
+  assert.equal(res.statusCode, 200);
+
+  const html = res.body;
+  assert.match(html, /<h1>The VantaOrigin community<\/h1>/);
+  assert.match(html, /discord\.gg/);
+  assert.match(html, /tiktok\.com/);
+  assert.match(html, /instagram\.com/);
+
+  const jsonLd = JSON.parse(html.match(/<script type="application\/ld\+json">(.+?)<\/script>/s)[1]);
+  assert.equal(jsonLd.mainEntity["@type"], "Organization");
+  assert.ok(jsonLd.mainEntity.sameAs.length >= 4);
+});
+
+test("the marketplace says so plainly when the portfolio cannot be read", async () => {
+  // Nothing is published at SITE/portfolio.json in a test, so this is the
+  // failure path: it must say so rather than serve an empty shop.
+  const res = await app.inject({ method: "GET", url: "/preview/marketplace" });
+  assert.equal(res.statusCode, 503);
+  assert.match(res.body, /noindex/);
+});
+
+test("the marketplace lists the studio's work, grouped as the albums are", async () => {
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({
+    ok: true,
+    status: 200,
+    json: async () => ({
+      albums: [
+        { id: 1, title: "Comics Art" },
+        { id: 2, title: "Cards & TCG Assets" },
+      ],
+      projects: [
+        { id: "a", title: "Cover Art for Iron Inferno", artist: "Carlos Idrobo", albumId: 1, permalink: "https://www.artstation.com/artwork/aaa" },
+        { id: "b", title: "Card Game Character", artist: "Dizguyken", albumId: 2, permalink: "https://www.artstation.com/artwork/bbb" },
+      ],
+    }),
+  });
+
+  try {
+    const res = await app.inject({ method: "GET", url: "/preview/marketplace" });
+    assert.equal(res.statusCode, 200);
+
+    const html = res.body;
+    assert.match(html, /<h1>VantaOrigin Studio<\/h1>/);
+    assert.match(html, /<h2>Comics Art<\/h2>/);
+    assert.match(html, /Cover Art for Iron Inferno — by Carlos Idrobo/);
+    assert.match(html, /<h2>Cards &amp; TCG Assets<\/h2>/);
+    assert.match(html, /Card Game Character — by Dizguyken/);
+
+    const jsonLd = JSON.parse(html.match(/<script type="application\/ld\+json">(.+?)<\/script>/s)[1]);
+    assert.equal(jsonLd.mainEntity.numberOfItems, 2);
+    assert.equal(jsonLd.mainEntity.itemListElement[0].name, "Cover Art for Iron Inferno");
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
