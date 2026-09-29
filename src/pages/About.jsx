@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import { usePageMeta } from "../data/pageMeta";
 
 // Plain language, short lines, one idea per paragraph: this page is read by
 // creators, parents and partners alike, so it avoids inside language.
@@ -24,6 +25,13 @@ function Section({ title, children }) {
 }
 
 export default function About() {
+  usePageMeta({
+    title: "About VantaOrigin",
+    description:
+      "VantaOrigin is a home for characters: create character cards, organize them, and share one link.",
+    canonicalPath: "/about",
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />

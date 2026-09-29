@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import { usePageMeta } from "../data/pageMeta";
 
 // Same shape as the Terms page: a string is a paragraph, an array is a list.
 const UPDATED = "24 September 2026";
@@ -178,6 +179,12 @@ function Paragraph({ item }) {
 }
 
 export default function Privacy() {
+  usePageMeta({
+    title: "Privacy Policy",
+    description: "What VantaOrigin collects, why, and what you can ask us to do with it.",
+    canonicalPath: "/privacy",
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />

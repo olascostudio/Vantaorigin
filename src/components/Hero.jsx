@@ -216,12 +216,12 @@ function AnnouncementBadge() {
   return (
     <div className="flex items-center gap-2.5 rounded-[10px] bg-surface/20 px-2 py-[5px] backdrop-blur-[30px]">
       <img src={bellRing} alt="" className="h-[16.048px] w-4" />
-      <p className="whitespace-nowrap text-center font-ui text-[7px] font-semibold text-white">
+      <p className="whitespace-nowrap text-center font-ui text-[11px] font-semibold text-white sm:text-xs">
         Create your character hub. Share it anywhere.
       </p>
       <Link
         to="/discover"
-        className="flex items-center justify-center gap-[5px] rounded-full bg-secondary px-2.5 py-[5px] font-ui text-[7px] font-semibold text-white"
+        className="flex items-center justify-center gap-[5px] rounded-full bg-secondary px-2.5 py-[5px] font-ui text-[11px] font-semibold text-white sm:text-xs"
       >
         Get started
         <img src={chevronRight} alt="" className="h-[3.333px] w-1" />

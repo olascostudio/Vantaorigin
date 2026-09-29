@@ -160,10 +160,20 @@ export default async function previewRoutes(app) {
     if (!row) return reply.code(404).type("text/html").send(notFound("character"));
 
     const { character, creator } = row;
-    const artwork = await db
-      .select({ url: characterAssets.url })
-      .from(characterAssets)
-      .where(eq(characterAssets.characterId, character.id));
+    const [artwork, alsoBy] = await Promise.all([
+      db
+        .select({ url: characterAssets.url })
+        .from(characterAssets)
+        .where(eq(characterAssets.characterId, character.id)),
+      // The rest of this creator's work, so a reader — and a crawler — has
+      // somewhere to go from here rather than a dead end.
+      db
+        .select({ id: characters.id, name: characters.name, tagline: characters.tagline })
+        .from(characters)
+        .where(and(eq(characters.userId, creator.id), eq(characters.isPublic, true)))
+        .orderBy(desc(characters.createdAt))
+        .limit(13),
+    ]);
 
     const handle = creator.username.replace(/^@/, "");
     const canonical = `${SITE}/character?id=${character.id}`;
@@ -205,6 +215,23 @@ export default async function previewRoutes(app) {
       publisher: { "@type": "Organization", name: "VantaOrigin", url: SITE },
     };
 
+    const breadcrumbs = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "VantaOrigin", item: SITE },
+        { "@type": "ListItem", position: 2, name: "Characters", item: `${SITE}/discover` },
+        { "@type": "ListItem", position: 3, name: maker, item: creatorUrl },
+        { "@type": "ListItem", position: 4, name: character.name, item: canonical },
+      ],
+    };
+
+    const asDay = (value) =>
+      new Date(value).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+    const published = asDay(character.createdAt);
+    const updated = asDay(character.updatedAt);
+    const others = alsoBy.filter((other) => other.id !== character.id).slice(0, 12);
+
     const body = `
     <article>
       <h1>${escape(character.name)}</h1>
@@ -225,13 +252,42 @@ export default async function previewRoutes(app) {
               .join("\n")}`
           : ""
       }
+      ${
+        others.length
+          ? `<h2>More characters by ${escape(maker)}</h2>
+      <ul>${others
+        .map(
+          (other) =>
+            `<li><a href="${SITE}/character?id=${escape(other.id)}">${escape(other.name)}</a>${
+              other.tagline ? ` — ${escape(other.tagline)}` : ""
+            }</li>`
+        )
+        .join("")}</ul>`
+          : ""
+      }
+      <p>Published ${published}${
+        updated && updated !== published ? `, last updated ${updated}` : ""
+      } by <a href="${escape(creatorUrl)}">${escape(maker)}</a> on VantaOrigin.</p>
+      <p><a href="${escape(creatorUrl)}">See every character by ${escape(maker)}</a> · <a href="${SITE}/discover">Browse all characters</a></p>
       <p><a href="${escape(canonical)}">See ${escape(character.name)} on VantaOrigin</a></p>
     </article>`;
+
+    const trail = `
+    <nav aria-label="Breadcrumb"><a href="${SITE}">VantaOrigin</a> › <a href="${SITE}/discover">Characters</a> › <a href="${escape(creatorUrl)}">${escape(maker)}</a> › ${escape(character.name)}</nav>`;
 
     return reply
       .type("text/html; charset=utf-8")
       .header("cache-control", "public, max-age=60, s-maxage=300")
-      .send(page({ title, description, canonical, image: character.coverUrl, jsonLd, body }));
+      .send(
+        page({
+          title,
+          description,
+          canonical,
+          image: character.coverUrl,
+          jsonLd: [jsonLd, breadcrumbs],
+          body: trail + body,
+        })
+      );
   });
 
   // ---- one creator's page ----

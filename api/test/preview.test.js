@@ -71,6 +71,13 @@ before(async () => {
   });
   characterId = made.json().id;
 
+  await app.inject({
+    method: "POST",
+    url: "/characters",
+    headers: { cookie },
+    payload: { name: "Atlas Veyron", tagline: "The Worldbearer", isPublic: true },
+  });
+
   const hidden = await app.inject({
     method: "POST",
     url: "/characters",
@@ -114,12 +121,39 @@ test("it says who made the character, in words and in schema.org", async () => {
   assert.match(html, /The First Law/);
   assert.match(html, /Energy:<\/strong> 9\/10 — Tied to the sky/);
 
-  const jsonLd = JSON.parse(html.match(/<script type="application\/ld\+json">(.+?)<\/script>/s)[1]);
-  assert.equal(jsonLd["@type"], "CreativeWork");
-  assert.equal(jsonLd.name, "Urokojin");
-  assert.equal(jsonLd.author.name, "Ola Oriola");
-  assert.equal(jsonLd.author.alternateName, "@Vtgshadowscribe");
-  assert.equal(jsonLd.isPartOf.name, "The Vantaverse");
+  // Two sets of notes now: the work itself, and the trail showing where it
+  // sits, which is what puts a path under a search result.
+  const notes = JSON.parse(html.match(/<script type="application\/ld\+json">(.+?)<\/script>/s)[1]);
+  const work = notes.find((note) => note["@type"] === "CreativeWork");
+  const trail = notes.find((note) => note["@type"] === "BreadcrumbList");
+
+  assert.equal(work.name, "Urokojin");
+  assert.equal(work.author.name, "Ola Oriola");
+  assert.equal(work.author.alternateName, "@Vtgshadowscribe");
+  assert.equal(work.isPartOf.name, "The Vantaverse");
+
+  assert.deepEqual(
+    trail.itemListElement.map((step) => step.name),
+    ["VantaOrigin", "Characters", "Ola Oriola", "Urokojin"]
+  );
+});
+
+test("a character page says when it was published and where to go next", async () => {
+  const res = await app.inject({ method: "GET", url: `/preview/character/${characterId}` });
+  const html = res.body;
+
+  assert.match(html, /Published \d{1,2} \w+ \d{4}/);
+  assert.match(html, /<h2>More characters by Ola Oriola<\/h2>/);
+  assert.match(html, /Atlas Veyron<\/a> — The Worldbearer/);
+  assert.match(html, /See every character by Ola Oriola/);
+  assert.match(html, /Browse all characters/);
+  assert.match(html, /aria-label="Breadcrumb"/);
+
+  // A character is not listed as somewhere else to go from itself.
+  const list = html.slice(html.indexOf("More characters by"));
+  const justTheList = list.slice(list.indexOf("<ul>"), list.indexOf("</ul>"));
+  assert.ok(justTheList.includes("Atlas Veyron"), "lists the other character");
+  assert.ok(!justTheList.includes(characterId), "does not list itself");
 });
 
 test("a private character is not served to crawlers", async () => {
@@ -141,7 +175,7 @@ test("a creator page lists their characters", async () => {
   const jsonLd = JSON.parse(html.match(/<script type="application\/ld\+json">(.+?)<\/script>/s)[1]);
   assert.equal(jsonLd["@type"], "ProfilePage");
   assert.equal(jsonLd.mainEntity.name, "Ola Oriola");
-  assert.equal(jsonLd.hasPart[0].name, "Urokojin");
+  assert.deepEqual(jsonLd.hasPart.map((part) => part.name).sort(), ["Atlas Veyron", "Urokojin"]);
 });
 
 test("the sitemap lists every public character and creator", async () => {
@@ -193,7 +227,10 @@ test("the discovery page lists every published character in plain HTML", async (
   const jsonLd = JSON.parse(html.match(/<script type="application\/ld\+json">(.+?)<\/script>/s)[1]);
   assert.equal(jsonLd["@type"], "CollectionPage");
   assert.equal(jsonLd.mainEntity["@type"], "ItemList");
-  assert.equal(jsonLd.mainEntity.itemListElement[0].name, "Urokojin");
+  assert.deepEqual(
+    jsonLd.mainEntity.itemListElement.map((item) => item.name).sort(),
+    ["Atlas Veyron", "Urokojin"]
+  );
   assert.equal(jsonLd.mainEntity.itemListElement[0].author.alternateName, "@Vtgshadowscribe");
 });
 

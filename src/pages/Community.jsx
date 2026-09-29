@@ -8,6 +8,7 @@ import backdrop2 from "../assets/community/backdrop-2.webp";
 import backdrop3 from "../assets/community/backdrop-3.webp";
 import backdrop4 from "../assets/community/backdrop-4.webp";
 import backdrop5 from "../assets/community/backdrop-5.webp";
+import { usePageMeta } from "../data/pageMeta";
 
 // Swap these for the real VantaOrigin handles when they exist.
 const LINKS = [
@@ -36,6 +37,13 @@ const LINKS = [
 const BACKDROPS = [backdrop1, backdrop2, backdrop3, backdrop4, backdrop5];
 
 export default function Community() {
+  usePageMeta({
+    title: "Community",
+    description:
+      "Join the VantaOrigin community of creators on Discord, TikTok, Instagram and Facebook.",
+    canonicalPath: "/community",
+  });
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#1b2233]">
       <DashboardNav active="Community" />

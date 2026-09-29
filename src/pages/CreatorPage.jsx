@@ -5,6 +5,7 @@ import Loading from "../components/Loading.jsx";
 import ReportCreator from "../components/ReportCreator.jsx";
 import JoinPrompt, { useJoinPrompt } from "../components/JoinPrompt.jsx";
 import { useAuth } from "../data/AuthContext.jsx";
+import { usePageMeta } from "../data/pageMeta";
 import logoMark from "../assets/landing/hero/logo-mark.svg";
 import logoWordmark from "../assets/landing/hero/logo-wordmark.svg";
 import characterCover from "../assets/creator/character-cover.svg";
@@ -72,6 +73,25 @@ export default function CreatorPage() {
   // This is the page a creator's link lands on, so it is where someone who
   // likes what they see is asked to make a page of their own.
   const joinPrompt = useJoinPrompt({ enabled: !user && Boolean(page) });
+
+  // Somebody who has not filled in their name is known by their handle — the
+  // API hands back the handle as the name in that case — and saying it twice
+  // reads as a mistake.
+  const handle = page?.creator?.username || "";
+  const given = page?.creator?.name?.trim() || "";
+  const creatorName = given && given !== handle ? given : "";
+  const shownAs = creatorName ? `${creatorName} (${handle})` : handle;
+
+  usePageMeta({
+    title: shownAs,
+    description: page?.creator
+      ? page.creator.bio ||
+        `${creatorName || page.creator.username} shares ${page.characters.length} character${
+          page.characters.length === 1 ? "" : "s"
+        } on VantaOrigin.`
+      : "",
+    canonicalPath: page?.creator ? `/creator/${page.creator.username.replace(/^@/, "")}` : "",
+  });
 
   useEffect(() => {
     let cancelled = false;

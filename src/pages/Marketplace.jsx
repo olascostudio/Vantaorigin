@@ -12,6 +12,7 @@ import bandGold from "../assets/marketplace/band-gold.svg";
 import streakGold from "../assets/marketplace/streak-gold.svg";
 import boltLeft from "../assets/marketplace/bolt-left.svg";
 import boltRight from "../assets/marketplace/bolt-right.svg";
+import { usePageMeta } from "../data/pageMeta";
 
 function Hero() {
   return (
@@ -125,6 +126,13 @@ function Sidebar({ activeId, onSelect }) {
 }
 
 export default function Marketplace() {
+  usePageMeta({
+    title: "VantaOrigin Studio — character art and creative services",
+    description:
+      "Character illustration, 3D characters and assets, prop design, book covers, cards and comic art by VantaOrigin Studio.",
+    canonicalPath: "/marketplace",
+  });
+
   const [activeId, setActiveId] = useState(ALBUMS[0]?.id ?? null);
   const [artist, setArtist] = useState(null);
   const [query, setQuery] = useState("");

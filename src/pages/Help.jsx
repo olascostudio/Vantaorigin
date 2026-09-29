@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import { usePageMeta } from "../data/pageMeta";
 
 // Everything here describes what VantaOrigin actually does today. Where a
 // feature isn't built yet, the answer says so rather than describing it as if
@@ -216,6 +217,13 @@ const SECTIONS = [
 ];
 
 export default function Help() {
+  usePageMeta({
+    title: "Help Centre",
+    description:
+      "How VantaOrigin works: signing up, creating characters, publishing them, and sharing your page.",
+    canonicalPath: "/help",
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />

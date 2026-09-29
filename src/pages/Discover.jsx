@@ -12,6 +12,7 @@ import artUrukojin from "../assets/landing/worlds/world-4.webp";
 import arrowUpRight from "../assets/landing/worlds/arrow-up-right.svg";
 import chevronLeft from "../assets/landing/worlds/chevron-left.svg";
 import chevronRight from "../assets/landing/worlds/chevron-right.svg";
+import { usePageMeta } from "../data/pageMeta";
 
 const EXCERPT_LEAD = "From the heart of molten mountains, Obaalu rises — ";
 const EXCERPT_BODY =
@@ -217,6 +218,13 @@ function CharacterMarquee({ characters }) {
 }
 
 export default function Discover() {
+  usePageMeta({
+    title: "Discover characters",
+    description:
+      "Browse every character published on VantaOrigin — their universe, their story, and the creator behind each one.",
+    canonicalPath: "/discover",
+  });
+
   const [query, setQuery] = useState("");
   const [submitted, setSubmitted] = useState("");
   const [showHints, setShowHints] = useState(false);

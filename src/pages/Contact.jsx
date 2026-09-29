@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import { usePageMeta } from "../data/pageMeta";
 
 const REASONS = [
   "General Inquiry",
@@ -25,6 +26,12 @@ function Label({ htmlFor, children }) {
 }
 
 export default function Contact() {
+  usePageMeta({
+    title: "Contact",
+    description: "Get in touch with the VantaOrigin team.",
+    canonicalPath: "/contact",
+  });
+
   const [form, setForm] = useState({ name: "", email: "", reason: REASONS[0], message: "" });
   const [notice, setNotice] = useState("");
 

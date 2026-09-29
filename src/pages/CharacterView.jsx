@@ -4,6 +4,7 @@ import DashboardNav from "../components/DashboardNav";
 import CharacterCard from "../components/creator/CharacterCard";
 import { DEFAULT_CHARACTER, likeCharacter, loadCharacter, loadPublicCharacter } from "../data/character";
 import { useAuth } from "../data/AuthContext.jsx";
+import { usePageMeta } from "../data/pageMeta";
 import ReportCreator from "../components/ReportCreator.jsx";
 import JoinPrompt, { useJoinPrompt } from "../components/JoinPrompt.jsx";
 import Loading from "../components/Loading.jsx";
@@ -161,6 +162,23 @@ export default function CharacterView({ owner = false }) {
       window.removeEventListener("focus", refresh);
     };
   }, [id, owner]);
+
+  // The same title a crawler is handed, so the tab, the bookmark and the
+  // search result all say the character rather than the site.
+  const named = character && character !== "missing" ? character : null;
+  usePageMeta({
+    title: named
+      ? `${named.alias}${named.universe ? ` — ${named.universe}` : ""}`
+      : "",
+    description: named
+      ? [named.tagline, named.creator ? `A character by ${named.creator} on VantaOrigin.` : "", named.backstory]
+          .filter(Boolean)
+          .join(" ")
+          .replace(/\s+/g, " ")
+          .slice(0, 200)
+      : "",
+    canonicalPath: named?.id ? `/character?id=${named.id}` : "",
+  });
 
   const assets = (character?.assets || []).map((asset) => asset.url ?? asset);
   // Phones show the origin story folded until it's opened.

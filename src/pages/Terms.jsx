@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import { usePageMeta } from "../data/pageMeta";
 
 // Kept as data so the wording stays easy to edit without touching layout.
 // A paragraph is a string; a list is an array.
@@ -172,6 +173,12 @@ function Paragraph({ item }) {
 }
 
 export default function Terms() {
+  usePageMeta({
+    title: "Terms of Service",
+    description: "The terms you agree to when using VantaOrigin.",
+    canonicalPath: "/terms",
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
