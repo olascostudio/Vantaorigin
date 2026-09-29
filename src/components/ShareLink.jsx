@@ -37,7 +37,7 @@ export default function ShareLink() {
                   key={label}
                   className="flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 font-ui text-sm text-neutral-200"
                 >
-                  <img src={icon} alt="" className="size-4" />
+                  <img src={icon} alt="" className="size-4"  loading="lazy" />
                   {label}
                 </li>
               ))}

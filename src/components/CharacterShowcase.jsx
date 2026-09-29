@@ -30,13 +30,13 @@ export default function CharacterShowcase() {
         <div className="flex w-full flex-col items-center gap-10 rounded-[32px] bg-[#222b3c] p-6 lg:flex-row lg:items-stretch lg:p-10">
           {/* The character card */}
           <div className="relative w-[260px] shrink-0 sm:w-[300px]">
-            <img src={cardFrame} alt="" className="w-full" />
+            <img src={cardFrame} alt="" className="w-full"  loading="lazy" />
             <div className="absolute inset-[4%] overflow-hidden rounded-[22px]">
-              <img src={characterCover} alt="Switch Face" className="size-full object-cover" />
+              <img src={characterCover} alt="Switch Face" className="size-full object-cover"  loading="lazy" />
               <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-1 bg-gradient-to-t from-black/85 to-transparent px-4 pb-6 pt-14">
                 <p className="font-ui text-2xl font-black text-white">Switch Face</p>
                 <p className="flex items-center gap-2 font-ui text-base font-bold text-white">
-                  <img src={sword} alt="" className="size-4" />
+                  <img src={sword} alt="" className="size-4"  loading="lazy" />
                   1.3M
                 </p>
               </div>

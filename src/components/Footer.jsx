@@ -88,7 +88,9 @@ function Newsletter() {
         </p>
       </div>
 
-      <ul className="flex items-center gap-[29.4px]">
+      {/* The circles keep their size; the link around them is a thumb's
+          width, so the gap shrinks to hold the row together. */}
+      <ul className="flex items-center gap-[12px]">
         {SOCIALS.map(({ label, icon, url }) => (
           <li key={label}>
             <a
@@ -96,9 +98,11 @@ function Newsletter() {
               target="_blank"
               rel="noreferrer"
               aria-label={label}
-              className="flex size-[26.88px] items-center rounded-[13.44px] border-[1.26px] border-neutral-400 p-[3.36px] transition-colors hover:border-white"
+              className="group flex size-11 items-center justify-center"
             >
-              <img src={icon} alt="" className="size-[20.16px]" />
+              <span className="flex size-[26.88px] items-center rounded-[13.44px] border-[1.26px] border-neutral-400 p-[3.36px] transition-colors group-hover:border-white">
+                <img src={icon} alt="" className="size-[20.16px]" />
+              </span>
             </a>
           </li>
         ))}

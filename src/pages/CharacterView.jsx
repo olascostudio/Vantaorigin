@@ -77,7 +77,7 @@ function Panel({ title, entry, flame, highlight, hideDescription = false, childr
   );
 }
 
-function AssetRail({ assets }) {
+function AssetRail({ assets, characterName }) {
   const rail = useRef(null);
   const [canScroll, setCanScroll] = useState(false);
 
@@ -104,7 +104,12 @@ function AssetRail({ assets }) {
             key={`${asset}-${index}`}
             className="aspect-[3/4] overflow-hidden rounded-2xl bg-[#222b3c]"
           >
-            <img src={asset} alt={`Asset ${index + 1}`} className="size-full object-cover" />
+            <img
+              src={asset}
+              alt={`${characterName} artwork ${index + 1}`}
+              loading="lazy"
+              className="size-full object-cover"
+            />
           </div>
         ))}
       </div>
@@ -315,7 +320,7 @@ export default function CharacterView({ owner = false }) {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <Link
               to={owner ? "/creators-hub" : "/discover"}
-              className="flex items-center gap-3 font-ui text-xl text-white hover:opacity-80"
+              className="-mx-2 flex items-center gap-3 px-2 py-2 font-ui text-xl text-white hover:opacity-80"
             >
               <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <path d="M19 12H5M11 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
@@ -403,7 +408,7 @@ export default function CharacterView({ owner = false }) {
                   type="button"
                   onClick={() => setStoryOpen((open) => !open)}
                   aria-expanded={storyOpen}
-                  className="mt-5 font-ui text-base font-bold text-[#6b8ff5] hover:underline"
+                  className="mt-3 px-3 py-2 font-ui text-base font-bold text-[#6b8ff5] hover:underline"
                 >
                   Origin Backstory
                 </button>
@@ -479,7 +484,7 @@ export default function CharacterView({ owner = false }) {
 
           <section aria-label="Assets" className="mt-12 flex flex-col gap-8 lg:mt-5 lg:block">
             <SectionPill>Assets</SectionPill>
-            <AssetRail assets={assets} />
+            <AssetRail assets={assets} characterName={character.alias} />
           </section>
 
           <div className="mt-12 lg:hidden">

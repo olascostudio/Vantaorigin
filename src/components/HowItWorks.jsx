@@ -46,7 +46,7 @@ export default function HowItWorks() {
         <div className="lg:absolute lg:left-1/2 lg:top-0 lg:h-[583.8px] lg:w-[1376px] lg:origin-top lg:-translate-x-1/2 lg:scale-[0.7] xl:scale-[0.85] min-[1440px]:scale-100">
           <div className="absolute left-0 top-0 hidden h-[525.6px] w-[1344px] lg:block">
             <div className="absolute" style={{ inset: "0 -0.65% -2.74% -0.77%" }}>
-              <img src={journeyCurve} alt="" className="block size-full max-w-none" />
+              <img src={journeyCurve} alt="" className="block size-full max-w-none"  loading="lazy" />
             </div>
           </div>
 

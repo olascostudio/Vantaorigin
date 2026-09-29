@@ -60,7 +60,7 @@ function CharacterCard({ title, author, colour, art, overlay, excerpt = SAMPLE_E
       data-testid="character-card"
     >
       <div className="relative h-[280px] w-full overflow-hidden rounded-xl bg-[#888787] sm:h-[360px]">
-        <img src={art} alt="" className="size-full object-cover" loading="lazy" />
+        <img src={art} alt={typeof title === "string" ? title : ""} className="size-full object-cover" loading="lazy" />
         {overlay && (
           <img src={overlay} alt="" className="absolute inset-0 size-full object-cover" loading="lazy" />
         )}
@@ -262,8 +262,8 @@ export default function Discover() {
             Every World <span className="text-secondary">Begins With</span> A Character.
           </h1>
           <p className="mx-auto mt-8 max-w-[1080px] text-center font-ui text-lg text-neutral-300 sm:text-xl">
-            Browse creations forged by artists, dreamers, and storytellers across their universe. Step
-            into the battleground - every legend starts with a single soul.
+            Characters published by creators on VantaOrigin — their art, their stories, and the
+            people who made them. Every one has a page of its own.
           </p>
 
           <form

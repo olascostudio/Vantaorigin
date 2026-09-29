@@ -11,7 +11,7 @@ import eganonArt from "../assets/landing/realms/eganon-art.svg";
 import eganonIcon from "../assets/landing/realms/eganon-icon.svg";
 
 function MaskArt({ src }) {
-  return <img src={src} alt="" className="absolute left-[-1.05px] top-[-1.05px] h-[631.579px] w-[578.947px] max-w-none" />;
+  return <img src={src} alt="" className="absolute left-[-1.05px] top-[-1.05px] h-[631.579px] w-[578.947px] max-w-none"  loading="lazy" />;
 }
 
 // Eganon's artwork is clipped by a separate alpha-mask shape in Figma.
@@ -32,7 +32,7 @@ function EganonArt() {
       }}
     >
       <div className="absolute" style={{ inset: "-0.67% -0.6% -0.56% -0.6%" }}>
-        <img src={eganonArt} alt="" className="block size-full max-w-none" />
+        <img src={eganonArt} alt="" className="block size-full max-w-none"  loading="lazy" />
       </div>
     </div>
   );
@@ -97,7 +97,7 @@ function PageCard({ title, creator, lead, body, art, icon, iconInset, cardBg }) 
       className={`relative flex min-h-[560px] w-[85vw] max-w-[578.947px] shrink-0 snap-center flex-col lg:w-full overflow-hidden rounded-[42.105px] border-[1.053px] border-primary px-6 pb-[43px] pt-[180px] sm:h-[631.579px] sm:pl-[44px] sm:pr-[45px] ${cardBg}`}
     >
       {art}
-      <img src={icon} alt="" className="absolute" style={{ inset: iconInset }} />
+      <img src={icon} alt="" className="absolute" style={{ inset: iconInset }}  loading="lazy" />
 
       <h3 className="relative max-w-[484.211px] font-ui text-[32px] font-black tracking-[-0.2105px] text-white sm:text-[42.105px]">
         {title}

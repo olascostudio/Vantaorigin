@@ -220,7 +220,7 @@ export default function CreatorPage() {
                 >
                   <img
                     src={character.coverUrl || characterCover}
-                    alt=""
+                    alt={character.name}
                     loading="lazy"
                     className="aspect-[3/4] w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                   />

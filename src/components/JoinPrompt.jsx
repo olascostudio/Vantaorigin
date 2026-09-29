@@ -128,7 +128,7 @@ export default function JoinPrompt({ open, onClose, creator }) {
         <button
           type="button"
           onClick={onClose}
-          className="mt-4 font-ui text-sm text-neutral-500 underline hover:text-neutral-300"
+          className="mt-2 px-3 py-2 font-ui text-sm text-neutral-500 underline hover:text-neutral-300"
         >
           Keep looking around
         </button>

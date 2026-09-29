@@ -16,14 +16,14 @@ const CARD_STEP = 530; // card width + gap
 function ObaaluArt() {
   return (
     <div className="absolute left-[calc(50%-0.5px)] top-[calc(50%+14.5px)] size-[461px] -translate-x-1/2 -translate-y-1/2">
-      <img src={world2Base} alt="" className="absolute size-full max-w-none object-cover" />
+      <img src={world2Base} alt="" className="absolute size-full max-w-none object-cover"  loading="lazy" />
       <div className="absolute inset-0 overflow-hidden">
         <img
           src={world2Overlay}
           alt=""
           className="absolute top-0 h-full max-w-none"
           style={{ left: "-0.04%", width: "100.01%" }}
-        />
+         loading="lazy" />
       </div>
     </div>
   );
@@ -42,7 +42,7 @@ const PAGES = [
         src={world1}
         alt=""
         className="absolute left-[calc(50%-0.5px)] top-[calc(50%+0.5px)] size-[455px] max-w-none -translate-x-1/2 -translate-y-1/2 object-cover"
-      />
+       loading="lazy" />
     ),
   },
   {
@@ -70,7 +70,7 @@ const PAGES = [
             alt=""
             className="absolute top-0 h-full max-w-none"
             style={{ left: "0.02%", width: "99.98%" }}
-          />
+           loading="lazy" />
         </div>
       </>
     ),
@@ -91,7 +91,7 @@ const PAGES = [
           alt=""
           className="absolute top-0 h-full max-w-none"
           style={{ left: "0.09%", width: "99.9%" }}
-        />
+         loading="lazy" />
       </div>
     ),
   },
@@ -127,7 +127,7 @@ function CreatorCard({ color, title, creator, characters, tags, art, titleWidth 
           className="flex items-center gap-[5px] font-ui text-base font-medium text-white underline"
         >
           View page
-          <img src={arrowUpRight} alt="" className="size-5" />
+          <img src={arrowUpRight} alt="" className="size-5"  loading="lazy" />
         </Link>
       </div>
     </article>
@@ -142,7 +142,7 @@ function ArrowButton({ label, icon, onClick, className }) {
       aria-label={label}
       className={`absolute top-[273px] flex items-center rounded-full bg-white/10 px-7 py-[17px] backdrop-blur-sm transition-colors hover:bg-white/20 ${className}`}
     >
-      <img src={icon} alt="" className="h-[44.8px] w-[22.4px]" />
+      <img src={icon} alt="" className="h-[44.8px] w-[22.4px]"  loading="lazy" />
     </button>
   );
 }

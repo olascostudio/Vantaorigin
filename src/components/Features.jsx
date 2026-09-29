@@ -43,7 +43,7 @@ function BuilderCard({ title, text }) {
     <article className="relative h-[150px] w-full max-w-[400px] overflow-hidden rounded-[22.018px] bg-[rgba(43,43,43,0.2)] shadow-[0_11.743px_20.917px_0_rgba(0,0,0,0.05)]">
       <div className="absolute left-[246.97px] top-[-1.47px] h-[126.239px] w-[153.761px]">
         <div className="absolute" style={{ inset: "-43.02% -35.32%" }}>
-          <img src={cardGlow} alt="" className="block size-full max-w-none" />
+          <img src={cardGlow} alt="" className="block size-full max-w-none"  loading="lazy" />
         </div>
       </div>
       <div className="absolute left-[25px] right-[80px] top-[25.07px] flex flex-col gap-[15px] capitalize">
@@ -55,7 +55,7 @@ function BuilderCard({ title, text }) {
         className="absolute right-[25px] top-[113.07px] flex items-center gap-1 font-ui text-xs font-medium text-white underline"
       >
         Learn More
-        <img src={arrowUpRight} alt="" className="size-4" />
+        <img src={arrowUpRight} alt="" className="size-4"  loading="lazy" />
       </a>
       <div className="pointer-events-none absolute inset-0 rounded-[inherit] shadow-[inset_-5.872px_0.734px_9.541px_0_#9333ea]" />
     </article>
@@ -110,7 +110,7 @@ function LayeredBust() {
           alt=""
           className="absolute left-0 w-full max-w-none"
           style={{ top: "-20.71%", height: "139.01%" }}
-        />
+         loading="lazy" />
       </div>
       <div className="absolute inset-0 overflow-hidden">
         <img
@@ -118,7 +118,7 @@ function LayeredBust() {
           alt=""
           className="absolute max-w-none"
           style={{ left: "-0.41%", top: "-20.4%", width: "100.82%", height: "120.4%" }}
-        />
+         loading="lazy" />
       </div>
     </div>
   );
