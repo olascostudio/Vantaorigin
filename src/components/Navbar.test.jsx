@@ -11,7 +11,7 @@ describe("Navbar", () => {
 
   it("navigates around the current product", () => {
     render(<Navbar />, { wrapper: MemoryRouter });
-    ["Explore", "Characters", "Marketplace", "My characters"].forEach((label) => {
+    ["Explore characters", "Marketplace", "Community", "My characters"].forEach((label) => {
       expect(screen.getByRole("link", { name: label })).toBeInTheDocument();
     });
     expect(screen.getByRole("link", { name: "My characters" })).toHaveAttribute("href", "/creators-hub");

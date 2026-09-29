@@ -140,12 +140,12 @@ export default function CreatorPages() {
             ))}
           </div>
 
-          <a
-            href="#explore"
+          <Link
+            to="/discover"
             className="rounded-[20px] border-[5px] border-[#d2d2d2] bg-white px-12 py-8 font-ui text-[28px] font-bold text-black transition-colors hover:bg-neutral-100"
           >
             See more pages
-          </a>
+          </Link>
         </div>
       </div>
     </section>

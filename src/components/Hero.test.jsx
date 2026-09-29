@@ -20,7 +20,11 @@ describe("Hero", () => {
     const signUp = screen.getAllByRole("link", { name: "Create your page" });
     expect(signUp.length).toBeGreaterThan(0);
     signUp.forEach((link) => expect(link).toHaveAttribute("href", "/auth"));
-    expect(screen.getByRole("link", { name: "Explore characters" })).toHaveAttribute("href", "#explore");
+    // Both of them — the navbar's and the hero's — go to the characters
+    // themselves rather than scrolling to a section about them.
+    const explore = screen.getAllByRole("link", { name: "Explore characters" });
+    expect(explore.length).toBeGreaterThan(0);
+    explore.forEach((link) => expect(link).toHaveAttribute("href", "/discover"));
   });
 
   it("announces the character hub rather than a story chapter", () => {

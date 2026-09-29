@@ -219,13 +219,13 @@ function AnnouncementBadge() {
       <p className="whitespace-nowrap text-center font-ui text-[7px] font-semibold text-white">
         Create your character hub. Share it anywhere.
       </p>
-      <a
-        href="#explore"
+      <Link
+        to="/discover"
         className="flex items-center justify-center gap-[5px] rounded-full bg-secondary px-2.5 py-[5px] font-ui text-[7px] font-semibold text-white"
       >
         Get started
         <img src={chevronRight} alt="" className="h-[3.333px] w-1" />
-      </a>
+      </Link>
     </div>
   );
 }
@@ -265,12 +265,12 @@ export default function Hero() {
             >
               Create your page
             </Link>
-            <a
-              href="#explore"
+            <Link
+              to="/discover"
               className="border-2 border-white px-6 py-4 font-ui text-sm font-bold text-white transition-colors hover:bg-white/10"
             >
               Explore characters
-            </a>
+            </Link>
           </div>
         </div>
 
