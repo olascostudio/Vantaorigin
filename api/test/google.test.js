@@ -164,3 +164,62 @@ test("anything still in angle brackets is treated as unset", () => {
     assert.equal(looksLikePlaceholder(real), false, JSON.stringify(real));
   }
 });
+
+// The gap this closes: somebody who signed up with Google got no welcome
+// letter at all, because it was only ever sent from the sign-up form.
+test("a new account made with Google is welcomed, a returning one is not", async () => {
+  const { mailer } = await import("../src/adapters/email.js");
+  const sent = [];
+  const realSend = mailer.send;
+  mailer.send = async (message) => {
+    sent.push(message);
+    return { id: "test" };
+  };
+
+  const realFetch = globalThis.fetch;
+  const asGoogle = (email) => async (url) => {
+    if (String(url).includes("token")) {
+      return { ok: true, status: 200, json: async () => ({ access_token: "t" }) };
+    }
+    return {
+      ok: true,
+      status: 200,
+      json: async () => ({
+        email,
+        email_verified: true,
+        name: "Ola Studios",
+        given_name: "Ola",
+        family_name: "Studios",
+        picture: "https://example.com/a.png",
+      }),
+    };
+  };
+
+  const walkThrough = async (email) => {
+    const start = await app.inject({ method: "GET", url: "/auth/google" });
+    const state = new URL(start.headers.location).searchParams.get("state");
+    const cookie = [].concat(start.headers["set-cookie"])[0].split(";")[0];
+    globalThis.fetch = asGoogle(email);
+    return app.inject({
+      method: "GET",
+      url: `/auth/google/callback?code=abc&state=${state}`,
+      headers: { cookie },
+    });
+  };
+
+  try {
+    const first = await walkThrough("welcome-me@vantaorigin.test");
+    assert.equal(first.statusCode, 302);
+    assert.equal(sent.length, 1, "a new account gets the letter");
+    assert.equal(sent[0].subject, "Welcome to VantaOrigin");
+    assert.match(sent[0].html, /I'm Ola, the founder/);
+    assert.equal(sent[0].replyTo, "hello@vantaorigin.com");
+
+    // Signing in again is not a new beginning.
+    await walkThrough("welcome-me@vantaorigin.test");
+    assert.equal(sent.length, 1, "coming back does not send it again");
+  } finally {
+    mailer.send = realSend;
+    globalThis.fetch = realFetch;
+  }
+});

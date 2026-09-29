@@ -15,6 +15,8 @@ import { db } from "../db/client.js";
 import { users } from "../db/schema.js";
 import { userByHandle } from "../db/handles.js";
 import { createSession, hashPassword, setSessionCookie } from "../auth/auth.js";
+import { mailer } from "../adapters/email.js";
+import { welcomeEmail } from "../emails/templates.js";
 
 const AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
@@ -215,6 +217,20 @@ export default async function googleRoutes(app) {
           emailVerifiedAt: new Date(),
         })
         .returning();
+
+      // Somebody who arrives this way is as new as somebody who filled in
+      // the form, and was getting no welcome at all: the letter was only
+      // ever sent from the sign-up route.
+      try {
+        await mailer.send({
+          to: email,
+          replyTo: config.EMAIL_REPLY_TO,
+          ...welcomeEmail({ user }),
+        });
+      } catch (error) {
+        // Never at the cost of the sign-in itself.
+        request.log.error({ err: error, to: email }, "welcome email failed");
+      }
     } else if (!user.emailVerifiedAt) {
       // Google has just vouched for the address this account was opened with.
       await db.update(users).set({ emailVerifiedAt: new Date() }).where(eq(users.id, user.id));
