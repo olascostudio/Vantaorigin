@@ -43,7 +43,7 @@ async function publicCharacters() {
         lead: character.tagline ? `${character.tagline} — ` : "",
         body: character.backstory,
       },
-      to: `/character?id=${character.id}`,
+      to: `/character/${character.slug || character.id}`,
       searchText: [character.alias, character.universe, character.tagline, character.creator]
         .filter(Boolean)
         .join(" "),

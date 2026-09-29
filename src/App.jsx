@@ -56,6 +56,9 @@ export default function App() {
         <Route path="/creators-hub/character/new" element={<RequireAuth><CreateCharacter /></RequireAuth>} />
         <Route path="/creators-hub/character" element={<RequireAuth><CharacterView owner /></RequireAuth>} />
         <Route path="/creators-hub/character/profile" element={<RequireAuth><CharacterProfile /></RequireAuth>} />
+        {/* A character has an address that says its name; the id form is
+            what earlier links carry, and still works. */}
+        <Route path="/character/:slug" element={<CharacterView />} />
         <Route path="/character" element={<CharacterView />} />
         <Route path="/marketplace" element={<Marketplace />} />
         <Route path="/marketplace/how-it-works" element={<MarketplaceHowItWorks />} />

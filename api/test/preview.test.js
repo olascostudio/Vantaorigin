@@ -105,7 +105,7 @@ test("a character page carries the tags a link preview reads", async () => {
   assert.match(html, /name="twitter:card" content="summary_large_image"/);
   assert.match(
     html,
-    /rel="canonical" href="https:\/\/www\.vantaorigin\.com\/character\?id=/
+    /rel="canonical" href="https:\/\/www\.vantaorigin\.com\/character\/urokojin"/
   );
 });
 
@@ -182,7 +182,9 @@ test("the sitemap lists every public character and creator", async () => {
   const res = await app.inject({ method: "GET", url: "/sitemap.xml" });
   assert.equal(res.statusCode, 200);
   assert.match(res.headers["content-type"], /xml/);
-  assert.match(res.body, new RegExp(`character\\?id=${characterId}`));
+  // Readable addresses, not the ids they used to be.
+  assert.match(res.body, /character\/urokojin/);
+  assert.match(res.body, /character\/atlas-veyron/);
   assert.match(res.body, /creator\/Vtgshadowscribe/);
   assert.ok(!res.body.includes(privateId), "private work stays out of the sitemap");
 });
@@ -192,7 +194,7 @@ test("llms.txt reads as a list an agent can use", async () => {
   assert.equal(res.statusCode, 200);
   assert.match(res.headers["content-type"], /text\/plain/);
   assert.match(res.body, /# VantaOrigin/);
-  assert.match(res.body, /\[Urokojin\]\(https:\/\/www\.vantaorigin\.com\/character\?id=/);
+  assert.match(res.body, /\[Urokojin\]\(https:\/\/www\.vantaorigin\.com\/character\/urokojin\)/);
   assert.match(res.body, /created by Ola Oriola \(@Vtgshadowscribe\), of The Vantaverse/);
   assert.ok(!res.body.includes("Work In Progress"));
 });
@@ -221,7 +223,7 @@ test("the discovery page lists every published character in plain HTML", async (
   assert.match(html, /of The Vantaverse/);
   assert.match(html, /The Thunder Judge/);
   assert.match(html, /Ola Oriola \(@Vtgshadowscribe\)/);
-  assert.ok(html.includes(`/character?id=${characterId}`), "links straight to the character");
+  assert.ok(html.includes("/character/urokojin"), "links straight to the character");
   assert.ok(!html.includes("Work In Progress"), "private work stays private");
 
   const jsonLd = JSON.parse(html.match(/<script type="application\/ld\+json">(.+?)<\/script>/s)[1]);

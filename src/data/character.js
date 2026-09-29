@@ -59,6 +59,7 @@ function toClient(row, creatorName = "") {
     id: row.id,
     categoryId: row.categoryId,
     alias: row.name,
+    slug: row.slug || null,
     universe: row.universe || "",
     tagline: row.tagline || "",
     backstory: row.backstory || "",

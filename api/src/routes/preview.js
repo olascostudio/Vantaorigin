@@ -15,6 +15,7 @@ import { config } from "../config.js";
 import { db } from "../db/client.js";
 import { characterAssets, characters, highlights, users } from "../db/schema.js";
 import { userByHandle } from "../db/handles.js";
+import { characterByIdOrSlug } from "../db/slugs.js";
 
 const SITE = (config.SITE_URL || "https://www.vantaorigin.com").replace(/\/$/, "");
 
@@ -149,17 +150,15 @@ function detailsHtml(details = {}) {
 
 export default async function previewRoutes(app) {
   // ---- one character ----
-  app.get("/preview/character/:id", async (request, reply) => {
-    const [row] = await db
-      .select({ character: characters, creator: users })
-      .from(characters)
-      .innerJoin(users, eq(users.id, characters.userId))
-      .where(and(eq(characters.id, request.params.id), eq(characters.isPublic, true)))
-      .limit(1);
+  app.get("/preview/character/:idOrSlug", async (request, reply) => {
+    const found = await characterByIdOrSlug(request.params.idOrSlug);
+    if (!found || !found.isPublic) {
+      return reply.code(404).type("text/html").send(notFound("character"));
+    }
 
-    if (!row) return reply.code(404).type("text/html").send(notFound("character"));
-
-    const { character, creator } = row;
+    const [creator] = await db.select().from(users).where(eq(users.id, found.userId)).limit(1);
+    if (!creator) return reply.code(404).type("text/html").send(notFound("character"));
+    const character = found;
     const [artwork, alsoBy] = await Promise.all([
       db
         .select({ url: characterAssets.url })
@@ -168,7 +167,7 @@ export default async function previewRoutes(app) {
       // The rest of this creator's work, so a reader — and a crawler — has
       // somewhere to go from here rather than a dead end.
       db
-        .select({ id: characters.id, name: characters.name, tagline: characters.tagline })
+        .select({ id: characters.id, slug: characters.slug, name: characters.name, tagline: characters.tagline })
         .from(characters)
         .where(and(eq(characters.userId, creator.id), eq(characters.isPublic, true)))
         .orderBy(desc(characters.createdAt))
@@ -176,7 +175,7 @@ export default async function previewRoutes(app) {
     ]);
 
     const handle = creator.username.replace(/^@/, "");
-    const canonical = `${SITE}/character?id=${character.id}`;
+    const canonical = `${SITE}/character/${character.slug || character.id}`;
     const creatorUrl = `${SITE}/creator/${handle}`;
     const maker = fullName(creator);
     const title = `${character.name}${character.universe ? ` — ${character.universe}` : ""} | VantaOrigin`;
@@ -258,7 +257,7 @@ export default async function previewRoutes(app) {
       <ul>${others
         .map(
           (other) =>
-            `<li><a href="${SITE}/character?id=${escape(other.id)}">${escape(other.name)}</a>${
+            `<li><a href="${SITE}/character/${escape(other.slug || other.id)}">${escape(other.name)}</a>${
               other.tagline ? ` — ${escape(other.tagline)}` : ""
             }</li>`
         )
@@ -335,7 +334,7 @@ export default async function previewRoutes(app) {
       hasPart: published.map((character) => ({
         "@type": "CreativeWork",
         name: character.name,
-        url: `${SITE}/character?id=${character.id}`,
+        url: `${SITE}/character/${character.slug || character.id}`,
         description: character.tagline || undefined,
         image: character.coverUrl || undefined,
       })),
@@ -352,7 +351,7 @@ export default async function previewRoutes(app) {
           ? `<ul>${published
               .map(
                 (character) =>
-                  `<li><a href="${SITE}/character?id=${escape(character.id)}">${escape(
+                  `<li><a href="${SITE}/character/${escape(character.slug || character.id)}">${escape(
                     character.name
                   )}</a>${character.tagline ? ` — ${escape(character.tagline)}` : ""}${
                     character.universe ? ` (${escape(character.universe)})` : ""
@@ -427,7 +426,7 @@ export default async function previewRoutes(app) {
         itemListElement: rows.map(({ character, creator }, index) => ({
           "@type": "ListItem",
           position: index + 1,
-          url: `${SITE}/character?id=${character.id}`,
+          url: `${SITE}/character/${character.slug || character.id}`,
           name: character.name,
           author: { "@type": "Person", name: fullName(creator), alternateName: creator.username },
         })),
@@ -444,7 +443,7 @@ export default async function previewRoutes(app) {
               .map(({ character, creator }) => {
                 const handle = creator.username.replace(/^@/, "");
                 return `<li>
-        <a href="${SITE}/character?id=${escape(character.id)}">${escape(character.name)}</a>${
+        <a href="${SITE}/character/${escape(character.slug || character.id)}">${escape(character.name)}</a>${
                   character.universe ? ` of ${escape(character.universe)}` : ""
                 }${character.tagline ? ` — ${escape(character.tagline)}` : ""}, created by
         <a href="${SITE}/creator/${escape(handle)}">${escape(fullName(creator))} (${escape(
@@ -468,7 +467,7 @@ export default async function previewRoutes(app) {
   app.get("/sitemap.xml", async (request, reply) => {
     const [published, creators] = await Promise.all([
       db
-        .select({ id: characters.id, updatedAt: characters.updatedAt })
+        .select({ id: characters.id, slug: characters.slug, updatedAt: characters.updatedAt })
         .from(characters)
         .where(eq(characters.isPublic, true))
         .orderBy(desc(characters.updatedAt)),
@@ -488,7 +487,7 @@ export default async function previewRoutes(app) {
         priority: "0.7",
       })),
       ...published.map((character) => ({
-        loc: `${SITE}/character?id=${character.id}`,
+        loc: `${SITE}/character/${character.slug || character.id}`,
         lastmod: character.updatedAt,
         priority: "0.9",
       })),
@@ -640,7 +639,7 @@ ${urls
       ...rows.map(({ character, creator }) => {
         const maker = fullName(creator);
         const about = summarise(character.backstory || character.tagline, 220);
-        return `- [${character.name}](${SITE}/character?id=${character.id}): created by ${maker} (${creator.username})${
+        return `- [${character.name}](${SITE}/character/${character.slug || character.id}): created by ${maker} (${creator.username})${
           character.universe ? `, of ${character.universe}` : ""
         }${about ? `. ${about}` : ""}`;
       }),

@@ -75,7 +75,7 @@ function ReportCard({ report, onSettle, busy }) {
       <div className="mt-4 flex flex-wrap items-center gap-2">
         {report.characterId && (
           <Link
-            to={`/character?id=${report.characterId}`}
+            to={`/character/${report.characterSlug || report.characterId}`}
             className="rounded-full border border-white/30 px-4 py-2 font-ui text-sm text-white hover:bg-white/10"
           >
             See the character
@@ -411,7 +411,7 @@ export default function Admin() {
                     />
                     <div className="min-w-0 flex-1">
                       <Link
-                        to={`/character?id=${character.id}`}
+                        to={`/character/${character.slug || character.id}`}
                         className="block truncate font-ui text-base font-bold text-white hover:text-[#6b8ff5]"
                       >
                         {character.name}

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import CharacterCard from "../components/creator/CharacterCard";
 import { DEFAULT_CHARACTER, likeCharacter, loadCharacter, loadPublicCharacter } from "../data/character";
@@ -129,7 +129,10 @@ export default function CharacterView({ owner = false }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [params] = useSearchParams();
-  const id = params.get("id");
+  // /character/urokojin is the address now; /character?id=<uuid> is what
+  // links shared before carry, and both find the same character.
+  const { slug } = useParams();
+  const id = slug || params.get("id");
   // Owners read their own character; visitors read the published one. With no
   // id (the links on the marketing pages) the sample is shown.
   const [character, setCharacter] = useState(null);
@@ -177,7 +180,7 @@ export default function CharacterView({ owner = false }) {
           .replace(/\s+/g, " ")
           .slice(0, 200)
       : "",
-    canonicalPath: named?.id ? `/character?id=${named.id}` : "",
+    canonicalPath: named?.id ? `/character/${named.slug || named.id}` : "",
   });
 
   const assets = (character?.assets || []).map((asset) => asset.url ?? asset);
@@ -195,7 +198,7 @@ export default function CharacterView({ owner = false }) {
   const [shareNote, setShareNote] = useState("");
   const share = async () => {
     const link = character?.id
-      ? `${window.location.origin}/character?id=${character.id}`
+      ? `${window.location.origin}/character/${character.slug || character.id}`
       : window.location.href;
 
     if (navigator.share) {

@@ -103,6 +103,9 @@ export const characters = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     categoryId: uuid("category_id").references(() => categories.id, { onDelete: "set null" }),
     name: text("name").notNull(),
+    // The name in the address bar: settled when the character is made, then
+    // left alone so a shared link never stops working.
+    slug: text("slug"),
     universe: text("universe").default("").notNull(),
     tagline: text("tagline").default("").notNull(),
     backstory: text("backstory").default("").notNull(),

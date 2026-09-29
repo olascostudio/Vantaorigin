@@ -215,7 +215,7 @@ export default function CreatorPage() {
               {characters.map((character) => (
                 <Link
                   key={character.id}
-                  to={`/character?id=${character.id}`}
+                  to={`/character/${character.slug || character.id}`}
                   className="group overflow-hidden rounded-2xl border border-white/10 bg-[#222b3c] transition-colors hover:border-white/30"
                 >
                   <img

@@ -55,6 +55,17 @@
       "destination": "https://api.vantaorigin.com/preview/character/:characterId"
     },
     {
+      "source": "/character/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(facebookexternalhit|facebookcatalog|twitterbot|linkedinbot|slackbot|slack-imgproxy|discordbot|telegrambot|whatsapp|pinterest|redditbot|embedly|quora link preview|skypeuripreview|vkshare|nuzzel|applebot|bingbot|googlebot|google-extended|duckduckbot|yandex|baiduspider|gptbot|oai-searchbot|chatgpt-user|claudebot|claude-web|anthropic-ai|perplexitybot|perplexity-user|youbot|bytespider|amazonbot|ccbot|diffbot|cohere-ai|meta-externalagent|moonshot|kimi|bot|crawler|spider|preview).*"
+        }
+      ],
+      "destination": "https://api.vantaorigin.com/preview/character/:slug"
+    },
+    {
       "source": "/creator/:username",
       "has": [
         {

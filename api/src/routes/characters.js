@@ -7,6 +7,7 @@ import { db } from "../db/client.js";
 import { categories, characterAssets, characterLikes, characters, users } from "../db/schema.js";
 import { authenticate } from "../auth/auth.js";
 import { tellSearchEngines } from "../indexnow.js";
+import { characterByIdOrSlug, freeSlugFor } from "../db/slugs.js";
 
 const detailsSchema = z
   .object({
@@ -150,7 +151,7 @@ export default async function characterRoutes(app) {
     const body = characterBody.parse(request.body);
     const [character] = await db
       .insert(characters)
-      .values({ ...body, userId: request.user.id })
+      .values({ ...body, slug: await freeSlugFor(body.name), userId: request.user.id })
       .returning();
 
     // Published straight away: let the search engines that take a nudge know
@@ -289,22 +290,24 @@ export default async function characterRoutes(app) {
     }
   );
 
+  // Either address works: the readable one, or the id that links already in
+  // the world still carry.
   app.get(
-    "/public/characters/:id",
+    "/public/characters/:idOrSlug",
     { preHandler: authenticate({ required: false }) },
     async (request, reply) => {
-      const [row] = await db
-        .select({
-          character: characters,
-          creator: { username: users.username, avatarUrl: users.avatarUrl },
-        })
-        .from(characters)
-        .innerJoin(users, eq(users.id, characters.userId))
-        .where(and(eq(characters.id, request.params.id), eq(characters.isPublic, true)))
+      const found = await characterByIdOrSlug(request.params.idOrSlug);
+      if (!found || !found.isPublic) {
+        return reply.code(404).send({ error: "Character not found" });
+      }
+
+      const [creator] = await db
+        .select({ username: users.username, avatarUrl: users.avatarUrl })
+        .from(users)
+        .where(eq(users.id, found.userId))
         .limit(1);
 
-      if (!row) return reply.code(404).send({ error: "Character not found" });
-      return { ...(await decorateOne(row.character, request.user?.id)), creator: row.creator };
+      return { ...(await decorateOne(found, request.user?.id)), creator };
     }
   );
 }
