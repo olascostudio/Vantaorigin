@@ -30,3 +30,12 @@ export const forgetSubscriber = (id) => api.delete(`/admin/newsletter/${id}`);
 // than through the JSON helper. The session cookie travels with it.
 export const subscribersFileUrl = (status = "subscribed") =>
   `${API_BASE}/admin/newsletter.csv?status=${status}`;
+
+// Writing the newsletter. A draft is kept as blocks, so the preview below is
+// built the same way the real email will be.
+export const loadIssues = () => api.get("/admin/newsletter/issues");
+export const loadIssue = (id) => api.get(`/admin/newsletter/issues/${id}`);
+export const startIssue = (writing = {}) => api.post("/admin/newsletter/issues", writing);
+export const saveIssue = (id, writing) => api.patch(`/admin/newsletter/issues/${id}`, writing);
+export const discardIssue = (id) => api.delete(`/admin/newsletter/issues/${id}`);
+export const previewIssue = (writing) => api.post("/admin/newsletter/preview", writing);

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import Loading, { Skeleton } from "../components/Loading.jsx";
+import NewsletterLetters from "../components/NewsletterEditor.jsx";
 import {
   amIAdmin,
   forgetSubscriber,
@@ -27,7 +28,7 @@ const REASONS = {
   other: "Other",
 };
 
-const TABS = ["Reports", "Creators", "Characters", "Newsletter"];
+const TABS = ["Reports", "Creators", "Characters", "Newsletter", "Letters"];
 
 const day = (value) =>
   value ? new Date(value).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "—";
@@ -618,6 +619,8 @@ export default function Admin() {
         )}
 
         {tab === "Newsletter" && <NewsletterPanel onTrouble={setProblem} />}
+
+        {tab === "Letters" && <NewsletterLetters onTrouble={setProblem} />}
 
         {tab === "Characters" && (
           <section className="mt-5">

@@ -229,3 +229,26 @@ export const newsletterSubscribers = pgTable(
     statusIdx: index("newsletter_subscribers_status_idx").on(table.status),
   })
 );
+
+// A letter, from first draft to sent. The writing is kept as blocks so the
+// email is built at sending time and always lands in the current shell.
+export const newsletterIssues = pgTable(
+  "newsletter_issues",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    subject: text("subject").default("").notNull(),
+    preheader: text("preheader").default("").notNull(),
+    blocks: jsonb("blocks").$type().default([]).notNull(),
+    status: text("status").default("draft").notNull(), // draft | sending | sent
+    authorId: uuid("author_id").references(() => users.id, { onDelete: "set null" }),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    sentCount: integer("sent_count").default(0).notNull(),
+    failedCount: integer("failed_count").default(0).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    statusIdx: index("newsletter_issues_status_idx").on(table.status),
+    createdIdx: index("newsletter_issues_created_idx").on(table.createdAt),
+  })
+);

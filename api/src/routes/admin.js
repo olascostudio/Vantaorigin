@@ -28,7 +28,7 @@ export const isAdmin = (user) => Boolean(user) && adminEmails().has(user.email.t
 
 // Signed in AND on the list. Anyone else is told the route does not exist,
 // rather than that they are not allowed: there is nothing to be learned here.
-function requireAdmin() {
+export function requireAdmin() {
   const signedIn = authenticate();
   return async (request, reply) => {
     await signedIn(request, reply);

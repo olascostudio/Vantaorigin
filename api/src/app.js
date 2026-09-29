@@ -13,6 +13,7 @@ import characterRoutes from "./routes/characters.js";
 import highlightRoutes from "./routes/highlights.js";
 import googleRoutes, { googleConfigNote } from "./routes/google.js";
 import newsletterRoutes from "./routes/newsletter.js";
+import newsletterAdminRoutes from "./routes/newsletter-admin.js";
 import previewRoutes from "./routes/preview.js";
 import creatorRoutes from "./routes/creator.js";
 import reportRoutes from "./routes/reports.js";
@@ -96,6 +97,7 @@ export async function buildApp() {
   await app.register(googleRoutes);
   await app.register(highlightRoutes);
   await app.register(newsletterRoutes);
+  await app.register(newsletterAdminRoutes);
   await app.register(previewRoutes);
   await app.register(creatorRoutes);
   await app.register(reportRoutes);
