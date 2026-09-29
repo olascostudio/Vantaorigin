@@ -72,7 +72,7 @@ export const button = (text, href) => `
     </tr>
   </table>`;
 
-export function shell({ preview = "", body }) {
+export function shell({ preview = "", body, unsubscribeUrl = "" }) {
   const year = new Date().getFullYear();
   const socials = SOCIALS.map(
     ([label, href, file, width]) =>
@@ -115,6 +115,11 @@ export function shell({ preview = "", body }) {
                   You are receiving this email because this address was registered on
                   <a href="https://vantaorigin.com" style="color:${PINK};font-weight:bold;text-decoration:none;">VantaOrigin</a>.
                 </p>
+                ${
+                  unsubscribeUrl
+                    ? `<p style="margin:8px 0 0;color:${MUTED};font-size:13px;line-height:1.5;">You are also on the creator newsletter. <a href="${unsubscribeUrl}" style="color:${MUTED};text-decoration:underline;">Unsubscribe</a> any time — your account stays as it is.</p>`
+                    : ""
+                }
                 <p style="margin:8px 0 0;color:${MUTED};font-size:13px;">© ${year} VantaOrigin.com, All Rights Reserved.</p>
               </td>
             </tr>

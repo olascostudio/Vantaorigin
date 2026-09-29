@@ -74,7 +74,7 @@ export function resetEmail({ user, code, minutes }) {
 
 // The founder's letter, in his words. It asks for a reply, so it is sent with
 // a reply-to that reaches a person.
-export function welcomeEmail({ user }) {
+export function welcomeEmail({ user, unsubscribeUrl = "" }) {
   const name = firstName(user);
   const body = `
     ${p(`Hey ${escape(name)},`, { top: 0 })}
@@ -118,6 +118,7 @@ export function welcomeEmail({ user }) {
     html: shell({
       preview: "A place for your characters, and one link to share them.",
       body,
+      unsubscribeUrl,
     }),
     text: [
       `Hey ${name},`,
@@ -149,6 +150,9 @@ export function welcomeEmail({ user }) {
       "Welcome to VantaOrigin,",
       "Ola",
       "Founder & Leader, VantaOrigin",
+      ...(unsubscribeUrl
+        ? ["", "--", `You are also on the creator newsletter. To leave it: ${unsubscribeUrl}`]
+        : []),
     ].join("\n"),
   };
 }

@@ -6,7 +6,7 @@ import { sessions, users } from "../db/schema.js";
 import { mailer } from "../adapters/email.js";
 import { userByHandle } from "../db/handles.js";
 import { resetEmail, verificationEmail, welcomeEmail } from "../emails/templates.js";
-import { subscribeQuietly } from "../newsletter.js";
+import { subscribeQuietly, unsubscribeLink } from "../newsletter.js";
 // While emails only print to the terminal (local development), the code is
 // also returned so you can finish the flow without an inbox. Never in
 // production, where EMAIL_DRIVER is "resend".
@@ -96,16 +96,22 @@ export default async function authRoutes(app) {
       ...verificationEmail({ user, code, minutes: CODE_TTL_MINUTES }),
     });
 
+    // Everyone who makes an account hears from us until they say otherwise,
+    // and this happens before the letter goes out so the letter can carry the
+    // way back out.
+    const listed = await subscribeQuietly(app, email, "signup");
+    const leaveLink = listed?.subscriber?.token
+      ? unsubscribeLink(config.API_PUBLIC_URL, listed.subscriber.token)
+      : "";
+
     // The welcome letter is its own message: it is not urgent, and it must
     // not hold up the answer to a sign-up, so it goes without being waited on.
     trySend(app, {
       to: email,
       replyTo: config.EMAIL_REPLY_TO,
-      ...welcomeEmail({ user }),
+      unsubscribeUrl: leaveLink,
+      ...welcomeEmail({ user, unsubscribeUrl: leaveLink }),
     });
-
-    // Everyone who makes an account hears from us until they say otherwise.
-    await subscribeQuietly(app, email, "signup");
 
     const session = await createSession(user.id);
     setSessionCookie(reply, session.token, session.expiresAt);

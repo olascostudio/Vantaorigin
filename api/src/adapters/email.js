@@ -1,4 +1,4 @@
-// Email behind one method: send({ to, subject, html, text, replyTo }).
+// Email behind one method: send({ to, subject, html, text, replyTo, unsubscribeUrl }).
 //
 // "resend" posts to Resend's HTTP API — no SDK, so there is nothing to remove
 // if we switch to SMTP or Postmark on a VPS. "console" prints the message,
@@ -16,7 +16,16 @@ const consoleMailer = {
 
 const resendMailer = {
   name: "resend",
-  async send({ to, subject, html, text, replyTo }) {
+  async send({ to, subject, html, text, replyTo, unsubscribeUrl }) {
+    // The two headers a mail app reads to offer its own unsubscribe button.
+    // One-Click tells it the POST needs no confirmation screen.
+    const unsubscribeHeaders = unsubscribeUrl
+      ? {
+          "List-Unsubscribe": `<${unsubscribeUrl}>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        }
+      : {};
+
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -30,6 +39,7 @@ const resendMailer = {
         html,
         ...(text ? { text } : {}),
         ...(replyTo ? { reply_to: replyTo } : {}),
+        ...(unsubscribeUrl ? { headers: unsubscribeHeaders } : {}),
       }),
     });
 

@@ -9,6 +9,7 @@ const dataDir = ".pglite-newsletter-test";
 process.env.DATABASE_URL = `pglite://${dataDir}`;
 process.env.NODE_ENV = "test";
 process.env.EMAIL_DRIVER = "console";
+process.env.API_PUBLIC_URL = "https://api.vantaorigin.com";
 
 const { buildApp } = await import("../src/app.js");
 const { migrate } = await import("../src/db/migrate.js");
@@ -133,4 +134,43 @@ test("somebody who left and comes back is welcomed back, in place", async () => 
   assert.equal(back.id, gone.id);
   assert.equal(back.status, "subscribed");
   assert.equal(back.unsubscribedAt, null);
+});
+
+test("the welcome letter carries a link that really takes you off", async () => {
+  const { mailer } = await import("../src/adapters/email.js");
+  const sent = [];
+  const realSend = mailer.send;
+  mailer.send = async (message) => {
+    sent.push(message);
+    return { id: "test" };
+  };
+
+  try {
+    const res = await app.inject({
+      method: "POST",
+      url: "/auth/signup",
+      payload: { email: "letter@vantaorigin.test", username: "letterreader", password: "supersecret1" },
+    });
+    assert.equal(res.statusCode, 201);
+
+    // The letter is sent without being waited on, so give it a tick.
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    const letter = sent.find((message) => message.subject === "Welcome to VantaOrigin");
+    assert.ok(letter, "the welcome letter went out");
+
+    // The header a mail app reads to offer its own unsubscribe button.
+    assert.ok(letter.unsubscribeUrl, "and carries somewhere to go");
+    assert.match(letter.html, /Unsubscribe/);
+    assert.match(letter.text, /To leave it: http/);
+
+    // Not just a link -- a link that works.
+    const token = new URL(letter.unsubscribeUrl).searchParams.get("token");
+    const goodbye = await app.inject({ method: "GET", url: `/newsletter/unsubscribe?token=${token}` });
+    assert.equal(goodbye.statusCode, 200);
+    assert.match(goodbye.body, /unsubscribed/i);
+    assert.equal((await rowFor("letter@vantaorigin.test")).status, "unsubscribed");
+  } finally {
+    mailer.send = realSend;
+  }
 });
