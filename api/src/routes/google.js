@@ -17,6 +17,7 @@ import { userByHandle } from "../db/handles.js";
 import { createSession, hashPassword, setSessionCookie } from "../auth/auth.js";
 import { mailer } from "../adapters/email.js";
 import { welcomeEmail } from "../emails/templates.js";
+import { subscribeQuietly } from "../newsletter.js";
 
 const AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
@@ -217,6 +218,8 @@ export default async function googleRoutes(app) {
           emailVerifiedAt: new Date(),
         })
         .returning();
+
+      await subscribeQuietly(app, email, "google");
 
       // Somebody who arrives this way is as new as somebody who filled in
       // the form, and was getting no welcome at all: the letter was only

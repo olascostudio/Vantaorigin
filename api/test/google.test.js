@@ -3,6 +3,7 @@
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { rm } from "node:fs/promises";
+import { eq } from "drizzle-orm";
 
 const dataDir = ".pglite-google-test";
 process.env.DATABASE_URL = `pglite://${dataDir}`;
@@ -15,7 +16,7 @@ process.env.APP_ORIGIN = "https://www.vantaorigin.com";
 
 const { buildApp } = await import("../src/app.js");
 const { migrate } = await import("../src/db/migrate.js");
-const { endConnection } = await import("../src/db/client.js");
+const { endConnection, db, schema } = await import("../src/db/client.js");
 const { usernameFrom, looksLikeClientId } = await import("../src/routes/google.js");
 const { looksLikePlaceholder } = await import("../src/config.js");
 
@@ -214,6 +215,15 @@ test("a new account made with Google is welcomed, a returning one is not", async
     assert.equal(sent[0].subject, "Welcome to VantaOrigin");
     assert.match(sent[0].html, /I'm Ola, the founder/);
     assert.equal(sent[0].replyTo, "hello@vantaorigin.com");
+
+    // And joins the newsletter, like anybody else who makes an account.
+    const [subscriber] = await db
+      .select()
+      .from(schema.newsletterSubscribers)
+      .where(eq(schema.newsletterSubscribers.email, "welcome-me@vantaorigin.test"))
+      .limit(1);
+    assert.equal(subscriber.status, "subscribed");
+    assert.equal(subscriber.source, "google");
 
     // Signing in again is not a new beginning.
     await walkThrough("welcome-me@vantaorigin.test");

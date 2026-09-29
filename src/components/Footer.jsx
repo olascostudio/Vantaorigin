@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import { api } from "../data/api";
 import logoMark from "../assets/landing/footer/logo-mark.svg";
 import logoWordmark from "../assets/landing/footer/logo-wordmark.svg";
 import instagramIcon from "../assets/landing/footer/instagram.svg";
@@ -79,6 +81,24 @@ function PatternRow({ top, logo }) {
 }
 
 function Newsletter() {
+  const [email, setEmail] = useState("");
+  // "idle" | "sending" | "done" | one sentence of trouble
+  const [state, setState] = useState("idle");
+
+  async function join(event) {
+    event.preventDefault();
+    if (state === "sending") return;
+
+    setState("sending");
+    try {
+      await api.post("/newsletter/subscribe", { email });
+      setEmail("");
+      setState("done");
+    } catch (error) {
+      setState(error.message || "That did not go through. Please try again.");
+    }
+  }
+
   return (
     <div className="flex flex-col gap-[30.24px]">
       <div>
@@ -108,21 +128,45 @@ function Newsletter() {
         ))}
       </ul>
 
-      <form className="flex w-full max-w-[402.36px] gap-[6.72px]" onSubmit={(event) => event.preventDefault()}>
-        <input
-          type="email"
-          required
-          aria-label="Email address"
-          placeholder="placeholder@gmail.com"
-          className="h-[47.04px] min-w-0 flex-1 rounded-[6.72px] border-[0.42px] border-neutral-300 bg-transparent px-[13.44px] font-ui text-[11.76px] text-white outline-none placeholder:text-neutral-400 focus:border-secondary"
-        />
-        <button
-          type="submit"
-          className="h-[47.04px] w-[126.84px] shrink-0 rounded-[6.72px] bg-secondary px-[13.44px] font-ui text-[13.44px] leading-[1.4] text-white transition-opacity hover:opacity-90"
-        >
-          Get Creator Updates
-        </button>
-      </form>
+      <div className="w-full max-w-[402.36px]">
+        <form className="flex gap-[6.72px]" onSubmit={join}>
+          <input
+            type="email"
+            required
+            aria-label="Email address"
+            placeholder="placeholder@gmail.com"
+            value={email}
+            onChange={(event) => {
+              setEmail(event.target.value);
+              // A new address deserves a fresh answer.
+              if (state !== "sending") setState("idle");
+            }}
+            className="h-[47.04px] min-w-0 flex-1 rounded-[6.72px] border-[0.42px] border-neutral-300 bg-transparent px-[13.44px] font-ui text-[11.76px] text-white outline-none placeholder:text-neutral-400 focus:border-secondary"
+          />
+          <button
+            type="submit"
+            disabled={state === "sending"}
+            className="h-[47.04px] w-[126.84px] shrink-0 rounded-[6.72px] bg-secondary px-[13.44px] font-ui text-[13.44px] leading-[1.4] text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+          >
+            {state === "sending" ? "Adding you…" : "Get Creator Updates"}
+          </button>
+        </form>
+
+        {/* Said out loud as well as shown, since the form it belongs to has
+            just been submitted and focus is still on the button. */}
+        {state !== "idle" && state !== "sending" && (
+          <p
+            role="status"
+            className={`mt-[10px] font-ui text-[12.5px] leading-snug ${
+              state === "done" ? "text-subtext" : "text-secondary"
+            }`}
+          >
+            {state === "done"
+              ? "You're on the list. Look out for the next one."
+              : state}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

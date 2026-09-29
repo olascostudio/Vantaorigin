@@ -207,3 +207,25 @@ export const reports = pgTable(
     reporterIdx: index("reports_reporter_idx").on(table.reporterId),
   })
 );
+
+// Who hears from VantaOrigin. Separate from accounts: somebody can follow
+// the newsletter without an account, and leave it without losing one.
+export const newsletterSubscribers = pgTable(
+  "newsletter_subscribers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    email: text("email").notNull(),
+    status: text("status").default("subscribed").notNull(),
+    source: text("source").default("footer").notNull(),
+    // Carried in the unsubscribe link, which has to work with nobody signed
+    // in and must not be guessable from the address.
+    token: text("token").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+    unsubscribedAt: timestamp("unsubscribed_at", { withTimezone: true }),
+  },
+  (table) => ({
+    tokenIdx: uniqueIndex("newsletter_subscribers_token_key").on(table.token),
+    statusIdx: index("newsletter_subscribers_status_idx").on(table.status),
+  })
+);
