@@ -39,3 +39,10 @@ export const startIssue = (writing = {}) => api.post("/admin/newsletter/issues",
 export const saveIssue = (id, writing) => api.patch(`/admin/newsletter/issues/${id}`, writing);
 export const discardIssue = (id) => api.delete(`/admin/newsletter/issues/${id}`);
 export const previewIssue = (writing) => api.post("/admin/newsletter/preview", writing);
+
+// Sending. A test copy changes nothing; the real send answers at once and
+// works through the list in the background, so the screen watches the counts.
+export const sendTestCopy = (id, to) =>
+  api.post(`/admin/newsletter/issues/${id}/test`, to ? { to } : {});
+export const countWaiting = (id) => api.get(`/admin/newsletter/issues/${id}/waiting`);
+export const sendIssue = (id) => api.post(`/admin/newsletter/issues/${id}/send`, {});

@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Skeleton } from "./Loading.jsx";
 import {
+  countWaiting,
   discardIssue,
   loadIssue,
   loadIssues,
   previewIssue,
   saveIssue,
+  sendIssue,
+  sendTestCopy,
   startIssue,
 } from "../data/admin";
 import { api } from "../data/api";
@@ -185,6 +188,151 @@ function BlockCard({ block, index, count, onChange, onMove, onRemove, onTrouble 
   );
 }
 
+// Sending, once it reads the way it should.
+//
+// A test copy first, because the only honest preview of an email is an email.
+// Then the real send, which answers at once and works through the list behind
+// the scenes, so this watches the count climb rather than holding still.
+function SendBar({ issue, saved, onChanged, onTrouble }) {
+  const [waiting, setWaiting] = useState(null);
+  const [testTo, setTestTo] = useState("");
+  const [testState, setTestState] = useState("");
+  const [confirming, setConfirming] = useState(false);
+  const [starting, setStarting] = useState(false);
+
+  const going = issue.status === "sending";
+
+  useEffect(() => {
+    countWaiting(issue.id)
+      .then((answer) => setWaiting(answer.waiting))
+      .catch(() => {});
+  }, [issue.id, issue.status, issue.sentCount]);
+
+  // While it is going out, ask again every couple of seconds. The answer is
+  // what the counts on screen are.
+  useEffect(() => {
+    if (!going) return undefined;
+    const timer = setInterval(() => {
+      loadIssue(issue.id)
+        .then(onChanged)
+        .catch(() => {});
+    }, 2000);
+    return () => clearInterval(timer);
+  }, [going, issue.id, onChanged]);
+
+  const test = async () => {
+    setTestState("Sending…");
+    try {
+      const answer = await sendTestCopy(issue.id, testTo.trim() || undefined);
+      setTestState(`Sent to ${answer.to}`);
+    } catch (error) {
+      setTestState("");
+      onTrouble(error.message);
+    }
+  };
+
+  const send = async () => {
+    setStarting(true);
+    try {
+      await sendIssue(issue.id);
+      setConfirming(false);
+      onChanged(await loadIssue(issue.id));
+    } catch (error) {
+      setConfirming(false);
+      onTrouble(error.message);
+    } finally {
+      setStarting(false);
+    }
+  };
+
+  if (issue.status === "sent") return null;
+
+  return (
+    <div className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-[#222b3c] p-5">
+      {/* A copy to read in a real inbox */}
+      <div className="flex flex-col gap-2">
+        <p className="font-ui text-sm font-bold text-white">Read it in your own inbox first</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="email"
+            value={testTo}
+            onChange={(event) => setTestTo(event.target.value)}
+            placeholder="Your address, unless you name another"
+            className={`${field} min-w-[200px] flex-1`}
+          />
+          <button
+            type="button"
+            onClick={test}
+            disabled={going}
+            className="shrink-0 rounded-full border border-white/25 px-5 py-2.5 font-ui text-sm text-white hover:bg-white/10 disabled:opacity-50"
+          >
+            Send a test copy
+          </button>
+        </div>
+        {testState && <p className="font-ui text-sm text-neutral-400">{testState}</p>}
+      </div>
+
+      <div className="h-px w-full bg-white/10" aria-hidden="true" />
+
+      {/* The real thing */}
+      {going ? (
+        <div>
+          <p className="font-ui text-base font-bold text-white">Going out now…</p>
+          <p className="mt-1 font-ui text-sm text-neutral-400">
+            {issue.sentCount} sent{waiting ? `, ${waiting} to go` : ""}. You can leave this page; it
+            carries on without you.
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="font-ui text-base font-bold text-white">
+              {waiting === null
+                ? "Counting who is waiting…"
+                : waiting === 0
+                  ? "Nobody is waiting for this one."
+                  : `Ready for ${waiting} ${waiting === 1 ? "person" : "people"}`}
+            </p>
+            <p className="mt-1 font-ui text-sm text-neutral-400">
+              Only people still on the list, each with their own way out.
+            </p>
+          </div>
+
+          {confirming ? (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={send}
+                disabled={starting}
+                className="rounded-full bg-[#c2185b] px-6 py-2.5 font-ui text-sm font-bold text-white hover:opacity-90 disabled:opacity-50"
+              >
+                {starting ? "Starting…" : `Yes, send it to ${waiting}`}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirming(false)}
+                className="rounded-full px-4 py-2.5 font-ui text-sm text-neutral-400 hover:text-white"
+              >
+                Not yet
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirming(true)}
+              disabled={!waiting || saved !== "Saved"}
+              title={saved !== "Saved" ? "Saving what you just typed…" : undefined}
+              className="rounded-full bg-gradient-to-r from-[#c2185b] to-[#a855f7] px-6 py-2.5 font-ui text-sm font-bold text-white hover:opacity-90 disabled:opacity-40"
+            >
+              Send it
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Editor({ id, onClose, onTrouble }) {
   const [issue, setIssue] = useState(null);
   const [subject, setSubject] = useState("");
@@ -359,6 +507,8 @@ function Editor({ id, onClose, onTrouble }) {
               ))}
             </div>
           )}
+
+          <SendBar issue={issue} saved={saved} onChanged={setIssue} onTrouble={onTrouble} />
         </div>
 
         {/* What it will look like */}

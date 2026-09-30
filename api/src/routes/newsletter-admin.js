@@ -12,6 +12,7 @@ import { desc, eq } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { newsletterIssues, users } from "../db/schema.js";
 import { renderIssue, startingBlocks } from "../emails/issue.js";
+import { countWaiting, deliver, isSending, sendTest, whyNotSendable } from "../newsletter-send.js";
 import { requireAdmin } from "./admin.js";
 
 // What a written block may hold. Anything else is refused rather than stored
@@ -152,5 +153,71 @@ export default async function newsletterAdminRoutes(app) {
       { subject: body.subject, preheader: body.preheader, blocks: body.blocks ?? [] },
       { unsubscribeUrl: "https://www.vantaorigin.com/newsletter/unsubscribe?token=preview" }
     );
+  });
+
+  // A copy to one address, to be read in a real inbox before anybody else
+  // gets it. It changes nothing: not the issue, not the list.
+  app.post("/admin/newsletter/issues/:id/test", { preHandler: requireAdmin() }, async (request, reply) => {
+    const { to } = z
+      .object({ to: z.string().email().optional() })
+      .parse(request.body ?? {});
+
+    const [issue] = await db
+      .select()
+      .from(newsletterIssues)
+      .where(eq(newsletterIssues.id, request.params.id))
+      .limit(1);
+    if (!issue) return reply.code(404).send({ error: "No such issue" });
+
+    // Their own address unless they name another, which is the common case
+    // and saves typing it every time.
+    const address = to || request.user.email;
+
+    try {
+      await sendTest(issue, address);
+    } catch (error) {
+      request.log.error({ err: error, to: address }, "test copy failed");
+      return reply.code(502).send({ error: "That test copy could not be sent." });
+    }
+
+    return { ok: true, to: address };
+  });
+
+  // How many people this issue would go to right now. Asked before sending,
+  // so the number on the button is the number that will be written to.
+  app.get("/admin/newsletter/issues/:id/waiting", { preHandler: requireAdmin() }, async (request) => ({
+    waiting: await countWaiting(request.params.id),
+    sending: isSending(request.params.id),
+  }));
+
+  // The real thing.
+  //
+  // It answers at once and works through the list in the background: holding
+  // an HTTP request open for a thousand copies would end in a timeout, and a
+  // timeout in the middle of sending tells nobody anything. The screen watches
+  // the counts climb instead.
+  app.post("/admin/newsletter/issues/:id/send", { preHandler: requireAdmin() }, async (request, reply) => {
+    const [issue] = await db
+      .select()
+      .from(newsletterIssues)
+      .where(eq(newsletterIssues.id, request.params.id))
+      .limit(1);
+    if (!issue) return reply.code(404).send({ error: "No such issue" });
+
+    if (isSending(issue.id)) {
+      return reply.code(409).send({ error: "This one is going out already." });
+    }
+
+    const waiting = await countWaiting(issue.id);
+    const refusal = whyNotSendable(issue, waiting);
+    if (refusal) return reply.code(400).send({ error: refusal });
+
+    // Started, not awaited. A failure inside is written to the log and to the
+    // issue's own counts, which is where anybody would look for it.
+    deliver(app, issue.id).catch((error) => {
+      request.log.error({ err: error, issueId: issue.id }, "newsletter send stopped");
+    });
+
+    return reply.code(202).send({ ok: true, sending: waiting });
   });
 }

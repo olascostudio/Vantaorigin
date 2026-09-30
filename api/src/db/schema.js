@@ -220,6 +220,9 @@ export const newsletterSubscribers = pgTable(
     // Carried in the unsubscribe link, which has to work with nobody signed
     // in and must not be guessable from the address.
     token: text("token").notNull(),
+    // The last letter this address was sent. It is what makes a send safe to
+    // repeat: a restart halfway through resumes rather than sends twice.
+    lastIssueId: uuid("last_issue_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
     unsubscribedAt: timestamp("unsubscribed_at", { withTimezone: true }),
