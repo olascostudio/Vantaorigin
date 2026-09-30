@@ -28,6 +28,29 @@ const page = (heading, words) => `<!doctype html>
 </html>`;
 
 export default async function newsletterRoutes(app) {
+  // A mail app's one-click unsubscribe is posted as a web form, not as JSON:
+  // `List-Unsubscribe=One-Click` with content-type
+  // application/x-www-form-urlencoded. Fastify reads JSON and text out of the
+  // box and answers anything else with 415, so without this the button Gmail
+  // draws did nothing at all.
+  //
+  // Registered inside this plugin rather than on the whole app on purpose. A
+  // form-encoded POST is a "simple request", so it crosses origins without a
+  // preflight; teaching every route to read one would open the cookie-backed
+  // routes to a form on somebody else's site. Nothing here is authorised by a
+  // cookie -- an unsubscribe is authorised by a token only its owner has.
+  app.addContentTypeParser(
+    "application/x-www-form-urlencoded",
+    { parseAs: "string" },
+    (request, body, done) => {
+      try {
+        done(null, Object.fromEntries(new URLSearchParams(body)));
+      } catch (error) {
+        done(error);
+      }
+    }
+  );
+
   app.post("/newsletter/subscribe", async (request, reply) => {
     const { email } = z.object({ email: z.string().email() }).parse(request.body);
     const result = await subscribe(email, "footer");
@@ -56,6 +79,9 @@ export default async function newsletterRoutes(app) {
   app.post("/newsletter/unsubscribe", async (request, reply) => {
     const token = request.query.token || request.body?.token;
     await unsubscribeByToken(token);
+    // Always 200, even for a token we do not know. A mail provider reads a
+    // failure here as a broken list and holds it against the sender, and
+    // there is nothing it could usefully do with the difference anyway.
     return reply.code(200).send({ ok: true });
   });
 }

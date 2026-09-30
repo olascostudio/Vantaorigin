@@ -28,6 +28,13 @@ const KINDS = [
   { type: "divider", label: "Divider" },
 ];
 
+// Blocks are stored as what they say, with no id of their own. The editor
+// gives each one a key for as long as it is on screen, and takes it off again
+// before saving: it is React's business, not the letter's.
+let nextKey = 0;
+const withKey = (block) => ({ ...block, _key: `b${(nextKey += 1)}` });
+const withoutKeys = (blocks) => blocks.map(({ _key, ...block }) => block);
+
 const emptyBlock = (type) => {
   if (type === "image") return { type, url: "", alt: "", href: "" };
   if (type === "button") return { type, text: "", href: "" };
@@ -260,30 +267,44 @@ function Record({ issue }) {
 // the scenes, so this watches the count climb rather than holding still.
 function SendBar({ issue, saved, onChanged, onTrouble }) {
   const [waiting, setWaiting] = useState(null);
+  // Whether the server is actually working through the list right now, as
+  // opposed to an issue left marked "sending" by a server that stopped.
+  const [running, setRunning] = useState(true);
   const [testTo, setTestTo] = useState("");
   const [testState, setTestState] = useState("");
   const [confirming, setConfirming] = useState(false);
   const [starting, setStarting] = useState(false);
 
   const going = issue.status === "sending";
+  // A send nobody is working on. Without this the screen would show "going
+  // out now" for ever after a restart, and the rest of the list would never
+  // be written to.
+  const stopped = going && !running;
+
+  const ask = useCallback(async () => {
+    try {
+      const answer = await countWaiting(issue.id);
+      setWaiting(answer.waiting);
+      setRunning(Boolean(answer.sending));
+    } catch {
+      // A failed count changes nothing on screen.
+    }
+  }, [issue.id]);
 
   useEffect(() => {
-    countWaiting(issue.id)
-      .then((answer) => setWaiting(answer.waiting))
-      .catch(() => {});
-  }, [issue.id, issue.status, issue.sentCount]);
+    ask();
+  }, [ask, issue.status, issue.sentCount]);
 
-  // While it is going out, ask again every couple of seconds. The answer is
-  // what the counts on screen are.
+  // While it is going out, ask again every couple of seconds -- both for the
+  // counts and for whether anybody is still sending them.
   useEffect(() => {
     if (!going) return undefined;
     const timer = setInterval(() => {
-      loadIssue(issue.id)
-        .then(onChanged)
-        .catch(() => {});
+      loadIssue(issue.id).then(onChanged).catch(() => {});
+      ask();
     }, 2000);
     return () => clearInterval(timer);
-  }, [going, issue.id, onChanged]);
+  }, [going, issue.id, onChanged, ask]);
 
   const test = async () => {
     setTestState("Sending…");
@@ -328,7 +349,10 @@ function SendBar({ issue, saved, onChanged, onTrouble }) {
           <button
             type="button"
             onClick={test}
-            disabled={going}
+            // The copy is built from what is stored, so testing before the
+            // last keystroke has been saved would post the version before it.
+            disabled={going || saved !== "Saved"}
+            title={saved !== "Saved" ? "Saving what you just typed…" : undefined}
             className="shrink-0 rounded-full border border-white/25 px-5 py-2.5 font-ui text-sm text-white hover:bg-white/10 disabled:opacity-50"
           >
             Send a test copy
@@ -340,7 +364,26 @@ function SendBar({ issue, saved, onChanged, onTrouble }) {
       <div className="h-px w-full bg-white/10" aria-hidden="true" />
 
       {/* The real thing */}
-      {going ? (
+      {stopped ? (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="font-ui text-base font-bold text-[#ffb4c4]">This send stopped partway.</p>
+            <p className="mt-1 font-ui text-sm text-neutral-400">
+              {issue.sentCount} went out
+              {waiting ? `, ${waiting} still to go` : ", and everybody has been reached"}. Picking it
+              up carries on from where it stopped — nobody is written to twice.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={send}
+            disabled={starting}
+            className="rounded-full bg-gradient-to-r from-[#c2185b] to-[#a855f7] px-6 py-2.5 font-ui text-sm font-bold text-white hover:opacity-90 disabled:opacity-50"
+          >
+            {starting ? "Picking it up…" : "Carry on sending"}
+          </button>
+        </div>
+      ) : going ? (
         <div>
           <p className="font-ui text-base font-bold text-white">Going out now…</p>
           <p className="mt-1 font-ui text-sm text-neutral-400">
@@ -418,7 +461,7 @@ function Editor({ id, onClose, onTrouble }) {
         setIssue(next);
         setSubject(next.subject);
         setPreheader(next.preheader);
-        setBlocks(next.blocks || []);
+        setBlocks((next.blocks || []).map(withKey));
       })
       .catch((error) => !cancelled && onTrouble(error.message));
     return () => {
@@ -427,13 +470,19 @@ function Editor({ id, onClose, onTrouble }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  const writing = useMemo(() => ({ subject, preheader, blocks }), [subject, preheader, blocks]);
-  const sent = issue && issue.status !== "draft";
+  const writing = useMemo(
+    () => ({ subject, preheader, blocks: withoutKeys(blocks) }),
+    [subject, preheader, blocks]
+  );
+  const sent = issue?.status === "sent";
+  const going = issue?.status === "sending";
+  // Nothing can be rewritten once it has started leaving.
+  const closed = sent || going;
 
   // Saving follows typing rather than a button: a letter half written and then
   // abandoned should still be there tomorrow.
   useEffect(() => {
-    if (!issue || sent || !touched.current) return undefined;
+    if (!issue || closed || !touched.current) return undefined;
     setSaved("Saving…");
     const timer = setTimeout(async () => {
       try {
@@ -446,7 +495,7 @@ function Editor({ id, onClose, onTrouble }) {
     }, 900);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [writing, issue, sent]);
+  }, [writing, issue, closed]);
 
   // The preview is rendered by the API, by the same code that will build the
   // real email. Asking on every keystroke would be one request per letter.
@@ -466,8 +515,10 @@ function Editor({ id, onClose, onTrouble }) {
     work();
   }, []);
 
-  const setBlock = (index, next) =>
-    change(() => setBlocks((current) => current.map((block, i) => (i === index ? next : block))));
+  const setBlock = (target, next) =>
+    change(() =>
+      setBlocks((current) => current.map((block) => (block._key === target._key ? next : block)))
+    );
 
   const moveBlock = (index, by) =>
     change(() =>
@@ -483,7 +534,8 @@ function Editor({ id, onClose, onTrouble }) {
   const removeBlock = (index) =>
     change(() => setBlocks((current) => current.filter((_, i) => i !== index)));
 
-  const addBlock = (type) => change(() => setBlocks((current) => [...current, emptyBlock(type)]));
+  const addBlock = (type) =>
+    change(() => setBlocks((current) => [...current, withKey(emptyBlock(type))]));
 
   if (!issue) return <Skeleton className="mt-5 h-[420px] rounded-2xl" />;
 
@@ -499,7 +551,11 @@ function Editor({ id, onClose, onTrouble }) {
         </button>
 
         <p className="font-ui text-sm text-neutral-400">
-          {sent ? `Sent ${day(issue.sentAt)} to ${issue.sentCount} people` : saved}
+          {sent
+            ? `Sent ${day(issue.sentAt)} to ${issue.sentCount} ${issue.sentCount === 1 ? "person" : "people"}`
+            : going
+              ? `Going out now · ${issue.sentCount} sent`
+              : saved}
         </p>
       </div>
 
@@ -515,7 +571,7 @@ function Editor({ id, onClose, onTrouble }) {
               </span>
               <input
                 value={subject}
-                disabled={sent}
+                disabled={closed}
                 onChange={(event) => change(() => setSubject(event.target.value))}
                 placeholder="What they see in their inbox"
                 className={`${field} text-base disabled:opacity-60`}
@@ -528,7 +584,7 @@ function Editor({ id, onClose, onTrouble }) {
               </span>
               <input
                 value={preheader}
-                disabled={sent}
+                disabled={closed}
                 onChange={(event) => change(() => setPreheader(event.target.value))}
                 placeholder="The grey line beside the subject"
                 className={`${field} disabled:opacity-60`}
@@ -536,15 +592,15 @@ function Editor({ id, onClose, onTrouble }) {
             </label>
           </div>
 
-          {!sent && (
+          {!closed && (
             <ul className="flex flex-col gap-3">
               {blocks.map((block, index) => (
                 <BlockCard
-                  key={index}
+                  key={block._key}
                   block={block}
                   index={index}
                   count={blocks.length}
-                  onChange={(next) => setBlock(index, next)}
+                  onChange={(next) => setBlock(block, next)}
                   onMove={moveBlock}
                   onRemove={removeBlock}
                   onTrouble={onTrouble}
@@ -553,7 +609,7 @@ function Editor({ id, onClose, onTrouble }) {
             </ul>
           )}
 
-          {!sent && (
+          {!closed && (
             <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-dashed border-white/15 p-3">
               <span className="px-2 font-ui text-sm text-neutral-500">Add</span>
               {KINDS.map((kind) => (

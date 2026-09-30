@@ -14,6 +14,7 @@ process.env.API_PUBLIC_URL = "https://api.vantaorigin.com";
 const { buildApp } = await import("../src/app.js");
 const { migrate } = await import("../src/db/migrate.js");
 const { endConnection, db, schema } = await import("../src/db/client.js");
+const { subscribe } = await import("../src/newsletter.js");
 
 let app;
 
@@ -105,13 +106,71 @@ test("the link in an email takes you off, with nobody signed in", async () => {
 
 test("a mail app's own unsubscribe button works too", async () => {
   const row = await rowFor("joiner@vantaorigin.test");
+
+  // Sent the way a mail provider really sends it: one-click unsubscribe is a
+  // web form post, not JSON. Asking without a body would pass whether or not
+  // the server could read the one that actually arrives.
   const res = await app.inject({
     method: "POST",
     url: `/newsletter/unsubscribe?token=${row.token}`,
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    payload: "List-Unsubscribe=One-Click",
   });
 
   assert.equal(res.statusCode, 200);
   assert.equal((await rowFor("joiner@vantaorigin.test")).status, "unsubscribed");
+});
+
+test("the one-click button is answered kindly even for a token we do not know", async () => {
+  // A provider reads a failure here as a broken list and holds it against
+  // every later letter.
+  const res = await app.inject({
+    method: "POST",
+    url: "/newsletter/unsubscribe?token=nonsense",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    payload: "List-Unsubscribe=One-Click",
+  });
+  assert.equal(res.statusCode, 200);
+});
+
+test("the token may come in the body as well as the address", async () => {
+  await app.inject({ method: "POST", url: "/newsletter/subscribe", payload: { email: "form@example.com" } });
+  const row = await rowFor("form@example.com");
+
+  const res = await app.inject({
+    method: "POST",
+    url: "/newsletter/unsubscribe",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    payload: new URLSearchParams({ token: row.token, "List-Unsubscribe": "One-Click" }).toString(),
+  });
+
+  assert.equal(res.statusCode, 200);
+  assert.equal((await rowFor("form@example.com")).status, "unsubscribed");
+});
+
+test("the same new address offered twice at once makes one row, not an error", async () => {
+  // The real race, reproduced rather than hoped for. subscribe() looks for the
+  // address and finds nothing; the row is then written underneath it, so its
+  // own insert is the one the unique index turns away. Asking twice over HTTP
+  // would not do it -- the queries queue up, and the second read already sees
+  // the first row.
+  const pending = subscribe("racer@example.com", "footer");
+  await db
+    .insert(schema.newsletterSubscribers)
+    .values({ email: "racer@example.com", source: "elsewhere", token: "a-token-of-its-own" });
+
+  const result = await pending;
+
+  // Whoever lost the race is still told the truth: they are on the list.
+  assert.equal(result.ok, true);
+  assert.equal(result.state, "already");
+  assert.equal(result.subscriber.email, "racer@example.com");
+
+  const [{ count }] = await db
+    .select({ count: sql`count(*)::int` })
+    .from(schema.newsletterSubscribers)
+    .where(sql`lower(${schema.newsletterSubscribers.email}) = 'racer@example.com'`);
+  assert.equal(count, 1);
 });
 
 test("a made-up token changes nothing and says so kindly", async () => {

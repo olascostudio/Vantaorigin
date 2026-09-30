@@ -47,7 +47,10 @@ export function whyNotSendable(issue, waiting) {
         : Boolean(String(block?.text || "").trim())
   );
   if (!said) return "There is nothing written in it yet.";
-  if (waiting === 0) return "Nobody is waiting for it.";
+  // A send that stopped partway is picked up by the same route, and picking
+  // one up when everybody has already been reached is how it gets marked
+  // finished. Only a draft can be refused for having nobody to go to.
+  if (waiting === 0 && issue.status !== "sending") return "Nobody is waiting for it.";
   return null;
 }
 
@@ -160,13 +163,18 @@ export async function deliver(app, issueId) {
           .set({ lastIssueId: issueId })
           .where(eq(newsletterSubscribers.id, subscriber.id));
 
+        // Counted in the same breath as the mark. Counting once per batch
+        // was cheaper, but a stop between the mark and the count loses the
+        // copy from the record for good: the person has it, and the history
+        // says they never got it. At two copies a second the extra write
+        // costs nothing worth having.
+        await db
+          .update(newsletterIssues)
+          .set({ sentCount: sent, failedCount: failed, failures, updatedAt: new Date() })
+          .where(eq(newsletterIssues.id, issueId));
+
         await pause(PACE_MS);
       }
-
-      await db
-        .update(newsletterIssues)
-        .set({ sentCount: sent, failedCount: failed, failures, updatedAt: new Date() })
-        .where(eq(newsletterIssues.id, issueId));
     }
 
     await db

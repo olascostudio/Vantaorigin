@@ -33,11 +33,24 @@ export async function subscribe(email, source = "footer") {
   const existing = await byEmail(address);
 
   if (!existing) {
-    const [row] = await db
-      .insert(newsletterSubscribers)
-      .values({ email: address, source, token: newToken() })
-      .returning();
-    return { ok: true, state: "added", subscriber: row };
+    try {
+      const [row] = await db
+        .insert(newsletterSubscribers)
+        .values({ email: address, source, token: newToken() })
+        .returning();
+      return { ok: true, state: "added", subscriber: row };
+    } catch (error) {
+      // The same address offered twice in the same moment -- two tabs, or a
+      // phone and a laptop. One insert wins and the unique index turns the
+      // other away; that is the index doing its job, not a failure worth
+      // showing to somebody who is, after all, now on the list.
+      const clash = error?.cause?.code === "23505" || error?.code === "23505";
+      if (!clash) throw error;
+
+      const row = await byEmail(address);
+      if (row) return { ok: true, state: "already", subscriber: row };
+      throw error;
+    }
   }
 
   // Somebody who left and came back is welcome back.

@@ -378,3 +378,107 @@ test("the history says what went out, when, and to how many", async () => {
   const dates = gone.map((issue) => new Date(issue.createdAt).getTime());
   assert.deepEqual(dates, [...dates].sort((a, b) => b - a));
 });
+
+test("each copy is counted as it goes, not once a batch is through", async () => {
+  const issue = await writtenIssue("The counted letter");
+  await join("counted-one@example.com");
+  await join("counted-two@example.com");
+  sent = [];
+
+  // What the issue row said at the moment each copy went out. A count kept
+  // only at the end of a batch would read 0, 0, 0 here, and a server that
+  // stopped midway would lose every copy it had really sent.
+  const seen = [];
+  const working = mailer.send;
+  mailer.send = async (message) => {
+    const [row] = await db
+      .select({ sentCount: schema.newsletterIssues.sentCount })
+      .from(schema.newsletterIssues)
+      .where(eq(schema.newsletterIssues.id, issue.id));
+    seen.push(row.sentCount);
+    return working(message);
+  };
+
+  await deliver(null, issue.id);
+  mailer.send = working;
+
+  // Climbing one at a time: nobody who received a copy is missing from the
+  // count for longer than the copy itself takes.
+  assert.deepEqual(seen, seen.map((_, index) => index));
+  assert.ok(seen.length >= 2);
+});
+
+test("a send left stranded by a restart can be picked up and finished", async () => {
+  const issue = await writtenIssue("The stranded letter");
+  await join("stranded@example.com");
+
+  // What a restart leaves behind: marked "sending", with nobody sending it.
+  await deliver(null, issue.id);
+  await db
+    .update(schema.newsletterIssues)
+    .set({ status: "sending" })
+    .where(eq(schema.newsletterIssues.id, issue.id));
+
+  // The screen asks this to tell "going out now" from "stopped partway".
+  const asked = await app.inject({
+    method: "GET",
+    url: `/admin/newsletter/issues/${issue.id}/waiting`,
+    headers: { cookie: editor },
+  });
+  assert.equal(asked.json().sending, false, "nobody is working on it");
+
+  // Picking it up finishes it rather than refusing because nobody is left.
+  const res = await app.inject({
+    method: "POST",
+    url: `/admin/newsletter/issues/${issue.id}/send`,
+    headers: { cookie: editor },
+  });
+  assert.equal(res.statusCode, 202);
+
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  const after = (
+    await app.inject({
+      method: "GET",
+      url: `/admin/newsletter/issues/${issue.id}`,
+      headers: { cookie: editor },
+    })
+  ).json();
+  assert.equal(after.status, "sent");
+});
+
+test("a stranded send carries on to whoever was still owed it", async () => {
+  const issue = await writtenIssue("The half-finished letter");
+  const latecomer = "still-owed@example.com";
+  await join(latecomer);
+
+  // One copy goes, then the server "stops".
+  let allowed = 1;
+  const working = mailer.send;
+  sent = [];
+  mailer.send = async (message) => {
+    if (allowed <= 0) throw new Error("stopped");
+    allowed -= 1;
+    return working(message);
+  };
+  await deliver(null, issue.id);
+  mailer.send = working;
+
+  // Put back the one that "failed" so it is owed the letter again, and mark
+  // the issue the way a restart would leave it.
+  await db
+    .update(schema.newsletterSubscribers)
+    .set({ lastIssueId: null })
+    .where(eq(schema.newsletterSubscribers.email, latecomer));
+  await db
+    .update(schema.newsletterIssues)
+    .set({ status: "sending" })
+    .where(eq(schema.newsletterIssues.id, issue.id));
+
+  sent = [];
+  await deliver(null, issue.id);
+
+  assert.ok(
+    sent.map((message) => message.to).includes(latecomer),
+    "whoever was still owed it gets it"
+  );
+});
