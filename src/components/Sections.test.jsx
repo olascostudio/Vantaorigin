@@ -99,6 +99,15 @@ describe("CommunityWorlds", () => {
     expect(pages[0].tags).toBe("The Vantaverse");
   });
 
+  it("does not list one universe twice for being typed twice", () => {
+    const [page] = byCreator([
+      { ...published[0], universe: "The Vantaverse" },
+      { ...published[1], universe: "The vantaverse" },
+    ]);
+    // Kept in the spelling it was first given.
+    expect(page.tags).toBe("The Vantaverse");
+  });
+
   it("counts one character as a character, not as characters", () => {
     expect(byCreator([published[2]])[0].characters).toHaveLength(1);
   });

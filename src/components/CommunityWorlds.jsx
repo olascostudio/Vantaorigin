@@ -31,11 +31,17 @@ export function byCreator(characters) {
     if (!username) continue;
 
     if (!pages.has(username)) {
-      pages.set(username, { username, characters: [], universes: new Set() });
+      pages.set(username, { username, characters: [], universes: new Map() });
     }
     const page = pages.get(username);
     page.characters.push(character);
-    if (character.universe) page.universes.add(character.universe);
+
+    // "The Vantaverse" and "The vantaverse" are one universe typed twice.
+    // Keyed by the lowercase form, kept in the spelling seen first.
+    const universe = String(character.universe || "").trim();
+    if (universe && !page.universes.has(universe.toLowerCase())) {
+      page.universes.set(universe.toLowerCase(), universe);
+    }
   }
 
   return [...pages.values()].map((page, index) => ({
@@ -43,7 +49,7 @@ export function byCreator(characters) {
     color: COLORS[index % COLORS.length],
     cover: page.characters.find((character) => character.cover)?.cover || null,
     // What they write about, in their own words, rather than invented genres.
-    tags: [...page.universes].slice(0, 3).join(" • "),
+    tags: [...page.universes.values()].slice(0, 3).join(" • "),
   }));
 }
 
