@@ -1,4 +1,5 @@
-// File storage behind one small interface: put(), remove(), urlFor().
+// File storage behind one small interface: put(), remove(), urlFor(), and --
+// for the pass that shrinks what is already stored -- list() and read().
 //
 // "s3" talks to anything with an S3 API — Cloudflare R2 now, MinIO on a VPS
 // later — so moving means changing S3_ENDPOINT, not this file's callers.
@@ -25,6 +26,15 @@ function memoryStorage() {
     // only used by the local file route
     get(key) {
       return files.get(key);
+    },
+    async *list() {
+      for (const [key, file] of files) {
+        yield { key, size: file.body.length, contentType: file.contentType };
+      }
+    },
+    async read(key) {
+      const file = files.get(key);
+      return file ? file.body : null;
     },
   };
 }
@@ -56,7 +66,8 @@ export function normaliseEndpoint(value) {
 }
 
 async function s3Storage() {
-  const { S3Client, PutObjectCommand, DeleteObjectCommand } = await import("@aws-sdk/client-s3");
+  const { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command, GetObjectCommand } =
+    await import("@aws-sdk/client-s3");
 
   // A bad endpoint must not stop the API from starting: sign-in and every
   // other route still work, and uploads explain what to fix.
@@ -98,6 +109,34 @@ async function s3Storage() {
       );
       return this.urlFor(key);
     },
+    // Everything in the bucket, a page at a time, so a large one is never
+    // held in memory all at once.
+    async *list() {
+      if (configError) throw new Error(configError);
+      let token;
+      do {
+        const page = await client.send(
+          new ListObjectsV2Command({
+            Bucket: config.S3_BUCKET,
+            ContinuationToken: token,
+            MaxKeys: 500,
+          })
+        );
+        for (const object of page.Contents ?? []) {
+          yield { key: object.Key, size: object.Size };
+        }
+        token = page.IsTruncated ? page.NextContinuationToken : undefined;
+      } while (token);
+    },
+
+    async read(key) {
+      if (configError) throw new Error(configError);
+      const answer = await client.send(
+        new GetObjectCommand({ Bucket: config.S3_BUCKET, Key: key })
+      );
+      return Buffer.from(await answer.Body.transformToByteArray());
+    },
+
     async remove(key) {
       if (configError) return;
       await client.send(new DeleteObjectCommand({ Bucket: config.S3_BUCKET, Key: key }));

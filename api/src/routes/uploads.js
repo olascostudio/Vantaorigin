@@ -3,6 +3,7 @@
 // the route and the client code stay the same.
 import { authenticate } from "../auth/auth.js";
 import { newKey, storage } from "../adapters/storage.js";
+import { limitFor, renameTo, shrink } from "../images.js";
 import { config } from "../config.js";
 
 const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
@@ -16,16 +17,40 @@ export default async function uploadRoutes(app) {
       return reply.code(415).send({ error: "Images only (jpeg, png, webp or gif)" });
     }
 
-    const folder = ["avatars", "banners", "covers", "assets"].includes(request.query.folder)
+    const folder = ["avatars", "banners", "covers", "assets", "newsletter"].includes(
+      request.query.folder
+    )
       ? request.query.folder
       : "assets";
 
     const buffer = await file.toBuffer();
     if (buffer.length > MAX_BYTES) return reply.code(413).send({ error: "That image is too large" });
 
-    const key = newKey(`${request.user.id}/${folder}`, file.filename || "upload.jpg");
+    // Stored at the size it will be drawn, not the size the camera made it.
+    // A picture that is already sensible comes back unchanged.
+    let body = buffer;
+    let type = file.mimetype;
+    let name = file.filename || "upload.jpg";
     try {
-      const url = await storage.put(key, buffer, file.mimetype);
+      const smaller = await shrink(buffer, { limit: limitFor(folder) });
+      if (smaller) {
+        body = smaller.buffer;
+        type = smaller.contentType;
+        name = renameTo(name, smaller.format);
+        request.log.info(
+          { was: smaller.was, now: smaller.now, folder },
+          "picture shrunk before storing"
+        );
+      }
+    } catch (error) {
+      // Something sharp could not read. It is still an image by content type,
+      // so it is stored as it came rather than turned away.
+      request.log.warn({ err: error }, "could not shrink that picture");
+    }
+
+    const key = newKey(`${request.user.id}/${folder}`, name);
+    try {
+      const url = await storage.put(key, body, type);
       return reply.code(201).send({ url, key });
     } catch (error) {
       // Storage misconfiguration is worth saying out loud in the logs.

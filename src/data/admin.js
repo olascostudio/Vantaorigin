@@ -49,3 +49,8 @@ export const sendIssue = (id) => api.post(`/admin/newsletter/issues/${id}/send`,
 
 // Posting the welcome letter again to somebody who never got one.
 export const resendWelcome = (to) => api.post("/admin/welcome", { to });
+
+// Shrinking the pictures stored before anything shrank them. Answers at once
+// and works through the bucket in the background, so the screen watches.
+export const startShrinking = () => api.post("/admin/images/shrink", {});
+export const shrinkProgress = () => api.get("/admin/images/shrink");

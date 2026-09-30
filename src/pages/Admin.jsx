@@ -13,6 +13,8 @@ import {
   loadTopCharacters,
   resendWelcome,
   setSubscriberStatus,
+  shrinkProgress,
+  startShrinking,
   settleReport,
   subscribersFileUrl,
 } from "../data/admin";
@@ -118,6 +120,72 @@ function ReportCard({ report, onSettle, busy }) {
         )}
       </div>
     </article>
+  );
+}
+
+// Making the stored pictures smaller.
+//
+// Everything uploaded before the API learned to shrink them was kept exactly
+// as it arrived. This walks the bucket once; addresses do not change, so
+// nothing that has been shared or indexed stops working.
+function ShrinkPictures({ onTrouble }) {
+  const [state, setState] = useState(null);
+
+  const ask = useCallback(async () => {
+    try {
+      setState(await shrinkProgress());
+    } catch {
+      // A failed look changes nothing on screen.
+    }
+  }, []);
+
+  useEffect(() => {
+    ask();
+  }, [ask]);
+
+  useEffect(() => {
+    if (!state?.running) return undefined;
+    const timer = setInterval(ask, 2000);
+    return () => clearInterval(timer);
+  }, [state?.running, ask]);
+
+  const begin = async () => {
+    try {
+      await startShrinking();
+      await ask();
+    } catch (error) {
+      onTrouble(error.message);
+    }
+  };
+
+  const megabytes = (bytes) => `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+
+  return (
+    <div className="flex flex-col gap-2 rounded-xl bg-black/25 p-4">
+      <p className="font-ui text-sm font-bold text-white">Shrink the stored pictures</p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="font-ui text-sm text-neutral-400">
+          {state?.running
+            ? `Working through them… ${state.shrunk} shrunk, ${megabytes(state.saved)} saved so far.`
+            : state?.finishedAt
+              ? `${state.shrunk} shrunk, ${state.skipped} already fine, ${megabytes(state.saved)} saved.`
+              : "Pictures uploaded before now were stored at full size. Their addresses do not change."}
+        </p>
+        <button
+          type="button"
+          onClick={begin}
+          disabled={state?.running}
+          className="shrink-0 rounded-full border border-white/25 px-5 py-2.5 font-ui text-sm text-white hover:bg-white/10 disabled:opacity-40"
+        >
+          {state?.running ? "Running…" : "Shrink them"}
+        </button>
+      </div>
+      {state?.failed > 0 && (
+        <p className="font-ui text-sm text-[#ffb4c4]">
+          {state.failed} could not be read, and were left as they were.
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -247,6 +315,7 @@ function NewsletterPanel({ onTrouble }) {
         </div>
 
         <WelcomeAgain onTrouble={onTrouble} />
+        <ShrinkPictures onTrouble={onTrouble} />
 
         <div className="flex flex-wrap items-center gap-3">
           <label className="min-w-[200px] flex-1">

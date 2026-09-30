@@ -17,6 +17,7 @@ import { mailer } from "../adapters/email.js";
 import { welcomeEmail } from "../emails/templates.js";
 import { subscribe, unsubscribeLink } from "../newsletter.js";
 import { config } from "../config.js";
+import { progress, shrinkEverything } from "../shrink-existing.js";
 import { requireAdmin } from "./admin.js";
 
 // What a written block may hold. Anything else is refused rather than stored
@@ -261,4 +262,23 @@ export default async function newsletterAdminRoutes(app) {
 
     return { ok: true, to: address, name: user.username };
   });
+
+  // Shrinking what was stored before anything shrank it.
+  //
+  // Answers at once and walks the bucket in the background: a few hundred
+  // pictures, each read, re-encoded and written back, is not something to
+  // hold a request open for.
+  app.post("/admin/images/shrink", { preHandler: requireAdmin() }, async (request, reply) => {
+    if (progress().running) {
+      return reply.code(409).send({ error: "That is already running." });
+    }
+
+    shrinkEverything(app).catch((error) => {
+      request.log.error({ err: error }, "shrinking stored pictures stopped");
+    });
+
+    return reply.code(202).send({ ok: true });
+  });
+
+  app.get("/admin/images/shrink", { preHandler: requireAdmin() }, async () => progress());
 }
