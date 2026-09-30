@@ -235,7 +235,7 @@ export default function Hero() {
     // The hero is exactly one screen tall and the showcase is pinned to the
     // foot of it, so the cards are the last thing on screen rather than the
     // first thing below it. Everything above them is tightened to match.
-    <header className="relative flex min-h-svh flex-col overflow-hidden bg-background px-4 pt-[clamp(10px,2vh,40px)]">
+    <header className="relative flex flex-col overflow-hidden bg-background px-4 pt-[clamp(10px,2vh,40px)] lg:min-h-svh">
       <HeroBackground />
 
       <div className="relative flex flex-1 flex-col">
@@ -277,7 +277,7 @@ export default function Hero() {
           </div>
         </div>
 
-        <div className="-mx-4 mt-auto pt-[clamp(10px,2.2vh,36px)]">
+        <div className="-mx-4 pt-[clamp(10px,2.2vh,36px)] lg:mt-auto">
           <Showcase />
         </div>
       </div>

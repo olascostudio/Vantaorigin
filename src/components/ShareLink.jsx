@@ -22,8 +22,10 @@ export default function ShareLink() {
         {/* Social bio -> page link -> characters */}
         <div className="w-full rounded-[32px] bg-[#222b3c] p-6 sm:p-10">
           <div className="flex flex-col items-center gap-3 rounded-2xl border border-white/15 bg-[#1b2233] px-5 py-6 sm:flex-row sm:justify-between sm:gap-6">
-            <p className="break-all text-center font-ui text-xl font-bold text-white sm:text-left sm:text-2xl">
-              vantaorigin.com/creator/<span className="text-primary">creatorname</span>
+            <p className="text-center font-ui text-base font-bold leading-snug text-white sm:text-left sm:text-2xl">
+              <span className="whitespace-nowrap">vantaorigin.com/creator/</span>
+              <wbr />
+              <span className="whitespace-nowrap text-primary">creatorname</span>
             </p>
             <span className="shrink-0 rounded-full bg-[#2b3547] px-5 py-2 font-ui text-sm text-neutral-300">
               your public page link
@@ -31,7 +33,7 @@ export default function ShareLink() {
           </div>
 
           <div className="mt-8 flex flex-col items-center gap-6 sm:flex-row sm:justify-between">
-            <ul className="flex items-center gap-4">
+            <ul className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
               {PLACES.map(({ label, icon }) => (
                 <li
                   key={label}

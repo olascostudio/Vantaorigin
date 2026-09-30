@@ -231,3 +231,25 @@ describe("Footer", () => {
     expect(event.defaultPrevented).toBe(true);
   });
 });
+
+describe("On a narrow screen", () => {
+  it("lets the row of places wrap instead of running off the edge", () => {
+    renderPage(<ShareLink />);
+    const places = screen.getByText("Instagram").closest("ul");
+
+    // Four things on one unwrapping line put the first off one edge of the
+    // phone and the last off the other.
+    expect(places.className).toContain("flex-wrap");
+    expect(places.className).toContain("justify-center");
+  });
+
+  it("turns the example link after the slash, not through a word", () => {
+    renderPage(<ShareLink />);
+    const link = screen.getByText("creatorname").closest("p");
+
+    // break-all gave "vantaorigin.com/creator/crea / torname".
+    expect(link.className).not.toContain("break-all");
+    expect(link.querySelector("wbr")).toBeInTheDocument();
+    expect(screen.getByText("vantaorigin.com/creator/").className).toContain("whitespace-nowrap");
+  });
+});

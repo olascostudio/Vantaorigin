@@ -52,3 +52,20 @@ describe("Hero", () => {
     sources.forEach((src) => expect(src).not.toMatch(/figma\.com/));
   });
 });
+
+describe("The hero on a phone", () => {
+  it("holds itself to one screen only where there is content to fill one", () => {
+    const { container } = render(<Hero />, { wrapper: MemoryRouter });
+    const header = container.querySelector("header");
+
+    // On a phone there is not enough above the cards to fill a screen, so
+    // forcing one left a gap of empty background between the buttons and
+    // the artwork. A phone scrolls anyway.
+    expect(header.className).toContain("lg:min-h-svh");
+    expect(header.className).not.toMatch(/(^|\s)min-h-svh/);
+
+    const showcase = container.querySelector('[data-testid="showcase"]').closest("div.-mx-4");
+    expect(showcase.className).toContain("lg:mt-auto");
+    expect(showcase.className).not.toMatch(/(^|\s)mt-auto/);
+  });
+});
