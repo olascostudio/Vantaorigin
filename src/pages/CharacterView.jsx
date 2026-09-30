@@ -7,7 +7,7 @@ import { useAuth } from "../data/AuthContext.jsx";
 import { usePageMeta } from "../data/pageMeta";
 import ReportCreator from "../components/ReportCreator.jsx";
 import JoinPrompt, { useJoinPrompt } from "../components/JoinPrompt.jsx";
-import Loading from "../components/Loading.jsx";
+import { CharacterSkeleton } from "../components/Loading.jsx";
 import heroBanner from "../assets/creator/hero-banner.webp";
 import mobileBanner from "../assets/creator/profile-mobile-bg.webp";
 import flameBright from "../assets/creator/flame-bright.svg";
@@ -271,7 +271,7 @@ export default function CharacterView({ owner = false }) {
     return (
       <div className="min-h-screen bg-[#1b2233]">
         <DashboardNav active="Creators’ Hub" />
-        <Loading label="Opening character" />
+        <CharacterSkeleton />
       </div>
     );
   }

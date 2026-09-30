@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../data/api";
-import Loading from "../components/Loading.jsx";
+import { CreatorSkeleton } from "../components/Loading.jsx";
 import ReportCreator from "../components/ReportCreator.jsx";
 import JoinPrompt, { useJoinPrompt } from "../components/JoinPrompt.jsx";
 import { useAuth } from "../data/AuthContext.jsx";
@@ -126,7 +126,7 @@ export default function CreatorPage() {
   if (!page) {
     return (
       <div className="min-h-screen bg-background">
-        <Loading label="Opening this page" className="min-h-screen" />
+        <CreatorSkeleton />
       </div>
     );
   }

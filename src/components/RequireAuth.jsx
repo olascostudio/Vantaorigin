@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../data/AuthContext.jsx";
-import Loading from "./Loading.jsx";
+import PageSkeleton from "./Loading.jsx";
 
 // Wraps the pages that belong to a creator. While the session is being
 // checked it shows nothing rather than flashing the sign-in screen.
@@ -11,7 +11,7 @@ export default function RequireAuth({ children }) {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#1b2233]">
-        <Loading label="Checking your session" className="min-h-screen" />
+        <PageSkeleton />
       </div>
     );
   }

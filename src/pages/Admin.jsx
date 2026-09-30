@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
-import Loading, { Skeleton } from "../components/Loading.jsx";
+import PageSkeleton, { Skeleton } from "../components/Loading.jsx";
 import NewsletterLetters from "../components/NewsletterEditor.jsx";
 import {
   amIAdmin,
@@ -424,7 +424,7 @@ export default function Admin() {
     return (
       <div className="min-h-screen bg-[#1b2233]">
         <DashboardNav />
-        <Loading label="Checking your account" />
+        <PageSkeleton />
       </div>
     );
   }
