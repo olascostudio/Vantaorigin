@@ -201,3 +201,39 @@ test("the pass is closed to everybody but an admin, and says how it is going", a
   assert.equal(typeof asked.json().looked, "number");
   assert.equal(typeof progress().saved, "number");
 });
+
+test("a stored picture says it may be kept for a year", async () => {
+  const huge = await photograph(2000, 2000);
+
+  const form = new FormData();
+  form.append("file", new Blob([huge], { type: "image/jpeg" }), "photo.jpg");
+  const encoded = new Response(form);
+
+  const res = await app.inject({
+    method: "POST",
+    url: "/uploads?folder=assets",
+    headers: { cookie: keeper, "content-type": encoded.headers.get("content-type") },
+    payload: Buffer.from(await encoded.arrayBuffer()),
+  });
+  assert.equal(res.statusCode, 201);
+
+  // Without this a browser has no instruction and asks again every visit.
+  const served = await app.inject({ method: "GET", url: `/files/${res.json().key}` });
+  assert.equal(served.statusCode, 200);
+  assert.equal(served.headers["cache-control"], "public, max-age=31536000, immutable");
+});
+
+test("the pass gives a cache header even to the pictures it leaves alone", async () => {
+  // Small enough to be passed over, and stored the old way with no header.
+  const small = await sharp(await photograph(200, 200)).webp({ quality: 60 }).toBuffer();
+  await storage.put("someone/covers/tiny.webp", small, "image/webp", undefined);
+  // Put it back the way the old code would have: no instruction at all.
+  const raw = await storage.read("someone/covers/tiny.webp");
+  await storage.put("someone/covers/tiny.webp", raw, "image/webp", null);
+
+  const answer = await shrinkEverything(null);
+  assert.ok(answer.cached > 0, "headers were set on pictures left as they were");
+
+  const served = await app.inject({ method: "GET", url: "/files/someone/covers/tiny.webp" });
+  assert.equal(served.headers["cache-control"], "public, max-age=31536000, immutable");
+});

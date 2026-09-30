@@ -12,12 +12,17 @@
 //   its own format rather than turned into webp, because the name would
 //   otherwise say one thing and the bytes another.
 //
+//   Every picture the pass looks at comes away with a cache header, whether
+//   it was shrunk or not. The ones stored before today have none at all, so
+//   a browser guesses -- and guesses that it should ask us again on every
+//   visit.
+//
 //   A picture is only written back when the saving is worth having. Every
 //   re-encode costs a little quality, and re-encoding a picture that is
 //   already the right size would shave a few bytes off it and a little more
 //   of its detail -- every time the pass was run. So a second run finds
 //   nothing to do, which is what makes it safe to run whenever.
-import { storage } from "./adapters/storage.js";
+import { contentTypeFor, storage } from "./adapters/storage.js";
 import { limitFor, shrink } from "./images.js";
 
 const PICTURES = /\.(jpe?g|png|webp|gif)$/i;
@@ -41,6 +46,7 @@ const state = {
   looked: 0,
   shrunk: 0,
   skipped: 0,
+  cached: 0,
   failed: 0,
   saved: 0,
   last: null,
@@ -50,6 +56,17 @@ export const progress = () => ({ ...state });
 
 // "<user>/covers/<uuid>.jpg" -> "covers"
 const folderOf = (key) => key.split("/").at(-2) || "assets";
+
+// A picture left as it is still wants telling that it may be kept. Copying
+// it over itself rewrites the header without moving the bytes.
+async function keepable(key, app) {
+  try {
+    await storage.refresh(key, contentTypeFor(key));
+    state.cached += 1;
+  } catch (error) {
+    app?.log?.warn({ err: error, key }, "could not set a cache header");
+  }
+}
 
 export async function shrinkEverything(app) {
   if (state.running) return { alreadyRunning: true };
@@ -61,6 +78,7 @@ export async function shrinkEverything(app) {
     looked: 0,
     shrunk: 0,
     skipped: 0,
+    cached: 0,
     failed: 0,
     saved: 0,
     last: null,
@@ -73,6 +91,7 @@ export async function shrinkEverything(app) {
 
       if (object.size && object.size < WORTH_IT) {
         state.skipped += 1;
+        await keepable(object.key, app);
         continue;
       }
 
@@ -91,6 +110,7 @@ export async function shrinkEverything(app) {
 
         if (!smaller || !worthWriting(smaller)) {
           state.skipped += 1;
+          await keepable(object.key, app);
           continue;
         }
 

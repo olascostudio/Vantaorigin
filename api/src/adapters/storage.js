@@ -7,13 +7,45 @@
 import { randomUUID } from "node:crypto";
 import { config } from "../config.js";
 
+// How long a browser may keep a picture before asking again.
+//
+// A year, and immutable, because a key is a fresh uuid every time: the bytes
+// at one never become a different picture. Without this header a browser has
+// no instruction, so it guesses -- and its guess is to ask us again on every
+// visit, which is a round trip per picture per page.
+export const CACHE_FOREVER = "public, max-age=31536000, immutable";
+
+// Our own keys, so the extension is the truth about what is inside.
+const TYPES = {
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".webp": "image/webp",
+  ".gif": "image/gif",
+  ".avif": "image/avif",
+};
+
+export const contentTypeFor = (key) =>
+  TYPES[(String(key).match(/.[a-z0-9]+$/i)?.[0] || "").toLowerCase()] || "application/octet-stream";
+
 function memoryStorage() {
   const files = new Map();
   return {
     name: "memory",
-    async put(key, body, contentType) {
-      files.set(key, { body, contentType });
+    async put(key, body, contentType, cacheControl = CACHE_FOREVER) {
+      files.set(key, { body, contentType, cacheControl });
       return this.urlFor(key);
+    },
+    // Changes how long a file may be kept, without moving the file itself.
+    async refresh(key, contentType) {
+      const file = files.get(key);
+      if (!file) return false;
+      files.set(key, {
+        ...file,
+        contentType: contentType || file.contentType,
+        cacheControl: CACHE_FOREVER,
+      });
+      return true;
     },
     async remove(key) {
       files.delete(key);
@@ -66,8 +98,14 @@ export function normaliseEndpoint(value) {
 }
 
 async function s3Storage() {
-  const { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command, GetObjectCommand } =
-    await import("@aws-sdk/client-s3");
+  const {
+    S3Client,
+    PutObjectCommand,
+    DeleteObjectCommand,
+    ListObjectsV2Command,
+    GetObjectCommand,
+    CopyObjectCommand,
+  } = await import("@aws-sdk/client-s3");
 
   // A bad endpoint must not stop the API from starting: sign-in and every
   // other route still work, and uploads explain what to fix.
@@ -97,7 +135,7 @@ async function s3Storage() {
   return {
     name: "s3",
     configError,
-    async put(key, body, contentType) {
+    async put(key, body, contentType, cacheControl = CACHE_FOREVER) {
       if (configError) throw new Error(configError);
       await client.send(
         new PutObjectCommand({
@@ -105,9 +143,28 @@ async function s3Storage() {
           Key: key,
           Body: body,
           ContentType: contentType,
+          CacheControl: cacheControl,
         })
       );
       return this.urlFor(key);
+    },
+
+    // Gives a file that is already the right size its cache header, by
+    // copying it over itself. The bytes never leave the bucket, so this
+    // costs nothing but the request.
+    async refresh(key, contentType) {
+      if (configError) throw new Error(configError);
+      await client.send(
+        new CopyObjectCommand({
+          Bucket: config.S3_BUCKET,
+          Key: key,
+          CopySource: `${config.S3_BUCKET}/${encodeURIComponent(key)}`,
+          ContentType: contentType || contentTypeFor(key),
+          CacheControl: CACHE_FOREVER,
+          MetadataDirective: "REPLACE",
+        })
+      );
+      return true;
     },
     // Everything in the bucket, a page at a time, so a large one is never
     // held in memory all at once.

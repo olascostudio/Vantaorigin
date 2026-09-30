@@ -2,7 +2,7 @@
 // lands. Today that is Cloudflare R2, later it could be MinIO on the VPS —
 // the route and the client code stay the same.
 import { authenticate } from "../auth/auth.js";
-import { newKey, storage } from "../adapters/storage.js";
+import { CACHE_FOREVER, newKey, storage } from "../adapters/storage.js";
 import { limitFor, renameTo, shrink } from "../images.js";
 import { config } from "../config.js";
 
@@ -73,7 +73,12 @@ export default async function uploadRoutes(app) {
     app.get("/files/*", async (request, reply) => {
       const stored = storage.get(request.params["*"]);
       if (!stored) return reply.code(404).send({ error: "Not found" });
-      return reply.type(stored.contentType).send(stored.body);
+      // The same instruction real storage sends, so a picture behaves the
+      // same way on a laptop as it does in production.
+      return reply
+        .type(stored.contentType)
+        .header("Cache-Control", stored.cacheControl || CACHE_FOREVER)
+        .send(stored.body);
     });
   }
 }
