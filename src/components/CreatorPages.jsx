@@ -3,24 +3,26 @@ import SectionHeading from "./SectionHeading";
 import hopeBreakerArt from "../assets/landing/pages/hope-breaker.webp";
 import atlasArt from "../assets/landing/pages/atlas-veyron.webp";
 
-// The characters shown here are real ones, published on VantaOrigin, and each
-// card leads to the page it is showing. Invented names and invented artwork
-// would be a promise the site could not keep -- somebody following a card
-// should land on the thing it showed them.
+// The characters shown here are real ones, and each is credited to whoever
+// made it -- which is not always the person running this site. Getting that
+// wrong is not a typo: it takes somebody else's work and puts another name
+// on it.
 //
-// `to` is the page each card opens. A character that is not published yet
-// leads to its creator's page instead, which is where it will appear.
+// `to` is the page a card opens. A character whose creator has no page here
+// yet has none to open, and says so rather than sending people somewhere
+// that does not belong to it.
 const PAGES = [
   {
     id: "hope-breaker",
     name: "Hope Breaker",
-    universe: "Heart Zone",
+    universe: "Heartline Comics",
     tagline: "Marcus Sinclair",
     body: "Conjures weapons out of Nether energy, sees the souls of the living and the dead, and opens portals into the wraith zone.",
     art: hopeBreakerArt,
-    // Not published yet: until it is, the card opens the page it will live on.
-    to: "/creator/Vtgshadowscribe",
-    creator: "@Vtgshadowscribe",
+    // Somebody else's character, shown with their name on it. There is no
+    // page to open until Spif Nation has one of their own.
+    to: null,
+    creator: "Spif Nation",
   },
   {
     id: "atlas-veyron",
@@ -61,12 +63,19 @@ function PageCard({ name, universe, tagline, body, art, to, creator }) {
       </p>
 
       <div className="relative mt-7 flex flex-wrap items-center justify-between gap-4">
-        <Link
-          to={to}
-          className="rounded-[52.632px] bg-secondary px-[36.842px] py-[18.947px] font-ui text-[21.053px] font-bold text-white transition-opacity hover:opacity-90"
-        >
-          View page
-        </Link>
+        {to ? (
+          <Link
+            to={to}
+            className="rounded-[52.632px] bg-secondary px-[36.842px] py-[18.947px] font-ui text-[21.053px] font-bold text-white transition-opacity hover:opacity-90"
+          >
+            View page
+          </Link>
+        ) : (
+          // No page of their own yet, so nothing to promise.
+          <p className="rounded-[52.632px] border border-white/25 px-[30px] py-[18.947px] font-ui text-[19px] font-medium text-neutral-300">
+            Page coming soon
+          </p>
+        )}
         <p className="whitespace-nowrap font-ui text-[21px] text-white sm:text-[24.211px]">
           <span className="font-medium">by</span> <span className="font-black">{creator}</span>
         </p>

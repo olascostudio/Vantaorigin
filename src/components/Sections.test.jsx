@@ -29,26 +29,28 @@ describe("Creator pages", () => {
     const cards = screen.getAllByRole("article");
     expect(cards).toHaveLength(2);
 
-    // Invented names and invented artwork would be a promise the site cannot
-    // keep: everything here belongs to a real creator on VantaOrigin.
     expect(within(cards[0]).getByRole("heading", { name: "Hope Breaker" })).toBeInTheDocument();
     expect(within(cards[1]).getByRole("heading", { name: "Atlas Veyron" })).toBeInTheDocument();
     cards.forEach((card) => {
-      expect(within(card).getByText("@Vtgshadowscribe")).toBeInTheDocument();
       // The artwork is named, not decorative: it is the character.
       expect(within(card).getByRole("img")).toHaveAccessibleName(/Artwork of/);
     });
 
-    // A published character opens on its own page; one that is not published
-    // yet opens on the page it will appear on, rather than on nothing.
+    // Each character is credited to whoever made it. Hope Breaker belongs to
+    // Heartline Comics, not to the person running the site, and putting the
+    // wrong name under it would be taking somebody else's work.
+    expect(within(cards[0]).getByText("Spif Nation")).toBeInTheDocument();
+    expect(within(cards[0]).queryByText("@Vtgshadowscribe")).not.toBeInTheDocument();
+    expect(within(cards[1]).getByText("@Vtgshadowscribe")).toBeInTheDocument();
+
+    // A published character opens on its own page. One whose creator has no
+    // page here has none to open, and offers none.
     expect(within(cards[1]).getByRole("link", { name: "View page" })).toHaveAttribute(
       "href",
       "/character/atlas-veyron"
     );
-    expect(within(cards[0]).getByRole("link", { name: "View page" })).toHaveAttribute(
-      "href",
-      "/creator/Vtgshadowscribe"
-    );
+    expect(within(cards[0]).queryByRole("link", { name: "View page" })).not.toBeInTheDocument();
+    expect(within(cards[0]).getByText("Page coming soon")).toBeInTheDocument();
 
     // membership numbers were invented, so they should be gone
     expect(screen.queryByText(/members/i)).not.toBeInTheDocument();
