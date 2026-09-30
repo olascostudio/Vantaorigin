@@ -30,7 +30,7 @@ describe("Creator pages", () => {
     expect(cards).toHaveLength(2);
 
     expect(within(cards[0]).getByRole("heading", { name: "Hope Breaker" })).toBeInTheDocument();
-    expect(within(cards[1]).getByRole("heading", { name: "Atlas Veyron" })).toBeInTheDocument();
+    expect(within(cards[1]).getByRole("heading", { name: "Urokojin" })).toBeInTheDocument();
     cards.forEach((card) => {
       // The artwork is named, not decorative: it is the character.
       expect(within(card).getByRole("img")).toHaveAccessibleName(/Artwork of/);
@@ -47,7 +47,7 @@ describe("Creator pages", () => {
     // page here has none to open, and offers none.
     expect(within(cards[1]).getByRole("link", { name: "View page" })).toHaveAttribute(
       "href",
-      "/character/atlas-veyron"
+      "/character/urokojin"
     );
     expect(within(cards[0]).queryByRole("link", { name: "View page" })).not.toBeInTheDocument();
     expect(within(cards[0]).getByText("Page coming soon")).toBeInTheDocument();

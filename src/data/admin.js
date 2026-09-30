@@ -46,3 +46,6 @@ export const sendTestCopy = (id, to) =>
   api.post(`/admin/newsletter/issues/${id}/test`, to ? { to } : {});
 export const countWaiting = (id) => api.get(`/admin/newsletter/issues/${id}/waiting`);
 export const sendIssue = (id) => api.post(`/admin/newsletter/issues/${id}/send`, {});
+
+// Posting the welcome letter again to somebody who never got one.
+export const resendWelcome = (to) => api.post("/admin/welcome", { to });

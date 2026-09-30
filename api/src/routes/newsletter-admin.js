@@ -13,6 +13,10 @@ import { db } from "../db/client.js";
 import { newsletterIssues, users } from "../db/schema.js";
 import { renderIssue, startingBlocks } from "../emails/issue.js";
 import { countWaiting, deliver, isSending, sendTest, whyNotSendable } from "../newsletter-send.js";
+import { mailer } from "../adapters/email.js";
+import { welcomeEmail } from "../emails/templates.js";
+import { subscribe, unsubscribeLink } from "../newsletter.js";
+import { config } from "../config.js";
 import { requireAdmin } from "./admin.js";
 
 // What a written block may hold. Anything else is refused rather than stored
@@ -219,5 +223,42 @@ export default async function newsletterAdminRoutes(app) {
     });
 
     return reply.code(202).send({ ok: true, sending: waiting });
+  });
+
+  // Sending somebody the welcome letter again.
+  //
+  // Accounts made before the letter existed never got one, and so did the
+  // ones made with Google before that route learned to send it. This posts it
+  // to an address that already has an account, so the letter is addressed to
+  // a real person by their real name rather than to a stranger.
+  app.post("/admin/welcome", { preHandler: requireAdmin() }, async (request, reply) => {
+    const { to } = z.object({ to: z.string().email() }).parse(request.body ?? {});
+    const address = to.trim().toLowerCase();
+
+    const [user] = await db.select().from(users).where(eq(users.email, address)).limit(1);
+    if (!user) {
+      return reply.code(404).send({ error: "Nobody here has that address." });
+    }
+
+    // On the list, if they were not already, so the letter's own unsubscribe
+    // link belongs to a real subscription.
+    const listed = await subscribe(address, "signup");
+    const leaveLink = listed?.subscriber?.token
+      ? unsubscribeLink(config.API_PUBLIC_URL, listed.subscriber.token)
+      : "";
+
+    try {
+      await mailer.send({
+        to: address,
+        replyTo: config.EMAIL_REPLY_TO,
+        unsubscribeUrl: leaveLink,
+        ...welcomeEmail({ user, unsubscribeUrl: leaveLink }),
+      });
+    } catch (error) {
+      request.log.error({ err: error, to: address }, "welcome letter failed");
+      return reply.code(502).send({ error: "That letter could not be sent." });
+    }
+
+    return { ok: true, to: address, name: user.username };
   });
 }

@@ -11,6 +11,7 @@ import {
   loadReports,
   loadSubscribers,
   loadTopCharacters,
+  resendWelcome,
   setSubscriberStatus,
   settleReport,
   subscribersFileUrl,
@@ -120,6 +121,52 @@ function ReportCard({ report, onSettle, busy }) {
   );
 }
 
+// Somebody who made an account before the welcome letter existed never got
+// one. This posts it to them, addressed by the name on their account.
+function WelcomeAgain({ onTrouble }) {
+  const [to, setTo] = useState("");
+  const [state, setState] = useState("");
+
+  const send = async () => {
+    setState("Sending…");
+    try {
+      const answer = await resendWelcome(to.trim());
+      setState(`Sent to ${answer.to}`);
+      setTo("");
+    } catch (error) {
+      setState("");
+      onTrouble(error.message);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-2 rounded-xl bg-black/25 p-4">
+      <p className="font-ui text-sm font-bold text-white">Send the welcome letter again</p>
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          type="email"
+          value={to}
+          onChange={(event) => {
+            setTo(event.target.value);
+            setState("");
+          }}
+          placeholder="An address that already has an account"
+          className="h-11 min-w-[220px] flex-1 rounded-full border border-white/15 bg-black/25 px-5 font-ui text-sm text-white outline-none placeholder:text-neutral-500 focus:border-[#6b8ff5]"
+        />
+        <button
+          type="button"
+          onClick={send}
+          disabled={!to.includes("@") || state === "Sending…"}
+          className="shrink-0 rounded-full border border-white/25 px-5 py-2.5 font-ui text-sm text-white hover:bg-white/10 disabled:opacity-40"
+        >
+          Send it
+        </button>
+      </div>
+      {state && <p className="font-ui text-sm text-neutral-400">{state}</p>}
+    </div>
+  );
+}
+
 // Who hears from VantaOrigin. The useful question is usually "is this person
 // on it?", so the search box comes before the list.
 function NewsletterPanel({ onTrouble }) {
@@ -198,6 +245,8 @@ function NewsletterPanel({ onTrouble }) {
             Download as CSV
           </a>
         </div>
+
+        <WelcomeAgain onTrouble={onTrouble} />
 
         <div className="flex flex-wrap items-center gap-3">
           <label className="min-w-[200px] flex-1">

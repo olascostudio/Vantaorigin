@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import SectionHeading from "./SectionHeading";
 import hopeBreakerArt from "../assets/landing/pages/hope-breaker.webp";
-import atlasArt from "../assets/landing/pages/atlas-veyron.webp";
+import urokojinArt from "../assets/landing/pages/urokojin.webp";
 
 // The characters shown here are real ones, and each is credited to whoever
 // made it -- which is not always the person running this site. Getting that
@@ -25,13 +25,13 @@ const PAGES = [
     creator: "Spif Nation",
   },
   {
-    id: "atlas-veyron",
-    name: "Atlas Veyron",
+    id: "urokojin",
+    name: "Urokojin",
     universe: "The Vantaverse",
-    tagline: "The Worldbearer",
-    body: "A wanderer who touched a celestial stone beneath a ruined temple, and was chosen to carry the weight of a dying world until someone worthy could take it up.",
-    art: atlasArt,
-    to: "/character/atlas-veyron",
+    tagline: "The Thunder Judge",
+    body: "What was left behind when the First Chaos struck the first laws of reality. He was not made to judge; judgment became part of him.",
+    art: urokojinArt,
+    to: "/character/urokojin",
     creator: "@Vtgshadowscribe",
   },
 ];

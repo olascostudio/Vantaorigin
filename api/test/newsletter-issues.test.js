@@ -3,13 +3,14 @@
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { rm } from "node:fs/promises";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 const dataDir = ".pglite-issues-test";
 process.env.DATABASE_URL = `pglite://${dataDir}`;
 process.env.NODE_ENV = "test";
 process.env.EMAIL_DRIVER = "console";
 process.env.ADMIN_EMAILS = "editor@vantaorigin.test";
+process.env.API_PUBLIC_URL = "https://api.vantaorigin.com";
 
 const { buildApp } = await import("../src/app.js");
 const { migrate } = await import("../src/db/migrate.js");
@@ -281,4 +282,60 @@ test("a newsletter says why it arrived in its own words, not the welcome letter'
   const welcome = welcomeEmail({ user: { firstName: "Ola" }, unsubscribeUrl: leave });
   assert.match(welcome.html, /this address was registered on/);
   assert.match(welcome.html, /also on the creator newsletter/);
+});
+
+test("the welcome letter can be sent again to somebody who missed it", async () => {
+  const { mailer } = await import("../src/adapters/email.js");
+  const sent = [];
+  const realSend = mailer.send;
+  mailer.send = async (message) => {
+    sent.push(message);
+    return { id: "test" };
+  };
+
+  try {
+    const res = await app.inject({
+      method: "POST",
+      url: "/admin/welcome",
+      headers: { cookie: editor },
+      payload: { to: "Editor@vantaorigin.test" },
+    });
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.json().to, "editor@vantaorigin.test");
+
+    const letter = sent.find((message) => message.subject === "Welcome to VantaOrigin");
+    assert.ok(letter, "the letter went out");
+    // Addressed to the person, by the name on their account.
+    assert.match(letter.html, /editor/i);
+    // And carries a way out that belongs to a real subscription.
+    assert.match(letter.unsubscribeUrl, /token=/);
+    const token = new URL(letter.unsubscribeUrl).searchParams.get("token");
+    const goodbye = await app.inject({ method: "GET", url: `/newsletter/unsubscribe?token=${token}` });
+    assert.match(goodbye.body, /unsubscribed/i);
+  } finally {
+    mailer.send = realSend;
+  }
+});
+
+test("the welcome letter is not sent to an address with no account", async () => {
+  const res = await app.inject({
+    method: "POST",
+    url: "/admin/welcome",
+    headers: { cookie: editor },
+    payload: { to: "stranger@example.com" },
+  });
+  assert.equal(res.statusCode, 404);
+});
+
+test("everybody who had an account before the list existed is on it", async () => {
+  // The backfill migration runs at boot; every account should be covered.
+  const missing = await db
+    .select({ email: schema.users.email })
+    .from(schema.users)
+    .where(
+      sql`not exists (select 1 from newsletter_subscribers n where lower(n.email) = lower(users.email))`
+    );
+
+  assert.deepEqual(missing, [], "no account is left unable to be written to");
 });
