@@ -316,3 +316,65 @@ test("sending is closed to everybody but an admin", async () => {
     assert.equal(res.statusCode, 404);
   }
 });
+
+test("the record says who did not get it, and what was said", async () => {
+  const issue = await writtenIssue("The letter with a bad address");
+  await join("bounces@example.com");
+  sent = [];
+
+  const working = mailer.send;
+  mailer.send = async (message) => {
+    if (message.to === "bounces@example.com") {
+      throw new Error("Email failed (422): that address does not exist");
+    }
+    return working(message);
+  };
+
+  const result = await deliver(null, issue.id);
+  mailer.send = working;
+
+  assert.equal(result.failed, 1);
+
+  const after = (
+    await app.inject({
+      method: "GET",
+      url: `/admin/newsletter/issues/${issue.id}`,
+      headers: { cookie: editor },
+    })
+  ).json();
+
+  assert.equal(after.status, "sent");
+  assert.equal(after.failedCount, 1);
+  // A number on its own could not be acted on.
+  assert.equal(after.failures.length, 1);
+  assert.equal(after.failures[0].email, "bounces@example.com");
+  assert.match(after.failures[0].reason, /does not exist/);
+  assert.ok(after.failures[0].at);
+
+  // Everybody else still got theirs.
+  assert.ok(after.sentCount > 0);
+});
+
+test("the history says what went out, when, and to how many", async () => {
+  const listed = (
+    await app.inject({
+      method: "GET",
+      url: "/admin/newsletter/issues",
+      headers: { cookie: editor },
+    })
+  ).json();
+
+  const gone = listed.filter((issue) => issue.status === "sent");
+  assert.ok(gone.length >= 2, "more than one letter has been sent by now");
+
+  for (const issue of gone) {
+    assert.ok(issue.sentAt, "a sent letter knows when it went");
+    assert.equal(typeof issue.sentCount, "number");
+    assert.equal(typeof issue.failedCount, "number");
+    assert.equal(issue.author, "@editor");
+  }
+
+  // Newest first, so the history reads as history.
+  const dates = gone.map((issue) => new Date(issue.createdAt).getTime());
+  assert.deepEqual(dates, [...dates].sort((a, b) => b - a));
+});

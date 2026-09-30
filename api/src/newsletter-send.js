@@ -22,6 +22,8 @@ import { unsubscribeLink } from "./newsletter.js";
 // the limit is free; being refused for going too fast is not.
 const PACE_MS = 550;
 const BATCH = 50;
+// The record of a disaster does not need to be as long as the disaster.
+const FAILURES_KEPT = 200;
 
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -117,6 +119,7 @@ export async function deliver(app, issueId) {
 
     let sent = issue.sentCount;
     let failed = issue.failedCount;
+    const failures = Array.isArray(issue.failures) ? [...issue.failures] : [];
 
     // Asked again each time round: somebody who joins mid-send is included,
     // and somebody who leaves mid-send is not.
@@ -139,6 +142,13 @@ export async function deliver(app, issueId) {
           sent += 1;
         } catch (error) {
           failed += 1;
+          if (failures.length < FAILURES_KEPT) {
+            failures.push({
+              email: subscriber.email,
+              reason: String(error?.message || "no reason given").slice(0, 300),
+              at: new Date().toISOString(),
+            });
+          }
           app?.log?.error({ err: error, to: subscriber.email }, "newsletter copy failed");
         }
 
@@ -155,7 +165,7 @@ export async function deliver(app, issueId) {
 
       await db
         .update(newsletterIssues)
-        .set({ sentCount: sent, failedCount: failed, updatedAt: new Date() })
+        .set({ sentCount: sent, failedCount: failed, failures, updatedAt: new Date() })
         .where(eq(newsletterIssues.id, issueId));
     }
 
@@ -166,6 +176,7 @@ export async function deliver(app, issueId) {
         sentAt: issue.sentAt ?? new Date(),
         sentCount: sent,
         failedCount: failed,
+        failures,
         updatedAt: new Date(),
       })
       .where(eq(newsletterIssues.id, issueId));

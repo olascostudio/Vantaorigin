@@ -188,6 +188,71 @@ function BlockCard({ block, index, count, onChange, onMove, onRemove, onTrouble 
   );
 }
 
+// What happened when a letter went out.
+//
+// The number that failed is kept with the addresses it failed for: a count on
+// its own cannot be acted on, and a bad address that is never named goes on
+// failing on every letter.
+function Record({ issue }) {
+  const failures = Array.isArray(issue.failures) ? issue.failures : [];
+  const when = issue.sentAt
+    ? new Date(issue.sentAt).toLocaleString(undefined, {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      })
+    : "—";
+
+  return (
+    <div className="mt-4 flex flex-col gap-4 rounded-2xl border border-white/10 bg-[#222b3c] p-5">
+      <div className="flex flex-wrap items-baseline gap-x-8 gap-y-3">
+        <div>
+          <p className="font-ui text-xs font-bold uppercase tracking-wide text-neutral-500">Sent</p>
+          <p className="mt-1 font-ui text-base text-white">{when}</p>
+        </div>
+        <div>
+          <p className="font-ui text-xs font-bold uppercase tracking-wide text-neutral-500">
+            Reached
+          </p>
+          <p className="mt-1 font-ui text-base text-white">
+            {issue.sentCount} {issue.sentCount === 1 ? "person" : "people"}
+          </p>
+        </div>
+        {issue.failedCount > 0 && (
+          <div>
+            <p className="font-ui text-xs font-bold uppercase tracking-wide text-neutral-500">
+              Did not arrive
+            </p>
+            <p className="mt-1 font-ui text-base text-[#ffb4c4]">{issue.failedCount}</p>
+          </div>
+        )}
+      </div>
+
+      {failures.length > 0 && (
+        <div className="rounded-xl bg-black/25 p-4">
+          <p className="font-ui text-sm text-neutral-400">
+            These addresses did not take it. Worth checking, or taking off the list.
+          </p>
+          <ul className="mt-3 flex flex-col gap-2">
+            {failures.map((failure, index) => (
+              <li key={index} className="font-ui text-sm">
+                <span className="text-white">{failure.email}</span>
+                <span className="text-neutral-500"> — {failure.reason}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <p className="font-ui text-sm text-neutral-400">
+        This one has gone out, so it is kept exactly as it was sent.
+      </p>
+    </div>
+  );
+}
+
 // Sending, once it reads the way it should.
 //
 // A test copy first, because the only honest preview of an email is an email.
@@ -438,11 +503,7 @@ function Editor({ id, onClose, onTrouble }) {
         </p>
       </div>
 
-      {sent && (
-        <p className="mt-4 rounded-xl bg-[#2b3547] px-5 py-3 font-ui text-sm text-neutral-300">
-          This one has gone out, so it is kept as it was sent.
-        </p>
-      )}
+      {sent && <Record issue={issue} />}
 
       <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,460px)]">
         {/* What it says */}
@@ -559,6 +620,9 @@ export default function NewsletterLetters({ onTrouble }) {
     }
   };
 
+  const being = (issues || []).filter((issue) => issue.status !== "sent");
+  const gone = (issues || []).filter((issue) => issue.status === "sent");
+
   if (openId) {
     return (
       <Editor
@@ -598,61 +662,114 @@ export default function NewsletterLetters({ onTrouble }) {
         </p>
       )}
 
-      {issues && issues.length > 0 && (
-        <ul className="mt-4 flex flex-col gap-3">
-          {issues.map((issue) => (
-            <li
-              key={issue.id}
-              className="flex flex-wrap items-center gap-4 rounded-2xl border border-white/10 bg-[#222b3c] p-4"
-            >
-              <div className="min-w-0 flex-1">
-                <button
-                  type="button"
-                  onClick={() => setOpenId(issue.id)}
-                  className="block max-w-full truncate text-left font-ui text-base font-bold text-white hover:text-[#6b8ff5]"
-                >
-                  {issue.subject || "Untitled letter"}
-                </button>
-                <p className="mt-1 font-ui text-sm text-neutral-400">
-                  {issue.status === "sent"
-                    ? `Sent ${day(issue.sentAt)} to ${issue.sentCount} people`
-                    : `Draft · last touched ${day(issue.updatedAt)}`}
-                  {issue.author ? ` · ${issue.author}` : ""}
-                </p>
-              </div>
+      {/* Being written, and then what has gone out. The two are different
+          things: one is work, the other is a record. */}
+      {being.length > 0 && (
+        <>
+          <h3 className="mt-6 font-ui text-sm font-bold uppercase tracking-wide text-neutral-500">
+            Being written
+          </h3>
+          <ul className="mt-3 flex flex-col gap-3">
+            {being.map((issue) => (
+              <li
+                key={issue.id}
+                className="flex flex-wrap items-center gap-4 rounded-2xl border border-white/10 bg-[#222b3c] p-4"
+              >
+                <div className="min-w-0 flex-1">
+                  <button
+                    type="button"
+                    onClick={() => setOpenId(issue.id)}
+                    className="block max-w-full truncate text-left font-ui text-base font-bold text-white hover:text-[#6b8ff5]"
+                  >
+                    {issue.subject || "Untitled letter"}
+                  </button>
+                  <p className="mt-1 font-ui text-sm text-neutral-400">
+                    {issue.status === "sending"
+                      ? `Going out now · ${issue.sentCount} sent`
+                      : `Draft · last touched ${day(issue.updatedAt)}`}
+                    {issue.author ? ` · ${issue.author}` : ""}
+                  </p>
+                </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setOpenId(issue.id)}
-                  className="rounded-full border border-white/25 px-4 py-2 font-ui text-sm text-white hover:bg-white/10"
-                >
-                  {issue.status === "sent" ? "Read it" : "Open"}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setOpenId(issue.id)}
+                    className="rounded-full border border-white/25 px-4 py-2 font-ui text-sm text-white hover:bg-white/10"
+                  >
+                    Open
+                  </button>
 
-                {issue.status !== "sent" &&
-                  (confirming === issue.id ? (
-                    <button
-                      type="button"
-                      onClick={() => discard(issue.id)}
-                      className="rounded-full bg-[#c2185b] px-4 py-2 font-ui text-sm font-bold text-white hover:opacity-90"
-                    >
-                      Throw it away?
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setConfirming(issue.id)}
-                      className="rounded-full px-3 py-2 font-ui text-sm text-neutral-500 hover:text-[#ffb4c4]"
-                    >
-                      Discard
-                    </button>
-                  ))}
-              </div>
-            </li>
-          ))}
-        </ul>
+                  {issue.status === "draft" &&
+                    (confirming === issue.id ? (
+                      <button
+                        type="button"
+                        onClick={() => discard(issue.id)}
+                        className="rounded-full bg-[#c2185b] px-4 py-2 font-ui text-sm font-bold text-white hover:opacity-90"
+                      >
+                        Throw it away?
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setConfirming(issue.id)}
+                        className="rounded-full px-3 py-2 font-ui text-sm text-neutral-500 hover:text-[#ffb4c4]"
+                      >
+                        Discard
+                      </button>
+                    ))}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
+
+      {gone.length > 0 && (
+        <>
+          <h3 className="mt-8 font-ui text-sm font-bold uppercase tracking-wide text-neutral-500">
+            Already sent
+          </h3>
+          <ol className="mt-3 flex flex-col gap-3">
+            {gone.map((issue) => (
+              <li
+                key={issue.id}
+                className="flex flex-wrap items-center gap-4 rounded-2xl border border-white/10 bg-[#1e2637] p-4"
+              >
+                <div className="min-w-0 flex-1">
+                  <button
+                    type="button"
+                    onClick={() => setOpenId(issue.id)}
+                    className="block max-w-full truncate text-left font-ui text-base font-bold text-white hover:text-[#6b8ff5]"
+                  >
+                    {issue.subject || "Untitled letter"}
+                  </button>
+                  <p className="mt-1 font-ui text-sm text-neutral-400">
+                    {day(issue.sentAt)} · reached {issue.sentCount}{" "}
+                    {issue.sentCount === 1 ? "person" : "people"}
+                    {issue.author ? ` · ${issue.author}` : ""}
+                  </p>
+                </div>
+
+                {issue.failedCount > 0 && (
+                  <span className="shrink-0 rounded-full bg-[#3a2030] px-3 py-1 font-ui text-xs font-bold text-[#ffb4c4]">
+                    {issue.failedCount} did not arrive
+                  </span>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setOpenId(issue.id)}
+                  className="shrink-0 rounded-full border border-white/25 px-4 py-2 font-ui text-sm text-white hover:bg-white/10"
+                >
+                  Read it
+                </button>
+              </li>
+            ))}
+          </ol>
+        </>
+      )}
+
     </section>
   );
 }

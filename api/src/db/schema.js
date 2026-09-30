@@ -247,6 +247,9 @@ export const newsletterIssues = pgTable(
     sentAt: timestamp("sent_at", { withTimezone: true }),
     sentCount: integer("sent_count").default(0).notNull(),
     failedCount: integer("failed_count").default(0).notNull(),
+    // Who did not get it and what was said, because a count of failures
+    // cannot be acted on.
+    failures: jsonb("failures").$type().default([]).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
