@@ -1,120 +1,73 @@
 import { Link } from "react-router-dom";
 import SectionHeading from "./SectionHeading";
-import obaaluMask from "../assets/landing/realms/obaalu-mask.svg";
-import obaaluIcon from "../assets/landing/realms/obaalu-icon.svg";
-import iyanuMask from "../assets/landing/realms/iyanu-mask.svg";
-import iyanuIcon from "../assets/landing/realms/iyanu-icon.svg";
-import urukojinMask from "../assets/landing/realms/urukojin-mask.svg";
-import urukojinIcon from "../assets/landing/realms/urukojin-icon.svg";
-import eganonMaskShape from "../assets/landing/realms/eganon-mask-shape.svg";
-import eganonArt from "../assets/landing/realms/eganon-art.svg";
-import eganonIcon from "../assets/landing/realms/eganon-icon.svg";
+import hopeBreakerArt from "../assets/landing/pages/hope-breaker.webp";
+import atlasArt from "../assets/landing/pages/atlas-veyron.webp";
 
-function MaskArt({ src }) {
-  return <img src={src} alt="" className="absolute left-[-1.05px] top-[-1.05px] h-[631.579px] w-[578.947px] max-w-none"  loading="lazy" />;
-}
-
-// Eganon's artwork is clipped by a separate alpha-mask shape in Figma.
-function EganonArt() {
-  return (
-    <div
-      className="absolute left-[164.21px] top-[211.58px] h-[535.79px] w-[370.371px]"
-      style={{
-        maskImage: `url("${eganonMaskShape}")`,
-        maskMode: "alpha",
-        maskRepeat: "no-repeat",
-        maskPosition: "-164.21px -211.579px",
-        maskSize: "578.947px 631.579px",
-        WebkitMaskImage: `url("${eganonMaskShape}")`,
-        WebkitMaskRepeat: "no-repeat",
-        WebkitMaskPosition: "-164.21px -211.579px",
-        WebkitMaskSize: "578.947px 631.579px",
-      }}
-    >
-      <div className="absolute" style={{ inset: "-0.67% -0.6% -0.56% -0.6%" }}>
-        <img src={eganonArt} alt="" className="block size-full max-w-none"  loading="lazy" />
-      </div>
-    </div>
-  );
-}
-
+// The characters shown here are real ones, published on VantaOrigin, and each
+// card leads to the page it is showing. Invented names and invented artwork
+// would be a promise the site could not keep -- somebody following a card
+// should land on the thing it showed them.
+//
+// `to` is the page each card opens. A character that is not published yet
+// leads to its creator's page instead, which is where it will appear.
 const PAGES = [
   {
-    id: "obaalu",
-    title: "Obaalu — The Emberforge of Creation",
-    creator: "Arinola",
-    lead: "A page showcasing a creator’s characters, artwork and creative work. ",
-    body: "Every character has its own profile with art, details and links, all kept in one place and shared from a single link.",
-    art: <MaskArt src={obaaluMask} />,
-    icon: obaaluIcon,
-    iconInset: "calc(10% - 0.84px) calc(81.71% + 0.67px) calc(81.67% + 0.67px) calc(10.88% - 0.82px)",
-    cardBg: "bg-black/[0.07]",
+    id: "hope-breaker",
+    name: "Hope Breaker",
+    universe: "Heart Zone",
+    tagline: "Marcus Sinclair",
+    body: "Conjures weapons out of Nether energy, sees the souls of the living and the dead, and opens portals into the wraith zone.",
+    art: hopeBreakerArt,
+    // Not published yet: until it is, the card opens the page it will live on.
+    to: "/creator/Vtgshadowscribe",
+    creator: "@Vtgshadowscribe",
   },
   {
-    id: "iyanu",
-    title: (
-      <>
-        Iyanu — The Eternal
-        <br />
-        Flow
-      </>
-    ),
-    creator: "Meyimeyi",
-    lead: "A page built around one creator’s cast of characters and the art behind them. ",
-    body: "Character profiles sit side by side with the artwork behind them, so visitors can see the whole cast at a glance.",
-    art: <MaskArt src={iyanuMask} />,
-    icon: iyanuIcon,
-    iconInset: "calc(11.67% - 0.81px) calc(81.95% + 0.67px) calc(80% + 0.63px) calc(10.91% - 0.82px)",
-    cardBg: "bg-black",
-  },
-  {
-    id: "urukojin",
-    title: "Urukojin — The Celestial Drift",
-    creator: "Bruno Diaz",
-    lead: "A page collecting a creator’s characters, props and concept work in one place. ",
-    body: "Characters, props and concept pieces stay organised as the creator’s body of work grows.",
-    art: <MaskArt src={urukojinMask} />,
-    icon: urukojinIcon,
-    iconInset: "calc(12.5% - 0.79px) calc(80% + 0.63px) calc(80.95% + 0.65px) calc(10.91% - 0.82px)",
-    cardBg: "bg-black/[0.07]",
-  },
-  {
-    id: "eganon",
-    title: "Eganon — The Core of Eternity",
-    creator: "Yan",
-    lead: "A page where a creator keeps every character profile up to date. ",
-    body: "New characters are added as they are made, and the link stays the same wherever it is shared.",
-    art: <EganonArt />,
-    icon: eganonIcon,
-    iconInset: "calc(11.81% - 0.8px) calc(78.18% + 0.59px) calc(79.86% + 0.63px) calc(10.91% - 0.82px)",
-    cardBg: "bg-black/[0.07]",
+    id: "atlas-veyron",
+    name: "Atlas Veyron",
+    universe: "The Vantaverse",
+    tagline: "The Worldbearer",
+    body: "A wanderer who touched a celestial stone beneath a ruined temple, and was chosen to carry the weight of a dying world until someone worthy could take it up.",
+    art: atlasArt,
+    to: "/character/atlas-veyron",
+    creator: "@Vtgshadowscribe",
   },
 ];
 
-function PageCard({ title, creator, lead, body, art, icon, iconInset, cardBg }) {
+function PageCard({ name, universe, tagline, body, art, to, creator }) {
   return (
-    <article
-      className={`relative flex min-h-[560px] w-[85vw] max-w-[578.947px] shrink-0 snap-center flex-col lg:w-full overflow-hidden rounded-[42.105px] border-[1.053px] border-primary px-6 pb-[43px] pt-[180px] sm:h-[631.579px] sm:pl-[44px] sm:pr-[45px] ${cardBg}`}
-    >
-      {art}
-      <img src={icon} alt="" className="absolute" style={{ inset: iconInset }}  loading="lazy" />
+    <article className="relative flex min-h-[520px] w-[85vw] max-w-[578.947px] shrink-0 snap-center flex-col justify-end overflow-hidden rounded-[42.105px] border-[1.053px] border-primary bg-black px-6 pb-[43px] pt-[180px] sm:h-[631.579px] sm:pl-[44px] sm:pr-[45px] lg:w-full">
+      <img
+        src={art}
+        alt={`Artwork of ${name}`}
+        loading="lazy"
+        className="absolute inset-0 size-full object-cover object-top"
+      />
+      {/* The writing sits over the artwork, so the artwork darkens under it. */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-gradient-to-t from-black via-black/85 via-40% to-transparent"
+      />
 
-      <h3 className="relative max-w-[484.211px] font-ui text-[32px] font-black tracking-[-0.2105px] text-white sm:text-[42.105px]">
-        {title}
+      <p className="relative font-ui text-sm font-bold uppercase tracking-[0.18em] text-primary">
+        {universe}
+      </p>
+      <h3 className="relative mt-3 max-w-[484.211px] font-ui text-[32px] font-black leading-[1.05] tracking-[-0.2105px] text-white sm:text-[42.105px]">
+        {name}
       </h3>
-      <p className="relative mt-5 max-w-[477.895px] font-ui text-lg font-medium leading-[1.5] text-white sm:text-[21.053px] sm:leading-[31.579px]">
-        <span className="font-bold">{lead}</span>
+      <p className="relative mt-4 max-w-[477.895px] font-ui text-lg font-medium leading-[1.5] text-white sm:text-[21.053px] sm:leading-[31.579px]">
+        <span className="font-bold">{tagline}. </span>
         {body}
       </p>
 
-      <div className="relative mt-auto flex items-center justify-between gap-4 pt-6">
+      <div className="relative mt-7 flex flex-wrap items-center justify-between gap-4">
         <Link
-          to="/character"
+          to={to}
           className="rounded-[52.632px] bg-secondary px-[36.842px] py-[18.947px] font-ui text-[21.053px] font-bold text-white transition-opacity hover:opacity-90"
         >
           View page
         </Link>
-        <p className="whitespace-nowrap font-ui text-[24.211px] text-white">
+        <p className="whitespace-nowrap font-ui text-[21px] text-white sm:text-[24.211px]">
           <span className="font-medium">by</span> <span className="font-black">{creator}</span>
         </p>
       </div>

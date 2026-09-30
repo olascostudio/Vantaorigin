@@ -1,8 +1,8 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, within, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { act, render, screen, within, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import CreatorPages from "./CreatorPages";
-import CommunityWorlds from "./CommunityWorlds";
+import CommunityWorlds, { byCreator } from "./CommunityWorlds";
 import HowItWorks from "./HowItWorks";
 import CharacterShowcase from "./CharacterShowcase";
 import ShareLink from "./ShareLink";
@@ -10,19 +10,45 @@ import Features from "./Features";
 import FinalCta from "./FinalCta";
 import Footer from "./Footer";
 
+vi.mock("../data/character", () => ({ loadPublicCharacters: vi.fn(async () => []) }));
+const { loadPublicCharacters } = await import("../data/character");
+
 const renderPage = (ui) => render(ui, { wrapper: MemoryRouter });
 
+beforeEach(() => {
+  loadPublicCharacters.mockReset();
+  loadPublicCharacters.mockResolvedValue([]);
+});
+
 describe("Creator pages", () => {
-  it("presents example creator pages, not communities to join", () => {
+  it("shows real characters, each linking to the page it is showing", () => {
     renderPage(<CreatorPages />);
     expect(screen.getByRole("heading", { name: "Create your page" })).toBeInTheDocument();
     expect(screen.getByText(/Your page is your personal space for your characters/i)).toBeInTheDocument();
 
     const cards = screen.getAllByRole("article");
-    expect(cards).toHaveLength(4);
+    expect(cards).toHaveLength(2);
+
+    // Invented names and invented artwork would be a promise the site cannot
+    // keep: everything here belongs to a real creator on VantaOrigin.
+    expect(within(cards[0]).getByRole("heading", { name: "Hope Breaker" })).toBeInTheDocument();
+    expect(within(cards[1]).getByRole("heading", { name: "Atlas Veyron" })).toBeInTheDocument();
     cards.forEach((card) => {
-      expect(within(card).getByRole("link", { name: "View page" })).toBeInTheDocument();
+      expect(within(card).getByText("@Vtgshadowscribe")).toBeInTheDocument();
+      // The artwork is named, not decorative: it is the character.
+      expect(within(card).getByRole("img")).toHaveAccessibleName(/Artwork of/);
     });
+
+    // A published character opens on its own page; one that is not published
+    // yet opens on the page it will appear on, rather than on nothing.
+    expect(within(cards[1]).getByRole("link", { name: "View page" })).toHaveAttribute(
+      "href",
+      "/character/atlas-veyron"
+    );
+    expect(within(cards[0]).getByRole("link", { name: "View page" })).toHaveAttribute(
+      "href",
+      "/creator/Vtgshadowscribe"
+    );
 
     // membership numbers were invented, so they should be gone
     expect(screen.queryByText(/members/i)).not.toBeInTheDocument();
@@ -31,24 +57,84 @@ describe("Creator pages", () => {
 });
 
 describe("CommunityWorlds", () => {
-  it("lists creator pages with their character counts", () => {
-    renderPage(<CommunityWorlds />);
-    expect(screen.getByRole("heading", { name: "Explore creator pages" })).toBeInTheDocument();
-    expect(screen.getAllByTestId("creator-card")).toHaveLength(4);
-    expect(screen.getByText("12 Characters")).toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: /View page/ })).toHaveLength(4);
+  // Real creators, read from the site. Nobody appears here who has not
+  // published, and the count is what they have actually published.
+  // The shape loadPublicCharacters really returns: flattened, with the
+  // creator as a handle and the artwork as `cover`.
+  const published = [
+    {
+      id: "1",
+      alias: "Atlas Veyron",
+      slug: "atlas-veyron",
+      universe: "The Vantaverse",
+      cover: "https://pictures.test/atlas.webp",
+      creator: "@Vtgshadowscribe",
+    },
+    {
+      id: "2",
+      alias: "Urokojin",
+      slug: "urokojin",
+      universe: "The Vantaverse",
+      cover: null,
+      creator: "@Vtgshadowscribe",
+    },
+    {
+      id: "3",
+      alias: "Somebody else's",
+      slug: "another",
+      universe: "Elsewhere",
+      cover: null,
+      creator: "@another",
+    },
+  ];
+
+  it("gathers each creator's published characters into one page", () => {
+    const pages = byCreator(published);
+
+    expect(pages.map((page) => page.username)).toEqual(["@Vtgshadowscribe", "@another"]);
+    expect(pages[0].characters).toHaveLength(2);
+    // The first character with artwork stands for the page.
+    expect(pages[0].cover).toBe("https://pictures.test/atlas.webp");
+    // What they write about, in their own words.
+    expect(pages[0].tags).toBe("The Vantaverse");
   });
 
-  it("scrolls the carousel one card at a time", () => {
+  it("counts one character as a character, not as characters", () => {
+    expect(byCreator([published[2]])[0].characters).toHaveLength(1);
+  });
+
+  it("waits rather than inventing anybody", async () => {
+    let answer;
+    loadPublicCharacters.mockReturnValue(new Promise((resolve) => { answer = resolve; }));
     renderPage(<CommunityWorlds />);
-    const track = screen.getAllByTestId("creator-card")[0].parentElement;
-    track.scrollBy = vi.fn();
 
-    fireEvent.click(screen.getByRole("button", { name: "Next pages" }));
-    fireEvent.click(screen.getByRole("button", { name: "Previous pages" }));
+    // Nothing claimed before the site has said who is there.
+    expect(screen.queryAllByTestId("creator-card")).toHaveLength(0);
+    expect(screen.getByRole("heading", { name: "Explore creator pages" })).toBeInTheDocument();
 
-    expect(track.scrollBy).toHaveBeenNthCalledWith(1, { left: 530, behavior: "smooth" });
-    expect(track.scrollBy).toHaveBeenNthCalledWith(2, { left: -530, behavior: "smooth" });
+    await act(async () => {
+      answer(published);
+    });
+
+    const cards = screen.getAllByTestId("creator-card");
+    expect(cards).toHaveLength(2);
+    expect(within(cards[0]).getByText("@Vtgshadowscribe")).toBeInTheDocument();
+    expect(within(cards[0]).getByText("2 characters")).toBeInTheDocument();
+    expect(within(cards[1]).getByText("1 character")).toBeInTheDocument();
+    // Each card opens the page it is showing.
+    expect(within(cards[0]).getByRole("link", { name: /View page/ })).toHaveAttribute(
+      "href",
+      "/creator/Vtgshadowscribe"
+    );
+  });
+
+  it("says nothing at all when nobody has published", async () => {
+    loadPublicCharacters.mockResolvedValue([]);
+    const { container } = renderPage(<CommunityWorlds />);
+    await act(async () => {});
+
+    // Better an absent section than a row of empty promises.
+    expect(container.querySelector("#explore")).toBeNull();
   });
 });
 

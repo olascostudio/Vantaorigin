@@ -185,7 +185,7 @@ function ShowcaseCard({ id, x, box, transform, bg, art, badge }) {
 function Showcase() {
   return (
     // Visible window onto the 698px-tall stage; the hero clips the rest.
-    <div className="relative h-[141px] sm:h-[176px] md:h-[211px] lg:h-[282px] xl:h-[317px] min-[1440px]:h-[352px]">
+    <div className="relative h-[141px] sm:h-[176px] md:h-[211px] lg:h-[clamp(200px,34vh,390px)]">
       <div
         className="absolute left-1/2 top-0 h-[697.786px] w-[1440px] origin-top -translate-x-1/2 scale-[0.4] sm:scale-50 md:scale-[0.6] lg:scale-[0.8] xl:scale-90 min-[1440px]:scale-100"
         data-testid="showcase"
@@ -232,26 +232,29 @@ function AnnouncementBadge() {
 
 export default function Hero() {
   return (
-    <header className="relative overflow-hidden bg-background px-4 pt-10">
+    // The hero is exactly one screen tall and the showcase is pinned to the
+    // foot of it, so the cards are the last thing on screen rather than the
+    // first thing below it. Everything above them is tightened to match.
+    <header className="relative flex min-h-svh flex-col overflow-hidden bg-background px-4 pt-[clamp(10px,2vh,40px)]">
       <HeroBackground />
 
-      <div className="relative">
+      <div className="relative flex flex-1 flex-col">
         <Navbar />
 
-        <div className="mx-auto mt-16 flex max-w-[688px] flex-col items-center gap-[30px] text-center lg:mt-[101.25px]">
-          <div className="flex flex-col items-center gap-5">
+        <div className="mx-auto mt-[clamp(18px,2.6vh,101px)] flex max-w-[688px] flex-col items-center gap-[clamp(16px,2.6vh,30px)] text-center">
+          <div className="flex flex-col items-center gap-[clamp(12px,2vh,20px)]">
             <AnnouncementBadge />
 
             <div>
               <h1 className="font-display text-primary">
-                <span className="block text-[40px] leading-[1.2] sm:text-[60px] lg:text-[85px] lg:leading-[120px]">
+                <span className="block text-[40px] leading-[1.15] sm:text-[60px] lg:text-[clamp(50px,7.2vh,85px)] lg:leading-[1.08]">
                   Create <span className="text-white">Your</span>
                 </span>{" "}
-                <span className="block text-[48px] leading-[1.2] sm:text-[73px] lg:text-[103.68px] lg:leading-[120px]">
+                <span className="block text-[48px] leading-[1.15] sm:text-[73px] lg:text-[clamp(61px,8.8vh,103.68px)] lg:leading-[1.08]">
                   <span className="text-white">Character</span> Cards
                 </span>
               </h1>
-              <p className="mx-auto mt-1 max-w-[700px] font-body text-base tracking-[-0.1px] text-subtext sm:text-xl">
+              <p className="mx-auto mt-[clamp(8px,1.5vh,16px)] max-w-[700px] font-body text-base tracking-[-0.1px] text-subtext sm:text-xl">
                 Create a home for your characters, organize their profiles, and share your
                 characters with one link.
               </p>
@@ -274,7 +277,7 @@ export default function Hero() {
           </div>
         </div>
 
-        <div className="-mx-4 mt-9">
+        <div className="-mx-4 mt-auto pt-[clamp(10px,2.2vh,36px)]">
           <Showcase />
         </div>
       </div>
