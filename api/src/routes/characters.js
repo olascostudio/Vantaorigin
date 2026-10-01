@@ -147,11 +147,41 @@ export default async function characterRoutes(app) {
     return decorate(rows, request.user.id);
   });
 
+  // What this project puts behind its characters, if it has been told.
+  const projectBanner = async (userId, categoryId) => {
+    if (!categoryId) return null;
+    const [project] = await db
+      .select({ bannerUrl: categories.bannerUrl })
+      .from(categories)
+      .where(and(eq(categories.id, categoryId), eq(categories.userId, userId)))
+      .limit(1);
+    return project?.bannerUrl || null;
+  };
+
+  // Remembered against the project, for the characters still to come.
+  const rememberBanner = (userId, categoryId, bannerUrl) =>
+    db
+      .update(categories)
+      .set({ bannerUrl })
+      .where(and(eq(categories.id, categoryId), eq(categories.userId, userId)));
+
   app.post("/characters", { preHandler: authenticate() }, async (request, reply) => {
     const body = characterBody.parse(request.body);
+
+    // A new character starts with the backdrop its project already uses,
+    // unless one was named outright. Picking the same sky for the thirteenth
+    // character of a comic is work nobody should have to do twice.
+    const banner =
+      body.bannerUrl === undefined ? await projectBanner(request.user.id, body.categoryId) : body.bannerUrl;
+
     const [character] = await db
       .insert(characters)
-      .values({ ...body, slug: await freeSlugFor(body.name), userId: request.user.id })
+      .values({
+        ...body,
+        ...(banner ? { bannerUrl: banner } : {}),
+        slug: await freeSlugFor(body.name),
+        userId: request.user.id,
+      })
       .returning();
 
     // Published straight away: let the search engines that take a nudge know
@@ -173,6 +203,14 @@ export default async function characterRoutes(app) {
       .returning();
 
     if (!character) return reply.code(404).send({ error: "Character not found" });
+
+    // Choosing a backdrop here is choosing it for the project: the next
+    // character made in it starts with this one. The characters that already
+    // exist are left alone -- a new choice should not reach back and repaint
+    // work that is finished.
+    if (body.bannerUrl && character.categoryId) {
+      await rememberBanner(request.user.id, character.categoryId, body.bannerUrl);
+    }
 
     // Either newly published, or published work that has changed.
     if (character.isPublic) {

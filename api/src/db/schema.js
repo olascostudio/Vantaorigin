@@ -86,6 +86,10 @@ export const categories = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
+    // The backdrop every character made in this project starts with. It is
+    // set by choosing one on any character here, since that is where the
+    // choice is really made.
+    bannerUrl: text("banner_url"),
     position: integer("position").default(0).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
