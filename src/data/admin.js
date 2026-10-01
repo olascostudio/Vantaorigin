@@ -54,3 +54,6 @@ export const resendWelcome = (to) => api.post("/admin/welcome", { to });
 // and works through the bucket in the background, so the screen watches.
 export const startShrinking = () => api.post("/admin/images/shrink", {});
 export const shrinkProgress = () => api.get("/admin/images/shrink");
+
+// How far people get, counted from what the site already holds.
+export const loadFunnel = (days = 30) => api.get(`/admin/funnel?days=${days}`);

@@ -22,6 +22,11 @@ vi.mock("../data/admin", () => ({
   })),
   loadReports: vi.fn(async () => []),
   loadCreators: vi.fn(async () => []),
+  loadFunnel: vi.fn(async () => ({
+    days: 30,
+    recent: { joined: 20, verified: 12, made: 7, published: 3 },
+    allTime: { joined: 31, verified: 20, made: 11, published: 5 },
+  })),
   loadTopCharacters: vi.fn(async () => []),
   settleReport: vi.fn(),
   loadSubscribers: vi.fn(async () => ({
@@ -82,6 +87,24 @@ describe("The dashboard", () => {
     // Said twice on purpose: once as a number, once as a tab.
     expect(screen.getAllByText("Newsletter").length).toBeGreaterThan(1);
     expect(screen.getByText("2 this week")).toBeInTheDocument();
+  });
+
+  it("says how far people get, and where most of them stop", async () => {
+    await open();
+
+    expect(screen.getByText(/How far people get, these last 30 days/)).toBeInTheDocument();
+    expect(screen.getByText("Made an account")).toBeInTheDocument();
+    expect(screen.getByText("Published one")).toBeInTheDocument();
+    // 3 of 20 is 15%.
+    expect(screen.getByText("15%")).toBeInTheDocument();
+    expect(screen.getByText(/5 of 31 have ever published/)).toBeInTheDocument();
+
+    // The widest fall is 20 -> 12, which is the one worth looking at first:
+    // eight people, against five and four at the later steps.
+    expect(screen.getByText(/Most are lost between/)).toBeInTheDocument();
+    expect(screen.getByText("made an account")).toBeInTheDocument();
+    expect(screen.getByText("confirmed their email")).toBeInTheDocument();
+    expect(screen.getByText(/8 people/)).toBeInTheDocument();
   });
 
   it("renders every tab without falling over", async () => {

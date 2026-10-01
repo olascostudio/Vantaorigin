@@ -313,3 +313,46 @@ test("the list downloads as a file of the people still on it", async () => {
   assert.equal(lines.length, 5); // heading plus four subscribed
   assert.ok(lines.every((line, index) => index === 0 || line.includes(",subscribed,")));
 });
+
+// How far people get, counted from what the site already holds.
+
+test("the journey counts every step from joining to publishing", async () => {
+  const res = await app.inject({ method: "GET", url: "/admin/funnel", headers: { cookie: boss } });
+  assert.equal(res.statusCode, 200);
+
+  const { recent, allTime, days } = res.json();
+  assert.equal(days, 30);
+
+  // boss, maker, fan and anybody else these tests made.
+  assert.ok(recent.joined >= 3);
+  assert.equal(recent.joined, allTime.joined, "everybody here joined this month");
+
+  // maker made a character and published it; the others did not.
+  assert.equal(recent.made, 1);
+  assert.equal(recent.published, 1);
+
+  // Nobody verified an address in these tests.
+  assert.equal(recent.verified, 0);
+
+  // Each step is a subset of the one before it.
+  assert.ok(recent.published <= recent.made);
+  assert.ok(recent.made <= recent.joined);
+});
+
+test("the journey is closed to an ordinary creator", async () => {
+  const res = await app.inject({ method: "GET", url: "/admin/funnel", headers: { cookie: fan } });
+  assert.equal(res.statusCode, 404);
+});
+
+test("a shorter window counts fewer people, never more", async () => {
+  const month = (
+    await app.inject({ method: "GET", url: "/admin/funnel?days=30", headers: { cookie: boss } })
+  ).json();
+  const day = (
+    await app.inject({ method: "GET", url: "/admin/funnel?days=1", headers: { cookie: boss } })
+  ).json();
+
+  assert.equal(day.days, 1);
+  assert.ok(day.recent.joined <= month.recent.joined);
+  assert.ok(month.recent.joined <= month.allTime.joined);
+});

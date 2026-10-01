@@ -7,6 +7,7 @@ import {
   amIAdmin,
   forgetSubscriber,
   loadCreators,
+  loadFunnel,
   loadOverview,
   loadReports,
   loadSubscribers,
@@ -35,6 +36,98 @@ const TABS = ["Reports", "Creators", "Characters", "Newsletter", "Letters"];
 
 const day = (value) =>
   value ? new Date(value).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "—";
+
+// Where people stop.
+//
+// Four steps, each a subset of the last, so the gap between two bars is the
+// number of people who got that far and no further. The widest gap is the
+// thing worth fixing, and it is the one question a visitor count cannot
+// answer.
+function Journey({ days = 30 }) {
+  const [answer, setAnswer] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadFunnel(days)
+      .then((next) => !cancelled && setAnswer(next))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [days]);
+
+  if (!answer) return <Skeleton className="mt-4 h-[168px] rounded-2xl" />;
+
+  const { joined, verified, made, published } = answer.recent;
+  const steps = [
+    { label: "Made an account", value: joined },
+    { label: "Confirmed their email", value: verified },
+    { label: "Made a character", value: made },
+    { label: "Published one", value: published },
+  ];
+
+  // The largest fall between two steps, which is where to look first.
+  let worst = null;
+  for (let i = 1; i < steps.length; i += 1) {
+    const lost = steps[i - 1].value - steps[i].value;
+    if (lost > 0 && (!worst || lost > worst.lost)) {
+      worst = { lost, from: steps[i - 1].label, to: steps[i].label };
+    }
+  }
+
+  return (
+    <section className="mt-4 rounded-2xl border border-white/10 bg-[#222b3c] p-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="font-ui text-base font-bold text-white">
+          How far people get, these last {answer.days} days
+        </h2>
+        <p className="font-ui text-sm text-neutral-500">
+          {answer.allTime.published} of {answer.allTime.joined} have ever published
+        </p>
+      </div>
+
+      <ol className="mt-4 flex flex-col gap-2.5">
+        {steps.map((step, index) => {
+          const share = joined ? Math.round((step.value / joined) * 100) : 0;
+          const lost = index === 0 ? 0 : steps[index - 1].value - step.value;
+          return (
+            <li key={step.label} className="flex items-center gap-3">
+              <span className="w-[150px] shrink-0 font-ui text-sm text-neutral-300 sm:w-[170px]">
+                {step.label}
+              </span>
+              <span className="relative h-7 min-w-[2px] flex-1 overflow-hidden rounded-md bg-black/25">
+                <span
+                  className="absolute inset-y-0 left-0 rounded-md bg-gradient-to-r from-[#c2185b] to-[#a855f7]"
+                  style={{ width: `${Math.max(share, step.value ? 2 : 0)}%` }}
+                />
+              </span>
+              <span className="w-[86px] shrink-0 text-right font-ui text-sm text-white">
+                {step.value}
+                <span className="ml-1.5 text-neutral-500">{share}%</span>
+              </span>
+              <span className="hidden w-[76px] shrink-0 text-right font-ui text-sm text-neutral-500 sm:block">
+                {lost > 0 ? `−${lost}` : ""}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+
+      {worst && (
+        <p className="mt-4 font-ui text-sm text-neutral-400">
+          Most are lost between <span className="text-white">{worst.from.toLowerCase()}</span> and{" "}
+          <span className="text-white">{worst.to.toLowerCase()}</span> — {worst.lost}{" "}
+          {worst.lost === 1 ? "person" : "people"}.
+        </p>
+      )}
+      {!worst && joined > 0 && (
+        <p className="mt-4 font-ui text-sm text-neutral-400">
+          Everybody who joined got all the way through.
+        </p>
+      )}
+    </section>
+  );
+}
 
 function Figure({ label, value, note }) {
   return (
@@ -621,6 +714,8 @@ export default function Admin() {
             ))
           )}
         </div>
+
+        <Journey />
 
         {/* Which list */}
         <div className="mt-9 flex flex-wrap items-center gap-2">

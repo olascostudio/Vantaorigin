@@ -106,6 +106,51 @@ export default async function adminRoutes(app) {
     };
   });
 
+  // How far people get.
+  //
+  // Nobody is followed to work this out: it is counted from what the site
+  // already holds -- an account exists, its address is confirmed, it has a
+  // character, that character is published. That is the whole journey from
+  // arriving to having something worth sharing, and every step of it is
+  // already recorded as a consequence of doing it.
+  //
+  // The step that loses the most people is the one worth fixing, and it is
+  // the question a visitor count cannot answer.
+  app.get("/admin/funnel", { preHandler: requireAdmin() }, async (request) => {
+    const days = Math.min(Math.max(Number(request.query.days) || 30, 1), 365);
+
+    const stages = (from) => sql`
+      select
+        count(*)::int as joined,
+        count(*) filter (where users.email_verified_at is not null)::int as verified,
+        count(*) filter (
+          where exists (select 1 from characters c where c.user_id = users.id)
+        )::int as made,
+        count(*) filter (
+          where exists (select 1 from characters c where c.user_id = users.id and c.is_public)
+        )::int as published
+      from users
+      ${from ? sql`where users.created_at >= ${from}` : sql``}
+    `;
+
+    const [recent, all] = await Promise.all([
+      db.execute(stages(since(days))),
+      db.execute(stages(null)),
+    ]);
+
+    const read = (result) => {
+      const row = (result.rows ?? result)[0] ?? {};
+      return {
+        joined: Number(row.joined ?? 0),
+        verified: Number(row.verified ?? 0),
+        made: Number(row.made ?? 0),
+        published: Number(row.published ?? 0),
+      };
+    };
+
+    return { days, recent: read(recent), allTime: read(all) };
+  });
+
   // The newest creators, with enough to tell a real one from a test account.
   app.get("/admin/creators", { preHandler: requireAdmin() }, async (request) => {
     const limit = Math.min(Number(request.query.limit) || 50, 200);
