@@ -46,3 +46,29 @@ describe("Counting a visit", () => {
     expect(doc.head.children).toHaveLength(1);
   });
 });
+
+describe("When the token never reached the build", () => {
+  it("says so on the real site rather than failing quietly", () => {
+    const said = [];
+    const warn = console.warn;
+    console.warn = (...args) => said.push(args.join(" "));
+    try {
+      countVisits({ token: undefined, host: "www.vantaorigin.com", doc: fakeDoc() });
+      expect(said.join(" ")).toContain("VITE_ANALYTICS_TOKEN");
+    } finally {
+      console.warn = warn;
+    }
+  });
+
+  it("stays quiet everywhere else, since there is nothing wrong there", () => {
+    const said = [];
+    const warn = console.warn;
+    console.warn = (...args) => said.push(args.join(" "));
+    try {
+      countVisits({ token: undefined, host: "localhost", doc: fakeDoc() });
+      expect(said).toHaveLength(0);
+    } finally {
+      console.warn = warn;
+    }
+  });
+});

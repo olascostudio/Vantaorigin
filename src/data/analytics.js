@@ -19,7 +19,20 @@ export function countVisits({
   host = typeof window === "undefined" ? "" : window.location.hostname,
   doc = typeof document === "undefined" ? null : document,
 } = {}) {
-  if (!token || !doc) return null;
+  if (!doc) return null;
+
+  // Vite reads this at build time, not at run time, so an unset variable
+  // becomes a literal undefined in the shipped file and nothing happens --
+  // silently, on a page nobody is watching. Said out loud instead, because
+  // the alternative is believing you are counting visitors when you are not.
+  if (!token) {
+    if (host === "vantaorigin.com" || host.endsWith(".vantaorigin.com")) {
+      console.warn(
+        "VantaOrigin: no visitor counting. VITE_ANALYTICS_TOKEN was not set when this was built — set it for the Production environment and build again (a redeploy that reuses the existing output will not pick it up)."
+      );
+    }
+    return null;
+  }
 
   // Only the real site. A preview deployment or a laptop sharing the token
   // would otherwise be counted as visitors.
