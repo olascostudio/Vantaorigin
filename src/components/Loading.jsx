@@ -1,9 +1,39 @@
+import { useState } from "react";
+
 // Waiting, shown as the shape of what is coming.
 //
 // Nothing here spins. A spinner says "something is happening" and nothing
 // else; a page in the shape of its own content says what is on its way, holds
 // the layout so nothing jumps when the real thing lands, and reads as faster
 // for it. Each of these is a rough tracing of the page it stands in for.
+
+// A picture that holds its own place while it arrives.
+//
+// An <img> with nothing behind it is an empty hole until the last byte
+// lands, and then the artwork appears all at once. This keeps the same
+// breathing grey as everything else in its place, in the exact shape the
+// picture will take, and stops as soon as it paints -- or fails, since a
+// block pulsing for ever says the wrong thing.
+//
+// One element, so it drops in wherever an <img> already is without changing
+// a single thing about the layout.
+export function Art({ className = "", ...rest }) {
+  const [settled, setSettled] = useState(false);
+
+  return (
+    <img
+      {...rest}
+      // A picture already in the browser's cache is complete before React
+      // hears about it, and would otherwise pulse for ever.
+      ref={(node) => {
+        if (node?.complete) setSettled(true);
+      }}
+      onLoad={() => setSettled(true)}
+      onError={() => setSettled(true)}
+      className={`${className} ${settled ? "" : "animate-pulse bg-white/[0.06]"}`}
+    />
+  );
+}
 
 // One grey block. The parts below are built from these.
 export function Skeleton({ className = "" }) {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../data/api";
-import { CreatorSkeleton } from "../components/Loading.jsx";
+import { Art, CreatorSkeleton } from "../components/Loading.jsx";
 import ReportCreator from "../components/ReportCreator.jsx";
 import JoinPrompt, { useJoinPrompt } from "../components/JoinPrompt.jsx";
 import { useAuth } from "../data/AuthContext.jsx";
@@ -141,7 +141,7 @@ export default function CreatorPage() {
         <div className="relative">
           <div className="h-[130px] overflow-hidden sm:h-[180px] sm:rounded-b-3xl">
             {creator.bannerUrl ? (
-              <img src={creator.bannerUrl} alt="" className="size-full object-cover" />
+              <Art src={creator.bannerUrl} alt="" className="size-full object-cover" />
             ) : (
               <div className="size-full bg-gradient-to-r from-[#2a3348] via-[#7a2352] to-[#c2185b]" />
             )}
@@ -157,7 +157,7 @@ export default function CreatorPage() {
 
           <div className="absolute inset-x-0 -bottom-10 flex justify-center sm:-bottom-12">
             {creator.avatarUrl ? (
-              <img
+              <Art
                 src={creator.avatarUrl}
                 alt={creator.name}
                 className="size-20 rounded-full object-cover ring-4 ring-background sm:size-24"
@@ -218,7 +218,7 @@ export default function CreatorPage() {
                   to={`/character/${character.slug || character.id}`}
                   className="group overflow-hidden rounded-2xl border border-white/10 bg-[#222b3c] transition-colors hover:border-white/30"
                 >
-                  <img
+                  <Art
                     src={character.coverUrl || characterCover}
                     alt={character.name}
                     loading="lazy"
@@ -245,7 +245,7 @@ export default function CreatorPage() {
                   className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#222b3c] p-3 text-left transition-colors hover:border-white/30 sm:gap-4"
                 >
                   {post.images?.[0] ? (
-                    <img
+                    <Art
                       src={post.images[0]}
                       alt=""
                       loading="lazy"

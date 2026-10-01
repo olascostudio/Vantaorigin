@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import { loadPublicCharacters } from "../data/character";
+import { Art } from "../components/Loading.jsx";
 import characterCover from "../assets/creator/character-cover.svg";
 import heroArt from "../assets/auth/banner.webp";
 import artOrange from "../assets/landing/worlds/world-1.webp";
@@ -59,8 +60,8 @@ function CharacterCard({ title, author, colour, art, overlay, excerpt = SAMPLE_E
       style={{ borderColor: colour }}
       data-testid="character-card"
     >
-      <div className="relative h-[280px] w-full overflow-hidden rounded-xl bg-[#888787] sm:h-[360px]">
-        <img src={art} alt={typeof title === "string" ? title : ""} className="size-full object-cover" loading="lazy" />
+      <div className="relative h-[280px] w-full overflow-hidden rounded-xl bg-[#1e2637] sm:h-[360px]">
+        <Art src={art} alt={typeof title === "string" ? title : ""} className="size-full object-cover" loading="lazy" />
         {overlay && (
           <img src={overlay} alt="" className="absolute inset-0 size-full object-cover" loading="lazy" />
         )}

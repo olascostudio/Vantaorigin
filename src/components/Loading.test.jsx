@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import PageSkeleton, {
+  Art,
   CardGridSkeleton,
   CharacterSkeleton,
   CreatorSkeleton,
@@ -43,5 +44,35 @@ describe("Waiting states", () => {
   it("offers a plain block for anywhere with its own shape", () => {
     const { container } = render(<Skeleton className="h-10 w-10" />);
     expect(container.firstChild.className).toContain("animate-pulse");
+  });
+});
+
+describe("A picture on its way", () => {
+  it("holds its place with the same breathing grey, then stops", async () => {
+    const { container, rerender } = render(<Art src="/art.webp" alt="Urokojin" className="size-20" />);
+    const img = container.querySelector("img");
+
+    // Before it lands: the same placeholder as everything else, in the exact
+    // shape the picture will take.
+    expect(img.className).toContain("animate-pulse");
+    expect(img.className).toContain("size-20");
+
+    fireEvent.load(img);
+    expect(container.querySelector("img").className).not.toContain("animate-pulse");
+    rerender(<Art src="/art.webp" alt="Urokojin" className="size-20" />);
+  });
+
+  it("stops when a picture fails, rather than pulsing for ever", () => {
+    const { container } = render(<Art src="/missing.webp" alt="" />);
+    fireEvent.error(container.querySelector("img"));
+    expect(container.querySelector("img").className).not.toContain("animate-pulse");
+  });
+
+  it("keeps whatever the picture was given", () => {
+    const { container } = render(<Art src="/a.webp" alt="A face" loading="lazy" className="rounded-full" />);
+    const img = container.querySelector("img");
+    expect(img).toHaveAttribute("alt", "A face");
+    expect(img).toHaveAttribute("loading", "lazy");
+    expect(img.className).toContain("rounded-full");
   });
 });
