@@ -3,7 +3,7 @@
 // the route and the client code stay the same.
 import { authenticate } from "../auth/auth.js";
 import { CACHE_FOREVER, newKey, storage } from "../adapters/storage.js";
-import { limitFor, renameTo, shrink } from "../images.js";
+import { accentOf, limitFor, renameTo, shrink } from "../images.js";
 import { config } from "../config.js";
 
 const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
@@ -48,10 +48,20 @@ export default async function uploadRoutes(app) {
       request.log.warn({ err: error }, "could not shrink that picture");
     }
 
+    // A cover decides the colour its card is trimmed in.
+    let accent = null;
+    if (folder === "covers") {
+      try {
+        accent = await accentOf(body);
+      } catch (error) {
+        request.log.warn({ err: error }, "could not read a colour from that cover");
+      }
+    }
+
     const key = newKey(`${request.user.id}/${folder}`, name);
     try {
       const url = await storage.put(key, body, type);
-      return reply.code(201).send({ url, key });
+      return reply.code(201).send({ url, key, ...(accent ? { accent } : {}) });
     } catch (error) {
       // Storage misconfiguration is worth saying out loud in the logs.
       request.log.error({ err: error, driver: storage.name }, "upload failed");

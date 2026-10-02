@@ -79,3 +79,59 @@ export async function shrink(buffer, { limit = 1600, keepFormat = false } = {}) 
 // "…/cover.jpg" becomes "…/cover.webp" when the bytes became webp.
 export const renameTo = (key, format) =>
   key.replace(/\.[a-z0-9]+$/i, "") + "." + (format === "jpeg" ? "jpg" : format);
+
+// The colour a picture is really about.
+//
+// Used for a character card's edge, so the card is trimmed in its own
+// artwork's colour rather than in one house colour for everybody.
+//
+// The most saturated pixels decide it, weighted so that neither a black
+// background nor a white page can win, and the result is pushed into a
+// lightness that still reads as a line on a dark screen.
+export async function accentOf(buffer) {
+  const { data, info } = await sharp(buffer)
+    .resize(32, 32, { fit: "cover" })
+    .removeAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  let best = null;
+  let bestScore = 0;
+
+  for (let i = 0; i < data.length; i += info.channels) {
+    const r = data[i] / 255;
+    const g = data[i + 1] / 255;
+    const b = data[i + 2] / 255;
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const lightness = (max + min) / 2;
+    const chroma = max - min;
+    if (chroma < 0.08) continue;
+
+    const saturation = chroma / (1 - Math.abs(2 * lightness - 1) || 1);
+    // Mid lightness is what a line wants: near-black and near-white are
+    // common in artwork and useless as an accent.
+    const usable = 1 - Math.abs(lightness - 0.52) * 1.7;
+    const score = saturation * Math.max(0, usable) * (0.45 + chroma);
+
+    if (score > bestScore) {
+      bestScore = score;
+      best = { r, g, b, lightness };
+    }
+  }
+
+  // Nothing colourful in it: the house pink, rather than a muddy grey.
+  if (!best) return "#fc187b";
+
+  // Lift or settle it into a band that holds against the dark card.
+  const target = 0.58;
+  const shift = target / (best.lightness || target);
+  const channel = (v) => {
+    const scaled = Math.min(1, Math.max(0, v * shift));
+    return Math.round(scaled * 255)
+      .toString(16)
+      .padStart(2, "0");
+  };
+
+  return `#${channel(best.r)}${channel(best.g)}${channel(best.b)}`;
+}

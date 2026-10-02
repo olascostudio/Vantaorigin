@@ -67,6 +67,7 @@ function toClient(row, creatorName = "") {
     likes: row.likes ?? 0,
     liked: Boolean(row.liked),
     cover: row.coverUrl || null,
+    accent: row.accent || null,
     banner: row.bannerUrl || null,
     visibility: row.isPublic ? "public" : "private",
     creator: row.creator?.username || creatorName,
@@ -89,6 +90,7 @@ function toApi(character) {
     backstory: character.backstory,
     power: character.power,
     coverUrl: character.cover,
+    accent: character.accent ?? null,
     bannerUrl: character.banner,
     isPublic: character.visibility === "public",
     details: {
@@ -175,6 +177,12 @@ export const removeAsset = (assetId) => api.delete(`/assets/${assetId}`);
 export async function uploadImage(file, folder = "covers") {
   const { url } = await api.upload(`/uploads?folder=${folder}`, file);
   return url;
+}
+
+// A cover comes back with the colour its card should be trimmed in.
+export async function uploadCover(file) {
+  const { url, accent } = await api.upload("/uploads?folder=covers", file);
+  return { url, accent: accent || null };
 }
 
 // ---- likes ----

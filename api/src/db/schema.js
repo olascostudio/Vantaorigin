@@ -116,6 +116,9 @@ export const characters = pgTable(
     power: text("power").default("0").notNull(),
     coverUrl: text("cover_url"),
     bannerUrl: text("banner_url"),
+    // Taken from the cover when it is uploaded: the colour this card's edge
+    // is drawn in, so each one is trimmed in its own artwork.
+    accent: text("accent"),
     isPublic: boolean("is_public").default(false).notNull(),
     // Abilities and stats travel together with the character and are only ever
     // read as a whole, so jsonb keeps them in one row. Still standard Postgres.

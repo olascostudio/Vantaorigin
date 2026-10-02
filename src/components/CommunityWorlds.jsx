@@ -46,8 +46,10 @@ export function byCreator(characters) {
 
   return [...pages.values()].map((page, index) => ({
     ...page,
-    color: COLORS[index % COLORS.length],
+    color: page.characters.find((c) => c.accent)?.accent || COLORS[index % COLORS.length],
     cover: page.characters.find((character) => character.cover)?.cover || null,
+    // The page takes the colour of the work it is showing.
+    accent: page.characters.find((character) => character.accent)?.accent || null,
     // What they write about, in their own words, rather than invented genres.
     tags: [...page.universes.values()].slice(0, 3).join(" • "),
   }));

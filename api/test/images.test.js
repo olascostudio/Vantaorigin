@@ -237,3 +237,68 @@ test("the pass gives a cache header even to the pictures it leaves alone", async
   const served = await app.inject({ method: "GET", url: "/files/someone/covers/tiny.webp" });
   assert.equal(served.headers["cache-control"], "public, max-age=31536000, immutable");
 });
+
+test("a cover gives up the colour its card should be trimmed in", async () => {
+  const { accentOf } = await import("../src/images.js");
+  const sharpLib = (await import("sharp")).default;
+
+  // A picture that is mostly dark with one strong colour in it: the colour
+  // is what the card should take, not the dark.
+  const pixels = Buffer.alloc(64 * 64 * 3);
+  for (let i = 0; i < pixels.length; i += 3) {
+    const bright = (i / 3) % 64 < 20;
+    pixels[i] = bright ? 230 : 12;
+    pixels[i + 1] = bright ? 40 : 14;
+    pixels[i + 2] = bright ? 120 : 20;
+  }
+  const picture = await sharpLib(pixels, { raw: { width: 64, height: 64, channels: 3 } })
+    .png()
+    .toBuffer();
+
+  const accent = await accentOf(picture);
+  assert.match(accent, /^#[0-9a-f]{6}$/, "a colour, written as a hex value");
+
+  const [r, g, b] = [1, 3, 5].map((at) => parseInt(accent.slice(at, at + 2), 16));
+  assert.ok(r > g && r > b, `${accent} keeps the red the picture is about`);
+  // Lifted into a band that still reads as a line on a dark card.
+  const lightness = (Math.max(r, g, b) + Math.min(r, g, b)) / 2 / 255;
+  assert.ok(lightness > 0.3 && lightness < 0.85, `${accent} sits at a usable lightness`);
+});
+
+test("a picture with no colour in it falls back to the house pink", async () => {
+  const { accentOf } = await import("../src/images.js");
+  const sharpLib = (await import("sharp")).default;
+
+  const grey = await sharpLib({
+    create: { width: 32, height: 32, channels: 3, background: { r: 90, g: 90, b: 90 } },
+  })
+    .png()
+    .toBuffer();
+
+  assert.equal(await accentOf(grey), "#fc187b");
+});
+
+test("uploading a cover hands back its colour; other folders do not", async () => {
+  const picture = await photograph(900, 1200);
+
+  const send = async (folder) => {
+    const form = new FormData();
+    form.append("file", new Blob([picture], { type: "image/jpeg" }), "cover.jpg");
+    const encoded = new Response(form);
+    return app.inject({
+      method: "POST",
+      url: `/uploads?folder=${folder}`,
+      headers: { cookie: keeper, "content-type": encoded.headers.get("content-type") },
+      payload: Buffer.from(await encoded.arrayBuffer()),
+    });
+  };
+
+  const cover = await send("covers");
+  assert.equal(cover.statusCode, 201);
+  assert.match(cover.json().accent, /^#[0-9a-f]{6}$/);
+
+  // A banner is not a card edge, so it is not asked the question.
+  const banner = await send("banners");
+  assert.equal(banner.statusCode, 201);
+  assert.equal(banner.json().accent, undefined);
+});

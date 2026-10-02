@@ -17,7 +17,7 @@ async function publicCharacters() {
       id: character.id,
       title: character.universe ? `${character.alias} — ${character.universe}` : character.alias,
       author: character.creator,
-      colour: "#f5af32",
+      colour: character.accent || "#fc187b",
       art: character.cover || characterCover,
       excerpt: {
         lead: character.tagline ? `${character.tagline} — ` : "",
@@ -35,7 +35,7 @@ async function publicCharacters() {
 const hintsFrom = (characters) =>
   [...new Set(characters.flatMap((c) => [c.title?.split(" — ")[0], c.author].filter(Boolean)))].slice(0, 6);
 
-function CharacterCard({ title, author, colour, art, overlay, excerpt = SAMPLE_EXCERPT, to = "/character" }) {
+function CharacterCard({ title, author, colour, art, overlay, excerpt, to = "/character" }) {
   return (
     <article
       className="flex w-[360px] shrink-0 flex-col gap-[18px] overflow-hidden rounded-[25px] border-[1.667px] bg-black/40 p-4 sm:w-[500px] sm:p-[25px]"
@@ -57,8 +57,8 @@ function CharacterCard({ title, author, colour, art, overlay, excerpt = SAMPLE_E
           <p className="whitespace-nowrap font-ui text-lg font-medium text-accent">By: {author}</p>
         </div>
         <p className="line-clamp-3 min-h-[76px] font-ui text-base text-neutral-300">
-          <span className="font-bold">{excerpt.lead}</span>
-          {excerpt.body}
+          <span className="font-bold">{excerpt?.lead}</span>
+          {excerpt?.body}
         </p>
       </div>
 

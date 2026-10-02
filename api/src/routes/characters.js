@@ -30,6 +30,7 @@ const characterBody = z.object({
   power: z.string().max(20).optional(),
   coverUrl: z.string().nullable().optional(),
   bannerUrl: z.string().nullable().optional(),
+  accent: z.string().max(9).nullable().optional(),
   isPublic: z.boolean().optional(),
   details: detailsSchema.optional(),
 });
