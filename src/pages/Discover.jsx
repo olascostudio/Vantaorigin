@@ -2,34 +2,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import { loadPublicCharacters } from "../data/character";
-import { Art } from "../components/Loading.jsx";
+import { Art, Skeleton } from "../components/Loading.jsx";
 import characterCover from "../assets/creator/character-cover.svg";
 import heroArt from "../assets/auth/banner.webp";
-import artOrange from "../assets/landing/worlds/world-1.webp";
-import artObaalu from "../assets/landing/worlds/world-2-base.jpg";
-import artObaaluOverlay from "../assets/landing/worlds/world-2-overlay.webp";
-import artIyanu from "../assets/landing/hero/card-urukojin.webp";
-import artUrukojin from "../assets/landing/worlds/world-4.webp";
 import arrowUpRight from "../assets/landing/worlds/arrow-up-right.svg";
 import chevronLeft from "../assets/landing/worlds/chevron-left.svg";
 import chevronRight from "../assets/landing/worlds/chevron-right.svg";
 import { usePageMeta } from "../data/pageMeta";
-
-const EXCERPT_LEAD = "From the heart of molten mountains, Obaalu rises — ";
-const EXCERPT_BODY =
-  "the forge-born sovereign of flame and will. His dominion burns with purpose, shaping worlds and warriors alike in the heat of creation...";
-
-const SAMPLE_EXCERPT = { lead: EXCERPT_LEAD, body: EXCERPT_BODY };
-
-// Sample cards shown alongside creators' own public characters.
-const SAMPLES = [
-  { id: "ember", title: "Obaalu’s Dominion: The Iron Inferno", author: "Arinola", colour: "#fc590b", art: artOrange },
-  { id: "obaalu", title: "Obaalu’s Dominion: The Iron Inferno", author: "Arinola", colour: "#f5af32", art: artObaalu, overlay: artObaaluOverlay },
-  { id: "iyanu", title: "Iyanu-Etere: The Song Beneath the Waves", author: "Arinola", colour: "#6687cd", art: artIyanu },
-  { id: "urukojin", title: "Obaalu’s Dominion: The Iron Inferno", author: "Arinola", colour: "#96307e", art: artUrukojin },
-  { id: "switch-1", title: "Switch Face Part 1", author: "Arinola", colour: "#fc590b", art: artIyanu },
-  { id: "switch-2", title: "Switch Face Part 2", author: "Arinola", colour: "#96307e", art: artObaalu, overlay: artObaaluOverlay },
-];
 
 // Published characters, shaped for the cards below.
 async function publicCharacters() {
@@ -51,7 +30,10 @@ async function publicCharacters() {
   }));
 }
 
-const SUGGESTIONS = ["Asomyyy", "voidsmith", "Emberfyre — Pyrokinetic", "Asomy — Ploserin"];
+// What the Hint button offers: real characters that are actually here, so
+// pressing one finds something. Invented names found nothing at all.
+const hintsFrom = (characters) =>
+  [...new Set(characters.flatMap((c) => [c.title?.split(" — ")[0], c.author].filter(Boolean)))].slice(0, 6);
 
 function CharacterCard({ title, author, colour, art, overlay, excerpt = SAMPLE_EXCERPT, to = "/character" }) {
   return (
@@ -231,11 +213,11 @@ export default function Discover() {
   const [showHints, setShowHints] = useState(false);
   const inputRef = useRef(null);
   // Published characters lead, then the samples.
-  const [characters, setCharacters] = useState(SAMPLES);
+  const [characters, setCharacters] = useState(null);
   useEffect(() => {
     let cancelled = false;
     publicCharacters().then((rows) => {
-      if (!cancelled) setCharacters([...rows, ...SAMPLES]);
+      if (!cancelled) setCharacters(rows);
     });
     return () => {
       cancelled = true;
@@ -245,7 +227,7 @@ export default function Discover() {
   const results = useMemo(() => {
     const term = submitted.trim().toLowerCase();
     if (!term) return null;
-    return characters.filter((c) =>
+    return (characters || []).filter((c) =>
       [c.title, c.author, c.searchText].filter(Boolean).join(" ").toLowerCase().includes(term)
     );
   }, [submitted, characters]);
@@ -305,7 +287,7 @@ export default function Discover() {
 
             {showHints && (
               <ul className="absolute inset-x-0 top-[100px] z-20 overflow-hidden rounded-[10px] border border-white/10 bg-[#141a2e]/95 py-4 backdrop-blur">
-                {SUGGESTIONS.map((suggestion) => (
+                {hintsFrom(characters || []).map((suggestion) => (
                   <li key={suggestion}>
                     <button
                       type="button"
@@ -336,6 +318,17 @@ export default function Discover() {
                 </p>
               )}
             </div>
+          ) : characters === null ? (
+            // Waiting, in the shape of the row that is coming.
+            <div role="status" aria-label="Loading" className="flex justify-center gap-[30px] overflow-hidden px-6">
+              {[0, 1, 2].map((index) => (
+                <Skeleton key={index} className="h-[440px] w-[360px] shrink-0 rounded-[25px]" />
+              ))}
+            </div>
+          ) : characters.length === 0 ? (
+            <p className="px-6 text-center font-ui text-lg text-neutral-300">
+              No characters have been published yet. Yours could be the first.
+            </p>
           ) : (
             <CharacterMarquee characters={characters} />
           )}

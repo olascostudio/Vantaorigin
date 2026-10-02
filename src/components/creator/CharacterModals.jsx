@@ -128,19 +128,14 @@ export function SuccessModal({ open, character, onClose, onAddMore }) {
           </p>
 
           <h2 className="mt-4 text-center font-ui text-2xl font-bold text-white">
-            {character?.name || "Iyanu-Etere: The Song Beneath the Waves"}
+            {character?.name || "Your character"}
           </h2>
 
           <p className="mx-auto mt-8 max-w-[400px] text-center font-ui text-base leading-relaxed text-white">
             {character?.origin || (
-              <>
-                <span className="font-bold">
-                  In the depths of the shifting seas, where silence hums with ancient power,
-                  Iyanu-Etere reigns
-                </span>{" "}
-                — a being born from the heart of the primordial tides. Her every movement ripples
-                across oceans, shaping storms, calming chaos, and awakening forgotten spirits.
-              </>
+              <span className="text-neutral-400">
+                Their origin goes here — where they came from, and what it cost them.
+              </span>
             )}
           </p>
 
