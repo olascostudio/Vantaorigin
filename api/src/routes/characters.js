@@ -5,7 +5,7 @@ import { z } from "zod";
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { categories, characterAssets, characterLikes, characters, users } from "../db/schema.js";
-import { authenticate } from "../auth/auth.js";
+import { authenticate, verified } from "../auth/auth.js";
 import { tellSearchEngines } from "../indexnow.js";
 import { characterByIdOrSlug, freeSlugFor } from "../db/slugs.js";
 
@@ -110,7 +110,7 @@ export default async function characterRoutes(app) {
       .orderBy(asc(categories.position), asc(categories.createdAt))
   );
 
-  app.post("/categories", { preHandler: authenticate() }, async (request, reply) => {
+  app.post("/categories", { preHandler: verified() }, async (request, reply) => {
     const { name } = z.object({ name: z.string().min(1).max(60) }).parse(request.body);
     const [category] = await db
       .insert(categories)
@@ -119,7 +119,7 @@ export default async function characterRoutes(app) {
     return reply.code(201).send(category);
   });
 
-  app.patch("/categories/:id", { preHandler: authenticate() }, async (request, reply) => {
+  app.patch("/categories/:id", { preHandler: verified() }, async (request, reply) => {
     const { name } = z.object({ name: z.string().min(1).max(60) }).parse(request.body);
     const [category] = await db
       .update(categories)
@@ -132,7 +132,7 @@ export default async function characterRoutes(app) {
     return category;
   });
 
-  app.delete("/categories/:id", { preHandler: authenticate() }, async (request, reply) => {
+  app.delete("/categories/:id", { preHandler: verified() }, async (request, reply) => {
     await db
       .delete(categories)
       .where(and(eq(categories.id, request.params.id), eq(categories.userId, request.user.id)));
@@ -166,7 +166,7 @@ export default async function characterRoutes(app) {
       .set({ bannerUrl })
       .where(and(eq(categories.id, categoryId), eq(categories.userId, userId)));
 
-  app.post("/characters", { preHandler: authenticate() }, async (request, reply) => {
+  app.post("/characters", { preHandler: verified() }, async (request, reply) => {
     const body = characterBody.parse(request.body);
 
     // A new character starts with the backdrop its project already uses,
@@ -195,7 +195,7 @@ export default async function characterRoutes(app) {
     return reply.code(201).send(await decorateOne(character, request.user.id));
   });
 
-  app.patch("/characters/:id", { preHandler: authenticate() }, async (request, reply) => {
+  app.patch("/characters/:id", { preHandler: verified() }, async (request, reply) => {
     const body = characterBody.partial().parse(request.body);
     const [character] = await db
       .update(characters)
@@ -221,14 +221,14 @@ export default async function characterRoutes(app) {
     return decorateOne(character, request.user.id);
   });
 
-  app.delete("/characters/:id", { preHandler: authenticate() }, async (request, reply) => {
+  app.delete("/characters/:id", { preHandler: verified() }, async (request, reply) => {
     await db
       .delete(characters)
       .where(and(eq(characters.id, request.params.id), eq(characters.userId, request.user.id)));
     return reply.code(204).send();
   });
 
-  app.post("/characters/:id/assets", { preHandler: authenticate() }, async (request, reply) => {
+  app.post("/characters/:id/assets", { preHandler: verified() }, async (request, reply) => {
     const { url } = z.object({ url: z.string() }).parse(request.body);
     if (!(await ownedCharacter(request.user.id, request.params.id))) {
       return reply.code(404).send({ error: "Character not found" });
@@ -240,7 +240,7 @@ export default async function characterRoutes(app) {
     return reply.code(201).send(asset);
   });
 
-  app.delete("/assets/:id", { preHandler: authenticate() }, async (request, reply) => {
+  app.delete("/assets/:id", { preHandler: verified() }, async (request, reply) => {
     const [asset] = await db
       .select({ characterId: characterAssets.characterId })
       .from(characterAssets)
@@ -277,7 +277,7 @@ export default async function characterRoutes(app) {
   const likeState = async (characterId, viewerId) =>
     (await likeInfo([characterId], viewerId)).get(characterId);
 
-  app.post("/characters/:id/like", { preHandler: authenticate() }, async (request, reply) => {
+  app.post("/characters/:id/like", { preHandler: verified() }, async (request, reply) => {
     const character = await likeable(request, reply);
     if (!character) return reply;
 
@@ -289,7 +289,7 @@ export default async function characterRoutes(app) {
     return likeState(character.id, request.user.id);
   });
 
-  app.delete("/characters/:id/like", { preHandler: authenticate() }, async (request, reply) => {
+  app.delete("/characters/:id/like", { preHandler: verified() }, async (request, reply) => {
     const character = await likeable(request, reply);
     if (!character) return reply;
 

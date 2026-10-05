@@ -148,6 +148,30 @@ export function authenticate({ required = true } = {}) {
   };
 }
 
+// Signed in, and the address proved.
+//
+// An account exists from the moment somebody fills in the form, but until
+// they have answered the code it is only an address somebody typed. Making
+// characters, publishing them, uploading artwork and reporting people all
+// wait for the answer; reading, verifying and leaving do not.
+//
+// Signing in with Google skips this, because Google has already confirmed
+// the address.
+export function verified() {
+  const signedIn = authenticate();
+  return async (request, reply) => {
+    await signedIn(request, reply);
+    if (reply.sent) return;
+
+    if (!request.user.emailVerifiedAt) {
+      return reply.code(403).send({
+        error: "Confirm your email address first — we sent you a code.",
+        needsVerification: true,
+      });
+    }
+  };
+}
+
 // What the browser is allowed to see about an account.
 export const publicUser = (user) => ({
   id: user.id,

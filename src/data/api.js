@@ -52,7 +52,18 @@ async function request(path, { method = "GET", body, headers } = {}) {
   if (response.status === 204) return null;
 
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new ApiError(data.error || "Something went wrong", response.status, data);
+  if (!response.ok) {
+    // The API refuses to make anything for an account whose address has not
+    // been confirmed. That is not an error to read and shrug at: it is a
+    // thing to go and do, so the person is taken to the code.
+    if (response.status === 403 && data.needsVerification) {
+      const here = window.location.pathname;
+      if (!here.startsWith("/signup/verify")) {
+        window.location.assign("/signup/verify?next=" + encodeURIComponent(here));
+      }
+    }
+    throw new ApiError(data.error || "Something went wrong", response.status, data);
+  }
   return data;
 }
 

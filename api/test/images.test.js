@@ -16,12 +16,21 @@ process.env.ADMIN_EMAILS = "keeper@vantaorigin.test";
 
 const { buildApp } = await import("../src/app.js");
 const { migrate } = await import("../src/db/migrate.js");
-const { endConnection } = await import("../src/db/client.js");
+const { endConnection, db, schema } = await import("../src/db/client.js");
 const { describe, limitFor, renameTo, shrink } = await import("../src/images.js");
 const { storage } = await import("../src/adapters/storage.js");
 const { shrinkEverything, progress } = await import("../src/shrink-existing.js");
 
 let app;
+
+// An account cannot create anything until its address is confirmed. These
+// suites are about what happens afterwards, so they mark the address
+// confirmed outright rather than walking the code through the post; the
+// journey itself is covered in verification.test.js.
+const confirm = async (cookie) => {
+  await db.update(schema.users).set({ emailVerifiedAt: new Date() });
+  return cookie;
+};
 let keeper;
 
 // Something that behaves like a photograph: detailed enough that resizing
@@ -58,6 +67,7 @@ before(async () => {
       payload: { email: "keeper@vantaorigin.test", username: "keeper", password: "supersecret1" },
     })
   );
+  await confirm(keeper);
 });
 
 after(async () => {

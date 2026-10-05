@@ -10,10 +10,19 @@ process.env.EMAIL_DRIVER = "console";
 
 const { buildApp } = await import("../src/app.js");
 const { migrate } = await import("../src/db/migrate.js");
-const { endConnection } = await import("../src/db/client.js");
+const { endConnection, db, schema } = await import("../src/db/client.js");
 const { slugify } = await import("../src/db/slugs.js");
 
 let app;
+
+// An account cannot create anything until its address is confirmed. These
+// suites are about what happens afterwards, so they mark the address
+// confirmed outright rather than walking the code through the post; the
+// journey itself is covered in verification.test.js.
+const confirm = async (cookie) => {
+  await db.update(schema.users).set({ emailVerifiedAt: new Date() });
+  return cookie;
+};
 let cookie;
 
 const cookieFrom = (res) => {
@@ -28,12 +37,14 @@ const make = (payload) =>
 before(async () => {
   await migrate();
   app = await buildApp();
-  cookie = cookieFrom(
-    await app.inject({
-      method: "POST",
-      url: "/auth/signup",
-      payload: { email: "slugs@vantaorigin.test", username: "slugger", password: "supersecret1" },
-    })
+  cookie = await confirm(
+    cookieFrom(
+      await app.inject({
+        method: "POST",
+        url: "/auth/signup",
+        payload: { email: "slugs@vantaorigin.test", username: "slugger", password: "supersecret1" },
+      })
+    )
   );
 });
 

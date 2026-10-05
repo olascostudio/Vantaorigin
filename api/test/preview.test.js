@@ -12,10 +12,19 @@ process.env.SITE_URL = "https://www.vantaorigin.com";
 
 const { buildApp } = await import("../src/app.js");
 const { migrate } = await import("../src/db/migrate.js");
-const { endConnection } = await import("../src/db/client.js");
+const { endConnection, db, schema } = await import("../src/db/client.js");
 const { forgetPortfolio } = await import("../src/routes/preview.js");
 
 let app;
+
+// An account cannot create anything until its address is confirmed. These
+// suites are about what happens afterwards, so they mark the address
+// confirmed outright rather than walking the code through the post; the
+// journey itself is covered in verification.test.js.
+const confirm = async (cookie) => {
+  await db.update(schema.users).set({ emailVerifiedAt: new Date() });
+  return cookie;
+};
 let cookie;
 let characterId;
 let privateId;
@@ -37,6 +46,7 @@ before(async () => {
       payload: { email: "ola@vantaorigin.test", username: "Vtgshadowscribe", password: "supersecret1" },
     })
   );
+  await confirm(cookie);
 
   await app.inject({
     method: "PATCH",

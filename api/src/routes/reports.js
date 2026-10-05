@@ -5,7 +5,7 @@ import { z } from "zod";
 import { and, eq } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { characters, reports, users } from "../db/schema.js";
-import { authenticate } from "../auth/auth.js";
+import { authenticate, verified } from "../auth/auth.js";
 import { userByHandle } from "../db/handles.js";
 
 // The reasons the screen offers, plus room to say more.
@@ -25,7 +25,7 @@ const reportBody = z
 export default async function reportRoutes(app) {
   // Signing in is required: a report nobody stands behind cannot be weighed,
   // and without it the same person could file the same complaint all day.
-  app.post("/reports", { preHandler: authenticate() }, async (request, reply) => {
+  app.post("/reports", { preHandler: verified() }, async (request, reply) => {
     const body = reportBody.parse(request.body);
 
     let subjectId = null;

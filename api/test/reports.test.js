@@ -24,14 +24,27 @@ const cookieFrom = (res) => {
   return first ? first.split(";")[0] : "";
 };
 
-const signUp = async (name) =>
-  cookieFrom(
+// Making an account is not the same as being able to use one: nothing can be
+// created until the address has been confirmed. These helpers answer the code
+// as a real person would, so each suite starts from a usable account.
+const signUp = async (name) => {
+  const made = await app.inject({
+    method: "POST",
+    url: "/auth/signup",
+    payload: { email: `${name}@vantaorigin.test`, username: name, password: "supersecret1" },
+  });
+  const cookie = cookieFrom(made);
+  const code = made.json().devCode;
+  if (code) {
     await app.inject({
       method: "POST",
-      url: "/auth/signup",
-      payload: { email: `${name}@vantaorigin.test`, username: name, password: "supersecret1" },
-    })
-  );
+      url: "/auth/verify-email",
+      headers: { cookie },
+      payload: { code },
+    });
+  }
+  return cookie;
+};
 
 before(async () => {
   await migrate();

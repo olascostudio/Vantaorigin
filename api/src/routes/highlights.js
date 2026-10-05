@@ -3,7 +3,7 @@ import { z } from "zod";
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { highlights, users } from "../db/schema.js";
-import { authenticate } from "../auth/auth.js";
+import { authenticate, verified } from "../auth/auth.js";
 
 const postBody = z.object({
   title: z.string().max(200).default(""),
@@ -29,7 +29,7 @@ export default async function highlightRoutes(app) {
     return rows.map((row) => ({ ...row, author: author(request.user) }));
   });
 
-  app.post("/highlights", { preHandler: authenticate() }, async (request, reply) => {
+  app.post("/highlights", { preHandler: verified() }, async (request, reply) => {
     const body = postBody.parse(request.body);
     const [row] = await db
       .insert(highlights)
@@ -39,7 +39,7 @@ export default async function highlightRoutes(app) {
     return reply.code(201).send({ ...row, author: author(request.user) });
   });
 
-  app.patch("/highlights/:id", { preHandler: authenticate() }, async (request, reply) => {
+  app.patch("/highlights/:id", { preHandler: verified() }, async (request, reply) => {
     const body = postBody.partial().parse(request.body);
     const [row] = await db
       .update(highlights)
@@ -51,7 +51,7 @@ export default async function highlightRoutes(app) {
     return { ...row, author: author(request.user) };
   });
 
-  app.delete("/highlights/:id", { preHandler: authenticate() }, async (request, reply) => {
+  app.delete("/highlights/:id", { preHandler: verified() }, async (request, reply) => {
     await db
       .delete(highlights)
       .where(and(eq(highlights.id, request.params.id), eq(highlights.userId, request.user.id)));

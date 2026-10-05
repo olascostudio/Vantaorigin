@@ -1,7 +1,7 @@
 // Image uploads. The browser posts the file here; the API decides where it
 // lands. Today that is Cloudflare R2, later it could be MinIO on the VPS —
 // the route and the client code stay the same.
-import { authenticate } from "../auth/auth.js";
+import { authenticate, verified } from "../auth/auth.js";
 import { CACHE_FOREVER, newKey, storage } from "../adapters/storage.js";
 import { accentOf, limitFor, renameTo, shrink } from "../images.js";
 import { config } from "../config.js";
@@ -10,7 +10,7 @@ const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 const MAX_BYTES = 8 * 1024 * 1024;
 
 export default async function uploadRoutes(app) {
-  app.post("/uploads", { preHandler: authenticate() }, async (request, reply) => {
+  app.post("/uploads", { preHandler: verified() }, async (request, reply) => {
     const file = await request.file({ limits: { fileSize: MAX_BYTES } });
     if (!file) return reply.code(400).send({ error: "No file uploaded" });
     if (!ALLOWED.has(file.mimetype)) {

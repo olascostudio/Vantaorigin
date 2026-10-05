@@ -26,14 +26,27 @@ const cookieFrom = (res) => {
   return first ? first.split(";")[0] : "";
 };
 
-const signUp = async (name) =>
-  cookieFrom(
+// Making an account is not the same as being able to use one: nothing can be
+// created until the address has been confirmed. These helpers answer the code
+// as a real person would, so each suite starts from a usable account.
+const signUp = async (name) => {
+  const made = await app.inject({
+    method: "POST",
+    url: "/auth/signup",
+    payload: { email: `${name}@vantaorigin.test`, username: name, password: "supersecret1" },
+  });
+  const cookie = cookieFrom(made);
+  const code = made.json().devCode;
+  if (code) {
     await app.inject({
       method: "POST",
-      url: "/auth/signup",
-      payload: { email: `${name}@vantaorigin.test`, username: name, password: "supersecret1" },
-    })
-  );
+      url: "/auth/verify-email",
+      headers: { cookie },
+      payload: { code },
+    });
+  }
+  return cookie;
+};
 
 before(async () => {
   await migrate();
@@ -100,7 +113,9 @@ test("the overview counts what is really there", async () => {
   const body = res.json();
   assert.equal(body.creators.total, 3);
   assert.equal(body.creators.thisWeek, 3);
-  assert.equal(body.creators.verified, 0);
+  // Every account here answers its code, because an account that has not
+  // cannot create anything to count.
+  assert.equal(body.creators.verified, 3);
   assert.equal(body.characters.total, 1);
   assert.equal(body.characters.public, 1);
   assert.equal(body.likes, 1);
@@ -113,7 +128,7 @@ test("creators are listed newest first, with their character count", async () =>
   assert.equal(rows.length, 3);
   assert.equal(rows[0].username, "@fan"); // signed up last
   assert.equal(rows.find((row) => row.username === "@maker").characters, 1);
-  assert.equal(rows[0].emailVerified, false);
+  assert.equal(rows[0].emailVerified, true);
 });
 
 test("characters are listed by how well liked they are", async () => {
@@ -331,8 +346,8 @@ test("the journey counts every step from joining to publishing", async () => {
   assert.equal(recent.made, 1);
   assert.equal(recent.published, 1);
 
-  // Nobody verified an address in these tests.
-  assert.equal(recent.verified, 0);
+  // All three confirmed, since nothing can be made before that.
+  assert.equal(recent.verified, 3);
 
   // Each step is a subset of the one before it.
   assert.ok(recent.published <= recent.made);
