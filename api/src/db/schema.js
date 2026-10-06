@@ -265,3 +265,21 @@ export const newsletterIssues = pgTable(
     createdIdx: index("newsletter_issues_created_idx").on(table.createdAt),
   })
 );
+
+// A letter's shape, kept to start the next one from.
+export const newsletterTemplates = pgTable(
+  "newsletter_templates",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    subject: text("subject").default("").notNull(),
+    preheader: text("preheader").default("").notNull(),
+    blocks: jsonb("blocks").$type().default([]).notNull(),
+    authorId: uuid("author_id").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    createdIdx: index("newsletter_templates_created_idx").on(table.createdAt),
+  })
+);

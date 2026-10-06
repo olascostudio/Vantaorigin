@@ -20,6 +20,10 @@ vi.mock("../data/admin", () => ({
   previewIssue: async () => ({ html: "<p>the letter</p>" }),
   countWaiting: async () => answers.waiting,
   sendIssue: vi.fn(async () => ({ ok: true })),
+  loadTemplates: vi.fn(async () => []),
+  saveTemplate: vi.fn(async () => ({ id: "t1", name: "Monthly" })),
+  forgetTemplate: vi.fn(async () => ({ ok: true })),
+  startFromTemplate: vi.fn(async () => ({ id: "letter-2" })),
   sendTestCopy: async () => ({ to: "boss@vantaorigin.test" }),
 }));
 
@@ -35,7 +39,7 @@ vi.mock("../data/api", () => ({
 }));
 
 const { default: NewsletterLetters } = await import("./NewsletterEditor.jsx");
-const { sendIssue } = await import("../data/admin");
+const { sendIssue, saveTemplate, loadTemplates, startFromTemplate } = await import("../data/admin");
 
 const anIssue = (extra) => ({
   id: "letter-1",
@@ -166,5 +170,46 @@ describe("A picture still being sent", () => {
     // written by position rather than by block, they would have been
     // overwritten by a picture.
     expect(screen.getByDisplayValue("first")).toBeInTheDocument();
+  });
+});
+
+describe("Bringing your own email in", () => {
+  it("offers a block for code, beside the written ones", async () => {
+    answers.issue = anIssue();
+    await open();
+
+    expect(await screen.findByRole("button", { name: "Code" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Code" }));
+
+    const box = await screen.findByPlaceholderText(/<table width/);
+    expect(box.tagName).toBe("TEXTAREA");
+    // Code is read as code, not as prose.
+    expect(box.className).toContain("font-mono");
+    expect(box).toHaveAttribute("spellcheck", "false");
+  });
+
+  it("keeps a letter as a template, and starts the next one from it", async () => {
+    answers.issue = anIssue();
+    await open();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Save as template" }));
+    fireEvent.change(screen.getByPlaceholderText("Call it something"), {
+      target: { value: "Monthly" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Keep it" }));
+
+    await waitFor(() => expect(saveTemplate).toHaveBeenCalledWith("Monthly", "letter-1"));
+    expect(await screen.findByText(/Kept as "Monthly"/)).toBeInTheDocument();
+  });
+
+  it("lists what has been kept, and opens a letter from one", async () => {
+    answers.issue = anIssue();
+    loadTemplates.mockResolvedValue([{ id: "t1", name: "Monthly", subject: "The monthly one" }]);
+
+    render(<NewsletterLetters onTrouble={() => {}} />);
+    await screen.findByText("Or start from");
+
+    fireEvent.click(screen.getByRole("button", { name: "Monthly" }));
+    await waitFor(() => expect(startFromTemplate).toHaveBeenCalledWith("t1"));
   });
 });

@@ -57,3 +57,11 @@ export const shrinkProgress = () => api.get("/admin/images/shrink");
 
 // How far people get, counted from what the site already holds.
 export const loadFunnel = (days = 30) => api.get(`/admin/funnel?days=${days}`);
+
+// Templates: a letter's shape, kept to start the next one from.
+export const loadTemplates = () => api.get("/admin/newsletter/templates");
+export const saveTemplate = (name, fromIssue) =>
+  api.post("/admin/newsletter/templates", { name, fromIssue });
+export const forgetTemplate = (id) => api.delete(`/admin/newsletter/templates/${id}`);
+export const startFromTemplate = (fromTemplate) =>
+  api.post("/admin/newsletter/issues", { fromTemplate });

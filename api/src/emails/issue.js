@@ -39,6 +39,25 @@ const inlinePlain = (text) =>
     .replace(/\*\*(.+?)\*\*/g, "$1")
     .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, "$1 ($2)");
 
+// Code written by whoever runs the site, dropped into the letter as it is.
+//
+// Two things are taken out of it. Scripts and inline handlers, because the
+// preview on the dashboard renders this in a frame that shares the app's
+// origin -- an email client would throw them away regardless, so nothing is
+// lost from the letter and a pasted surprise cannot run against the
+// dashboard. And <style> blocks, because an email's styling has to live on
+// the elements themselves: a style tag is ignored by Gmail and would quietly
+// leave the letter looking wrong everywhere it matters.
+const asWritten = (code) =>
+  String(code || "")
+    .replace(/<script\b[\s\S]*?<\/script\s*>/gi, "")
+    .replace(/<script\b[^>]*\/?>/gi, "")
+    .replace(/<style\b[\s\S]*?<\/style\s*>/gi, "")
+    .replace(/\son[a-z]+\s*=\s*"[^"]*"/gi, "")
+    .replace(/\son[a-z]+\s*=\s*'[^']*'/gi, "")
+    .replace(/\son[a-z]+\s*=\s*[^\s>]+/gi, "")
+    .replace(/javascript:/gi, "");
+
 const blockHtml = (block, first) => {
   const top = first ? 0 : 22;
 
@@ -92,6 +111,12 @@ const blockHtml = (block, first) => {
         top + 6
       }px 0 0;"><tr><td style="border-top:1px solid #262f42;font-size:0;line-height:0;">&nbsp;</td></tr></table>`;
 
+    case "html": {
+      const code = asWritten(block.code).trim();
+      if (!code) return "";
+      return `<div style="margin:${top}px 0 0;">${code}</div>`;
+    }
+
     default:
       return "";
   }
@@ -111,6 +136,14 @@ const blockText = (block) => {
     }
     case "divider":
       return "--";
+    case "html":
+      // The plain part gets the words out of the markup, so a reader on a
+      // text-only client still gets something.
+      return asWritten(block.code)
+        .replace(/<[^>]+>/g, " ")
+        .replace(/&nbsp;/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
     default:
       return "";
   }

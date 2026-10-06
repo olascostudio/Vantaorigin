@@ -10,7 +10,7 @@
 import { z } from "zod";
 import { desc, eq } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { newsletterIssues, users } from "../db/schema.js";
+import { newsletterIssues, newsletterTemplates, users } from "../db/schema.js";
 import { renderIssue, startingBlocks } from "../emails/issue.js";
 import { countWaiting, deliver, isSending, sendTest, whyNotSendable } from "../newsletter-send.js";
 import { mailer } from "../adapters/email.js";
@@ -37,12 +37,17 @@ const block = z.discriminatedUnion("type", [
     href: z.string().max(2000).default(""),
   }),
   z.object({ type: z.literal("divider") }),
+  // Code written by whoever runs the site. Kept whole, because an email
+  // design that already exists should not have to be rebuilt out of blocks.
+  z.object({ type: z.literal("html"), code: z.string().max(60_000).default("") }),
 ]);
 
 const writing = z.object({
   subject: z.string().max(200).optional(),
   preheader: z.string().max(200).optional(),
   blocks: z.array(block).max(200).optional(),
+  // Start this letter from a template rather than from an empty page.
+  fromTemplate: z.string().uuid().optional(),
 });
 
 // The columns a list needs. The blocks themselves are left out: a list of
@@ -73,13 +78,24 @@ export default async function newsletterAdminRoutes(app) {
   app.post("/admin/newsletter/issues", { preHandler: requireAdmin() }, async (request, reply) => {
     const body = writing.parse(request.body ?? {});
 
+    let start = null;
+    if (body.fromTemplate) {
+      const [template] = await db
+        .select()
+        .from(newsletterTemplates)
+        .where(eq(newsletterTemplates.id, body.fromTemplate))
+        .limit(1);
+      if (!template) return reply.code(404).send({ error: "No such template" });
+      start = template;
+    }
+
     const [issue] = await db
       .insert(newsletterIssues)
       .values({
-        subject: body.subject ?? "",
-        preheader: body.preheader ?? "",
+        subject: body.subject ?? start?.subject ?? "",
+        preheader: body.preheader ?? start?.preheader ?? "",
         // A new draft opens on something to type over, not on nothing.
-        blocks: body.blocks ?? startingBlocks(),
+        blocks: body.blocks ?? start?.blocks ?? startingBlocks(),
         authorId: request.user.id,
       })
       .returning();
@@ -281,4 +297,97 @@ export default async function newsletterAdminRoutes(app) {
   });
 
   app.get("/admin/images/shrink", { preHandler: requireAdmin() }, async () => progress());
+
+  // --- templates ------------------------------------------------------------
+  //
+  // A letter's shape without its moment, so a design made once is the starting
+  // point every month rather than something to rebuild.
+
+  app.get("/admin/newsletter/templates", { preHandler: requireAdmin() }, async () =>
+    db
+      .select({
+        id: newsletterTemplates.id,
+        name: newsletterTemplates.name,
+        subject: newsletterTemplates.subject,
+        updatedAt: newsletterTemplates.updatedAt,
+        author: users.username,
+      })
+      .from(newsletterTemplates)
+      .leftJoin(users, eq(users.id, newsletterTemplates.authorId))
+      .orderBy(desc(newsletterTemplates.createdAt))
+      .limit(100)
+  );
+
+  app.get("/admin/newsletter/templates/:id", { preHandler: requireAdmin() }, async (request, reply) => {
+    const [template] = await db
+      .select()
+      .from(newsletterTemplates)
+      .where(eq(newsletterTemplates.id, request.params.id))
+      .limit(1);
+    if (!template) return reply.code(404).send({ error: "No such template" });
+    return template;
+  });
+
+  app.post("/admin/newsletter/templates", { preHandler: requireAdmin() }, async (request, reply) => {
+    const body = z
+      .object({
+        name: z.string().min(1).max(80),
+        subject: z.string().max(200).optional(),
+        preheader: z.string().max(200).optional(),
+        blocks: z.array(block).max(200).optional(),
+        fromIssue: z.string().uuid().optional(),
+      })
+      .parse(request.body ?? {});
+
+    // Usually saved from a letter somebody has already written.
+    let { subject = "", preheader = "", blocks = [] } = body;
+    if (body.fromIssue) {
+      const [issue] = await db
+        .select()
+        .from(newsletterIssues)
+        .where(eq(newsletterIssues.id, body.fromIssue))
+        .limit(1);
+      if (!issue) return reply.code(404).send({ error: "No such letter" });
+      subject = issue.subject;
+      preheader = issue.preheader;
+      blocks = issue.blocks;
+    }
+
+    const [template] = await db
+      .insert(newsletterTemplates)
+      .values({ name: body.name, subject, preheader, blocks, authorId: request.user.id })
+      .returning();
+
+    return reply.code(201).send(template);
+  });
+
+  app.patch("/admin/newsletter/templates/:id", { preHandler: requireAdmin() }, async (request, reply) => {
+    const body = z
+      .object({
+        name: z.string().min(1).max(80).optional(),
+        subject: z.string().max(200).optional(),
+        preheader: z.string().max(200).optional(),
+        blocks: z.array(block).max(200).optional(),
+      })
+      .parse(request.body ?? {});
+
+    const [saved] = await db
+      .update(newsletterTemplates)
+      .set({ ...body, updatedAt: new Date() })
+      .where(eq(newsletterTemplates.id, request.params.id))
+      .returning();
+
+    if (!saved) return reply.code(404).send({ error: "No such template" });
+    return saved;
+  });
+
+  app.delete("/admin/newsletter/templates/:id", { preHandler: requireAdmin() }, async (request, reply) => {
+    const [gone] = await db
+      .delete(newsletterTemplates)
+      .where(eq(newsletterTemplates.id, request.params.id))
+      .returning({ id: newsletterTemplates.id });
+
+    if (!gone) return reply.code(404).send({ error: "No such template" });
+    return { ok: true };
+  });
 }

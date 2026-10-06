@@ -352,3 +352,152 @@ test("everybody who had an account before the list existed is on it", async () =
 
   assert.deepEqual(missing, [], "no account is left unable to be written to");
 });
+
+// --- code, and templates ----------------------------------------------------
+
+test("a letter can carry code written elsewhere, as it was written", async () => {
+  const res = await app.inject({
+    method: "POST",
+    url: "/admin/newsletter/preview",
+    headers: { cookie: editor },
+    payload: {
+      subject: "From my own code",
+      blocks: [
+        {
+          type: "html",
+          code: '<table width="100%"><tr><td style="padding:20px;background:#111"><h1 style="color:#fc187b">Hand-built</h1><p>Straight from my template.</p></td></tr></table>',
+        },
+      ],
+    },
+  });
+
+  assert.equal(res.statusCode, 200);
+  const { html, text } = res.json();
+
+  // Kept whole, inline styles and all.
+  assert.match(html, /<h1 style="color:#fc187b">Hand-built<\/h1>/);
+  assert.match(html, /background:#111/);
+  // And still inside the VantaOrigin shell, with the way out.
+  assert.match(html, /Unsubscribe/);
+  // The plain part gets the words out of the markup.
+  assert.match(text, /Hand-built Straight from my template\./);
+});
+
+test("what cannot safely run is taken out, and nothing else is", async () => {
+  const { renderIssue } = await import("../src/emails/issue.js");
+  const { html } = renderIssue({
+    blocks: [
+      {
+        type: "html",
+        code:
+          '<div onclick="steal()" style="color:red">Keep me</div>' +
+          '<script>steal()</script>' +
+          '<style>.x{color:blue}</style>' +
+          '<a href="javascript:steal()">Link</a>' +
+          '<img src="https://pictures.test/a.png" width="100" />',
+      },
+    ],
+  });
+
+  // The letter keeps its shape.
+  assert.match(html, /<div style="color:red">Keep me<\/div>/);
+  assert.match(html, /<img src="https:\/\/pictures\.test\/a\.png" width="100" \/>/);
+
+  // The dashboard previews this in a frame on our own origin, so none of
+  // this gets to run; an email client would have dropped it anyway.
+  assert.ok(!html.includes("<script"));
+  assert.ok(!html.includes("onclick"));
+  assert.ok(!html.includes("javascript:"));
+  // A style block is ignored by Gmail, so it is removed rather than left to
+  // make the letter look right here and wrong where it matters.
+  assert.ok(!html.includes("<style"));
+});
+
+test("a letter can be kept as a template, and start the next one", async () => {
+  const written = await app.inject({
+    method: "POST",
+    url: "/admin/newsletter/issues",
+    headers: { cookie: editor },
+    payload: {
+      subject: "The monthly one",
+      preheader: "What happened this month",
+      blocks: [
+        { type: "html", code: "<p>My own header</p>" },
+        { type: "text", text: "This month we..." },
+      ],
+    },
+  });
+  const issue = written.json();
+
+  const saved = await app.inject({
+    method: "POST",
+    url: "/admin/newsletter/templates",
+    headers: { cookie: editor },
+    payload: { name: "Monthly", fromIssue: issue.id },
+  });
+  assert.equal(saved.statusCode, 201);
+  const template = saved.json();
+  assert.equal(template.name, "Monthly");
+  assert.equal(template.subject, "The monthly one");
+  assert.equal(template.blocks.length, 2);
+
+  // The next letter starts from it rather than from an empty page.
+  const next = await app.inject({
+    method: "POST",
+    url: "/admin/newsletter/issues",
+    headers: { cookie: editor },
+    payload: { fromTemplate: template.id },
+  });
+  assert.equal(next.statusCode, 201);
+  assert.equal(next.json().subject, "The monthly one");
+  assert.equal(next.json().blocks[0].code, "<p>My own header</p>");
+
+  // And it is its own letter: changing it leaves the template alone.
+  await app.inject({
+    method: "PATCH",
+    url: `/admin/newsletter/issues/${next.json().id}`,
+    headers: { cookie: editor },
+    payload: { subject: "Changed" },
+  });
+  const stillThere = await app.inject({
+    method: "GET",
+    url: `/admin/newsletter/templates/${template.id}`,
+    headers: { cookie: editor },
+  });
+  assert.equal(stillThere.json().subject, "The monthly one");
+});
+
+test("templates are listed, and can be thrown away", async () => {
+  const listed = await app.inject({
+    method: "GET",
+    url: "/admin/newsletter/templates",
+    headers: { cookie: editor },
+  });
+  assert.equal(listed.statusCode, 200);
+  const monthly = listed.json().find((row) => row.name === "Monthly");
+  assert.ok(monthly, "the one just saved is in the list");
+  assert.equal(monthly.author, "@editor");
+
+  const removed = await app.inject({
+    method: "DELETE",
+    url: `/admin/newsletter/templates/${monthly.id}`,
+    headers: { cookie: editor },
+  });
+  assert.equal(removed.statusCode, 200);
+
+  const gone = await app.inject({
+    method: "GET",
+    url: `/admin/newsletter/templates/${monthly.id}`,
+    headers: { cookie: editor },
+  });
+  assert.equal(gone.statusCode, 404);
+});
+
+test("templates are closed to everybody but an admin", async () => {
+  const res = await app.inject({
+    method: "GET",
+    url: "/admin/newsletter/templates",
+    headers: { cookie: outsider },
+  });
+  assert.equal(res.statusCode, 404);
+});

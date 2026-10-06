@@ -60,6 +60,10 @@ vi.mock("../data/admin", () => ({
   previewIssue: vi.fn(),
   countWaiting: vi.fn(),
   sendIssue: vi.fn(),
+  loadTemplates: vi.fn(async () => []),
+  saveTemplate: vi.fn(async () => ({ id: "t1", name: "Monthly" })),
+  forgetTemplate: vi.fn(async () => ({ ok: true })),
+  startFromTemplate: vi.fn(async () => ({ id: "letter-2" })),
   sendTestCopy: vi.fn(),
 }));
 

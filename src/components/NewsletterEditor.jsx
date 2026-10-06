@@ -3,6 +3,10 @@ import { Skeleton } from "./Loading.jsx";
 import {
   countWaiting,
   discardIssue,
+  forgetTemplate,
+  loadTemplates,
+  saveTemplate,
+  startFromTemplate,
   loadIssue,
   loadIssues,
   previewIssue,
@@ -26,6 +30,7 @@ const KINDS = [
   { type: "image", label: "Picture" },
   { type: "button", label: "Button" },
   { type: "divider", label: "Divider" },
+  { type: "html", label: "Code" },
 ];
 
 // Blocks are stored as what they say, with no id of their own. The editor
@@ -39,6 +44,7 @@ const emptyBlock = (type) => {
   if (type === "image") return { type, url: "", alt: "", href: "" };
   if (type === "button") return { type, text: "", href: "" };
   if (type === "divider") return { type };
+  if (type === "html") return { type, code: "" };
   return { type, text: "" };
 };
 
@@ -190,6 +196,25 @@ function BlockCard({ block, index, count, onChange, onMove, onRemove, onTrouble 
 
       {block.type === "divider" && (
         <div className="h-px w-full bg-white/15" aria-hidden="true" />
+      )}
+
+      {block.type === "html" && (
+        <>
+          <textarea
+            value={block.code || ""}
+            onChange={(event) => set({ code: event.target.value })}
+            rows={10}
+            spellCheck={false}
+            placeholder={'<table width="100%"><tr><td style="padding:24px">…</td></tr></table>'}
+            className={`${field} resize-y whitespace-pre font-mono text-[12.5px] leading-relaxed`}
+          />
+          <p className="mt-2 font-ui text-xs text-neutral-500">
+            Paste an email you have already built. It goes in as written, inside the VantaOrigin
+            shell, so it keeps the banner and the unsubscribe line. Style the elements themselves —
+            a style tag is ignored by Gmail, so it is dropped rather than left to look right here
+            and wrong there.
+          </p>
+        </>
       )}
     </li>
   );
@@ -448,6 +473,9 @@ function Editor({ id, onClose, onTrouble }) {
   const [blocks, setBlocks] = useState([]);
   const [saved, setSaved] = useState("Saved");
   const [preview, setPreview] = useState("");
+  const [keeping, setKeeping] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [kept, setKept] = useState("");
 
   // Nothing is saved until something is typed: opening a letter must not
   // stamp it as changed.
@@ -515,6 +543,17 @@ function Editor({ id, onClose, onTrouble }) {
     work();
   }, []);
 
+  const keep = async () => {
+    try {
+      await saveTemplate(templateName.trim(), id);
+      setKept(`Kept as "${templateName.trim()}"`);
+      setTemplateName("");
+      setKeeping(false);
+    } catch (error) {
+      onTrouble(error.message);
+    }
+  };
+
   const setBlock = (target, next) =>
     change(() =>
       setBlocks((current) => current.map((block) => (block._key === target._key ? next : block)))
@@ -542,13 +581,50 @@ function Editor({ id, onClose, onTrouble }) {
   return (
     <section className="mt-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-full border border-white/25 px-4 py-2 font-ui text-sm text-white hover:bg-white/10"
-        >
-          ← All letters
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-white/25 px-4 py-2 font-ui text-sm text-white hover:bg-white/10"
+          >
+            ← All letters
+          </button>
+
+          {/* A letter worth sending twice is a template. */}
+          {keeping ? (
+            <span className="flex items-center gap-2">
+              <input
+                value={templateName}
+                onChange={(event) => setTemplateName(event.target.value)}
+                placeholder="Call it something"
+                className="h-9 w-[180px] rounded-full border border-white/15 bg-black/25 px-4 font-ui text-sm text-white outline-none placeholder:text-neutral-500 focus:border-[#6b8ff5]"
+              />
+              <button
+                type="button"
+                onClick={keep}
+                disabled={!templateName.trim()}
+                className="rounded-full bg-secondary px-4 py-2 font-ui text-sm font-bold text-white hover:opacity-90 disabled:opacity-40"
+              >
+                Keep it
+              </button>
+              <button
+                type="button"
+                onClick={() => setKeeping(false)}
+                className="rounded-full px-3 py-2 font-ui text-sm text-neutral-400 hover:text-white"
+              >
+                Cancel
+              </button>
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setKeeping(true)}
+              className="rounded-full border border-white/25 px-4 py-2 font-ui text-sm text-neutral-300 hover:bg-white/10 hover:text-white"
+            >
+              {kept || "Save as template"}
+            </button>
+          )}
+        </div>
 
         <p className="font-ui text-sm text-neutral-400">
           {sent
@@ -646,6 +722,7 @@ function Editor({ id, onClose, onTrouble }) {
 
 export default function NewsletterLetters({ onTrouble }) {
   const [issues, setIssues] = useState(null);
+  const [templates, setTemplates] = useState([]);
   const [openId, setOpenId] = useState("");
   const [confirming, setConfirming] = useState("");
 
@@ -653,14 +730,26 @@ export default function NewsletterLetters({ onTrouble }) {
     loadIssues()
       .then(setIssues)
       .catch((error) => onTrouble(error.message));
+    loadTemplates()
+      .then(setTemplates)
+      .catch(() => {});
   }, [onTrouble]);
 
   useEffect(refresh, [refresh]);
 
-  const begin = async () => {
+  const begin = async (fromTemplate) => {
     try {
-      const issue = await startIssue();
+      const issue = fromTemplate ? await startFromTemplate(fromTemplate) : await startIssue();
       setOpenId(issue.id);
+    } catch (error) {
+      onTrouble(error.message);
+    }
+  };
+
+  const dropTemplate = async (id) => {
+    try {
+      await forgetTemplate(id);
+      refresh();
     } catch (error) {
       onTrouble(error.message);
     }
@@ -703,12 +792,38 @@ export default function NewsletterLetters({ onTrouble }) {
         </div>
         <button
           type="button"
-          onClick={begin}
+          onClick={() => begin()}
           className="rounded-full bg-gradient-to-r from-[#c2185b] to-[#a855f7] px-6 py-2.5 font-ui text-sm font-bold text-white hover:opacity-90"
         >
           Start a letter
         </button>
       </div>
+
+      {/* The shapes you have kept, each one a letter already built. */}
+      {templates.length > 0 && (
+        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-dashed border-white/15 p-3">
+          <span className="px-2 font-ui text-sm text-neutral-500">Or start from</span>
+          {templates.map((template) => (
+            <span key={template.id} className="flex items-center overflow-hidden rounded-full bg-white/5">
+              <button
+                type="button"
+                onClick={() => begin(template.id)}
+                className="py-2 pl-4 pr-3 font-ui text-sm text-neutral-200 hover:bg-white/10 hover:text-white"
+              >
+                {template.name}
+              </button>
+              <button
+                type="button"
+                onClick={() => dropTemplate(template.id)}
+                aria-label={`Forget the ${template.name} template`}
+                className="py-2 pr-3 font-ui text-sm text-neutral-600 hover:text-[#ffb4c4]"
+              >
+                ✕
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
 
       {!issues && <Skeleton className="mt-4 h-[180px] rounded-2xl" />}
 
