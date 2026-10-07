@@ -10,6 +10,7 @@ const LINKS = [
   { label: "Discover", to: "/discover" },
   { label: "Creators’ Hub", to: "/creators-hub" },
   { label: "Marketplace", to: "/marketplace" },
+  { label: "Blog", to: "/blog" },
   { label: "Community", to: "/community" },
 ];
 

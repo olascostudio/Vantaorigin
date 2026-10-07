@@ -2,6 +2,9 @@ import { Navigate, Route, Routes, useLocation, useParams } from "react-router-do
 import Footer from "./components/Footer";
 import RequireAuth from "./components/RequireAuth.jsx";
 import Landing from "./pages/Landing";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
+import BlogEditor from "./pages/BlogEditor";
 import Discover from "./pages/Discover";
 import CreatorHub from "./pages/CreatorHub";
 import CreateCharacter from "./pages/CreateCharacter";
@@ -52,6 +55,8 @@ export default function App() {
         {/* Open to anyone. Discovery is how a character is found, and asking
             a stranger to sign in first is asking them not to look. */}
         <Route path="/discover" element={<Discover />} />
+        <Route path="/blog" element={<Blog />} />
+        <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/creators-hub" element={<RequireAuth><CreatorHub /></RequireAuth>} />
         <Route path="/creators-hub/character/new" element={<RequireAuth><CreateCharacter /></RequireAuth>} />
         <Route path="/creators-hub/character" element={<RequireAuth><CharacterView owner /></RequireAuth>} />
@@ -71,6 +76,7 @@ export default function App() {
         <Route path="/help" element={<Help />} />
         {/* Only opens for an account named in the API setting. */}
         <Route path="/admin" element={<RequireAuth><Admin /></RequireAuth>} />
+        <Route path="/admin/blog/:id" element={<RequireAuth><BlogEditor /></RequireAuth>} />
         {/* The page a creator shares. It used to be called a Realm, and links
             with that word in them are already out in the world, so they keep
             working. */}

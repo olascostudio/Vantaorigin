@@ -20,6 +20,7 @@ import {
   subscribersFileUrl,
 } from "../data/admin";
 import characterCover from "../assets/creator/character-cover.svg";
+import BlogPanel from "../components/BlogPanel.jsx";
 
 // What is happening across VantaOrigin, for whoever runs it: the numbers, the
 // reports waiting to be dealt with, who has joined, and what people like.
@@ -32,7 +33,7 @@ const REASONS = {
   other: "Other",
 };
 
-const TABS = ["Reports", "Creators", "Characters", "Newsletter", "Letters"];
+const TABS = ["Reports", "Creators", "Characters", "Blog", "Newsletter", "Letters"];
 
 const day = (value) =>
   value ? new Date(value).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "Not yet";
@@ -830,6 +831,8 @@ export default function Admin() {
             )}
           </section>
         )}
+
+        {tab === "Blog" && <BlogPanel onTrouble={setProblem} />}
 
         {tab === "Newsletter" && <NewsletterPanel onTrouble={setProblem} />}
 

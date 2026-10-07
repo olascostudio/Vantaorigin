@@ -13,9 +13,11 @@
     "prebuild": "node scripts/publish-portfolio.mjs"
   },
   "dependencies": {
+    "@tinymce/tinymce-react": "^6.3.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^7.18.4"
+    "react-router-dom": "^7.18.4",
+    "tinymce": "^8.9.3"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.5.0",

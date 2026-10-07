@@ -4,8 +4,32 @@
     {
       "name": "vite-dev",
       "runtimeExecutable": "C:\\Program Files\\nodejs\\npm.cmd",
-      "runtimeArgs": ["run", "dev", "--", "--port", "5173", "--strictPort"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5173",
+        "--strictPort"
+      ],
       "port": 5173
+    },
+    {
+      "name": "api-dev",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "src/server.js"
+      ],
+      "cwd": "api",
+      "port": 8080,
+      "env": {
+        "DATABASE_URL": "pglite://.pglite-dev",
+        "NODE_ENV": "test",
+        "EMAIL_DRIVER": "console",
+        "ADMIN_EMAILS": "boss@vantaorigin.test",
+        "PORT": "8080",
+        "STORAGE_DRIVER": "memory"
+      }
     }
   ]
 }
