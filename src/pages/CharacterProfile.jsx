@@ -387,7 +387,7 @@ export default function CharacterProfile() {
                     inputClassName="text-center text-xl"
                   />
                   <span aria-hidden="true" className="font-ui text-2xl text-white">
-                    —
+                    ·
                   </span>
                   <EditableText
                     value={data.universe}
@@ -400,7 +400,7 @@ export default function CharacterProfile() {
                 </div>
 
                 <div className="mt-2 flex flex-wrap items-center justify-center">
-                  <span className="font-ui text-base font-bold text-white">Tagline —</span>
+                  <span className="font-ui text-base font-bold text-white">Tagline:</span>
                   <EditableText
                     value={data.tagline}
                     onChange={setField("tagline")}
@@ -495,7 +495,7 @@ export default function CharacterProfile() {
                       inputClassName="text-lg font-bold"
                     />
                     <span aria-hidden="true" className="shrink-0 py-2.5 font-ui text-lg font-bold text-white">
-                      —
+                      ·
                     </span>
                     <EditableText
                       value={data.universe}
@@ -508,7 +508,7 @@ export default function CharacterProfile() {
                   </div>
                   <div className="flex min-w-0 items-start xl:max-w-[45%] xl:shrink-0">
                     <span className="shrink-0 py-2.5 pl-2 font-ui text-lg font-bold text-white">
-                      Tagline <span aria-hidden="true">—</span>
+                      Tagline<span aria-hidden="true">:</span>
                     </span>
                     <EditableText
                       value={data.tagline}
@@ -772,7 +772,7 @@ export default function CharacterProfile() {
                 <svg viewBox="0 0 24 24" className="size-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <path d="M19 12H5M11 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-                Done — back to Creators&rsquo; Hub
+                Done, back to Creators&rsquo; Hub
               </button>
               <p className="font-ui text-xs text-neutral-400">
                 {problem ? problem : savedAt ? `Saved ${savedAt.toLocaleTimeString()}` : "Everything on this page saves itself"}

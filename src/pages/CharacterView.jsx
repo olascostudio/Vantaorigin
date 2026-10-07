@@ -176,7 +176,7 @@ export default function CharacterView({ owner = false }) {
   const named = character && character !== "missing" ? character : null;
   usePageMeta({
     title: named
-      ? `${named.alias}${named.universe ? ` — ${named.universe}` : ""}`
+      ? `${named.alias}${named.universe ? ` · ${named.universe}` : ""}`
       : "",
     description: named
       ? [named.tagline, named.creator ? `A character by ${named.creator} on VantaOrigin.` : "", named.backstory]
@@ -220,7 +220,7 @@ export default function CharacterView({ owner = false }) {
       await navigator.clipboard.writeText(link);
       setShareNote(
         owner && character.visibility === "private"
-          ? "Copied — publish it so fans can open it"
+          ? "Copied. Publish it so fans can open it"
           : "Link copied"
       );
       setTimeout(() => setShareNote(""), 2600);
@@ -395,12 +395,12 @@ export default function CharacterView({ owner = false }) {
 
                 <h1 className="mt-4 font-ui text-2xl text-white">
                   {character.alias}
-                  {character.universe && <> — {character.universe}</>}
+                  {character.universe && <> · {character.universe}</>}
                 </h1>
 
                 {character.tagline && (
                   <p className="mt-2 font-ui text-base font-bold text-white">
-                    Tagline — {character.tagline}
+                    Tagline: {character.tagline}
                   </p>
                 )}
 
@@ -462,11 +462,11 @@ export default function CharacterView({ owner = false }) {
                 <div className="flex flex-col gap-1 xl:flex-row xl:items-start xl:gap-6">
                   <h1 className="max-w-[520px] font-ui text-lg font-bold text-white">
                     {character.alias}
-                    {character.universe && <> — {character.universe}</>}
+                    {character.universe && <> · {character.universe}</>}
                   </h1>
                   {character.tagline && (
                     <p className="font-ui text-lg font-bold text-white">
-                      Tagline — {character.tagline}
+                      Tagline: {character.tagline}
                     </p>
                   )}
                 </div>

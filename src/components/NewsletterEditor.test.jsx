@@ -76,7 +76,7 @@ describe("A letter on its way out", () => {
     // The record belongs to a letter that has finished. Claiming it while
     // copies are still leaving reads as "sent to nobody".
     expect(screen.queryByText(/has gone out, so it is kept/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Sent — to/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Sent Not yet to/)).not.toBeInTheDocument();
   });
 
   it("offers a way to pick up a send that stopped partway", async () => {

@@ -37,7 +37,7 @@ export default function Contact() {
 
   const set = (key) => (event) => setForm({ ...form, [key]: event.target.value });
 
-  // TODO(backend): submit this to the API — store the message and email it to
+  // TODO(backend): submit this to the API: store the message and email it to
   // hello@vantaorigin.com. Until that exists, the form does not pretend to
   // send: it points the sender at the email address instead.
   const submit = (event) => {

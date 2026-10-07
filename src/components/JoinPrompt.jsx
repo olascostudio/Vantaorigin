@@ -101,7 +101,7 @@ export default function JoinPrompt({ open, onClose, creator }) {
         <p className="mx-auto mt-3 max-w-[320px] font-ui text-base leading-relaxed text-neutral-300">
           {creator ? (
             <>
-              Like {creator}&rsquo;s characters, and build a page of your own — one link for
+              Like {creator}&rsquo;s characters, and build a page of your own. One link for
               everything you create.
             </>
           ) : (

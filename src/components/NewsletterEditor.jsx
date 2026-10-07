@@ -51,7 +51,7 @@ const emptyBlock = (type) => {
 const day = (value) =>
   value
     ? new Date(value).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })
-    : "—";
+    : "Not yet";
 
 const field =
   "w-full rounded-xl border border-white/15 bg-black/25 px-4 py-2.5 font-ui text-sm text-white outline-none placeholder:text-neutral-500 focus:border-[#6b8ff5]";
@@ -210,7 +210,7 @@ function BlockCard({ block, index, count, onChange, onMove, onRemove, onTrouble 
           />
           <p className="mt-2 font-ui text-xs text-neutral-500">
             Paste an email you have already built. It goes in as written, inside the VantaOrigin
-            shell, so it keeps the banner and the unsubscribe line. Style the elements themselves —
+            shell, so it keeps the banner and the unsubscribe line. Style the elements themselves.
             a style tag is ignored by Gmail, so it is dropped rather than left to look right here
             and wrong there.
           </p>
@@ -235,7 +235,7 @@ function Record({ issue }) {
         hour: "numeric",
         minute: "2-digit",
       })
-    : "—";
+    : "Not yet";
 
   return (
     <div className="mt-4 flex flex-col gap-4 rounded-2xl border border-white/10 bg-[#222b3c] p-5">
@@ -271,7 +271,7 @@ function Record({ issue }) {
             {failures.map((failure, index) => (
               <li key={index} className="font-ui text-sm">
                 <span className="text-white">{failure.email}</span>
-                <span className="text-neutral-500"> — {failure.reason}</span>
+                <span className="text-neutral-500">: {failure.reason}</span>
               </li>
             ))}
           </ul>
@@ -396,7 +396,7 @@ function SendBar({ issue, saved, onChanged, onTrouble }) {
             <p className="mt-1 font-ui text-sm text-neutral-400">
               {issue.sentCount} went out
               {waiting ? `, ${waiting} still to go` : ", and everybody has been reached"}. Picking it
-              up carries on from where it stopped — nobody is written to twice.
+              up carries on from where it stopped, so nobody is written to twice.
             </p>
           </div>
           <button

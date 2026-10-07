@@ -81,7 +81,7 @@ async function copyPageLink(username) {
   const link = pageLink(username);
   try {
     await navigator.clipboard.writeText(link);
-    return `Link copied — paste it anywhere: ${link}`;
+    return `Link copied. Paste it anywhere: ${link}`;
   } catch {
     return link;
   }
@@ -226,7 +226,7 @@ function CharacterCard({ character, onEdit, onView, onDelete }) {
         )}
         <p className="mt-1 truncate font-ui text-xs font-medium text-accent">By: {creator}</p>
         <p className="mt-2 line-clamp-2 font-ui text-xs text-neutral-300">
-          {character.tagline && <span className="font-bold">{character.tagline} — </span>}
+          {character.tagline && <span className="font-bold">{character.tagline}. </span>}
           {character.backstory}
         </p>
         <button

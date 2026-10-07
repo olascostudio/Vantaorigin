@@ -48,7 +48,7 @@ export default function CharacterShowcase() {
             <div>
               <p className="font-ui text-lg font-bold text-[#4ea1ff]">Character Profile</p>
               <p className="mt-2 font-ui text-base leading-relaxed text-neutral-200">
-                Artwork, abilities, stats and links live on one page — yours to edit any time, and
+                Artwork, abilities, stats and links live on one page, yours to edit any time, and
                 ready for your audience to read.
               </p>
             </div>

@@ -42,7 +42,7 @@ export default function About() {
         </h1>
 
         <p className="mt-5 font-ui text-xl leading-relaxed text-neutral-200 sm:text-[22px]">
-          VantaOrigin is a platform made by creators, for creators — and for the characters,
+          VantaOrigin is a platform made by creators, for creators, and for the characters,
           stories and worlds they bring to life.
         </p>
         <p className="mt-4 font-ui text-lg leading-relaxed text-neutral-200 sm:text-xl">
@@ -56,7 +56,7 @@ export default function About() {
             the rest in folders nobody else ever sees.
           </p>
           <p>
-            VantaOrigin gives you one place to bring it together — and one link to share it, so
+            VantaOrigin gives you one place to bring it together, and one link to share it, so
             people can actually find it.
           </p>
         </Section>
@@ -81,7 +81,7 @@ export default function About() {
           </p>
           <p>
             From there we’re building more ways for creators to find each other, share what they
-            make, and get the creative help they need — step by step, with creators at the centre
+            make, and get the creative help they need, step by step, with creators at the centre
             of it.
           </p>
         </Section>

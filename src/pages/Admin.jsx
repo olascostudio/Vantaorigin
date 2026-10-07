@@ -35,7 +35,7 @@ const REASONS = {
 const TABS = ["Reports", "Creators", "Characters", "Newsletter", "Letters"];
 
 const day = (value) =>
-  value ? new Date(value).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "—";
+  value ? new Date(value).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "Not yet";
 
 // Where people stop.
 //
@@ -116,7 +116,7 @@ function Journey({ days = 30 }) {
       {worst && (
         <p className="mt-4 font-ui text-sm text-neutral-400">
           Most are lost between <span className="text-white">{worst.from.toLowerCase()}</span> and{" "}
-          <span className="text-white">{worst.to.toLowerCase()}</span> — {worst.lost}{" "}
+          <span className="text-white">{worst.to.toLowerCase()}</span>: {worst.lost}{" "}
           {worst.lost === 1 ? "person" : "people"}.
         </p>
       )}

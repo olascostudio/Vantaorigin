@@ -1,5 +1,5 @@
 // Marketplace copy. The categories themselves come from ArtStation albums in
-// portfolio.json — see scripts/sync-artstation.mjs.
+// portfolio.json; see scripts/sync-artstation.mjs.
 
 import portfolio from "./portfolio.json";
 
@@ -7,7 +7,7 @@ export const ALBUMS = portfolio.albums || [];
 export const PROJECTS = portfolio.projects || [];
 export const lastSyncedAt = portfolio.syncedAt;
 
-// Artists represented inside one album, most work first — used for the chips.
+// Artists represented inside one album, most work first, used for the chips.
 export const artistsIn = (albumId) => {
   const counts = PROJECTS.filter((project) => project.albumId === albumId).reduce(
     (totals, project) => {

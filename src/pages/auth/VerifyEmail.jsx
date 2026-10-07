@@ -121,7 +121,7 @@ export default function VerifyEmail({
 
       {devCode && (
         <p className="mt-4 text-center font-ui text-base text-[#5fdc8a]">
-          Development mode — your code is <b>{devCode}</b>
+          Development mode: your code is <b>{devCode}</b>
         </p>
       )}
 

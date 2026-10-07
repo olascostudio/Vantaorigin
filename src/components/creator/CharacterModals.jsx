@@ -170,7 +170,7 @@ export function SuccessModal({ open, character, onClose, onAddMore, onPublish })
           <p className="mx-auto mt-8 max-w-[400px] text-center font-ui text-base leading-relaxed text-white">
             {character?.origin || (
               <span className="text-neutral-400">
-                Their origin goes here — where they came from, and what it cost them.
+                Their origin goes here: where they came from, and what it cost them.
               </span>
             )}
           </p>

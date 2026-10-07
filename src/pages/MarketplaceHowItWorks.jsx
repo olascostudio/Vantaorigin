@@ -22,7 +22,7 @@ export default function MarketplaceHowItWorks() {
           {HOW_IT_WORKS.map(({ step, title, body }) => (
             <li key={step}>
               <h2 className="font-ui text-xl font-bold text-white sm:text-[26px]">
-                {step} — {title}
+                {step}: {title}
               </h2>
               <p className="mt-2 max-w-[1280px] font-ui text-lg text-neutral-200 sm:text-[22px]">
                 {body}

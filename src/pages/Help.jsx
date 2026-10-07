@@ -39,7 +39,7 @@ const SECTIONS = [
       {
         q: "How do I add a character?",
         a: [
-          "In Creator's Hub, open the Character tab. Create a category first — one per comic, book or project — then choose Add Character inside it.",
+          "In Creator's Hub, open the Character tab. Create a category first, one per comic, book or project, then choose Add Character inside it.",
           "You'll be asked for a name, then a cover image, origin story (up to 800 characters), the universe they belong to and a tagline. All of these are needed before the character can be saved, because they all appear on the character card.",
           "Your creator name is filled in from your username automatically.",
         ],
@@ -63,7 +63,7 @@ const SECTIONS = [
         q: "Why isn't my character on Discovery?",
         a: [
           "Check that the switch on its edit page is set to Public. Private characters never appear there.",
-          "Publishing is immediate — there's no review queue or waiting period. Discovery shows the most recent published characters, up to 24 at a time.",
+          "Publishing is immediate. There's no review queue or waiting period. Discovery shows the most recent published characters, up to 24 at a time.",
           "If it's public and still missing, contact support.",
         ],
       },
@@ -115,7 +115,7 @@ const SECTIONS = [
       {
         q: "How does VantaOrigin protect my account?",
         a: [
-          "Passwords are stored as argon2id hashes — we never store the password itself, and can't see it.",
+          "Passwords are stored as argon2id hashes. We never store the password itself, and can't see it.",
           "Signing in creates a session token that's kept in a cookie your browser's scripts can't read, and only a hashed version is stored in our database, so a stolen database copy can't be replayed as a login.",
           "All traffic runs over HTTPS, and every request that touches your characters checks that they belong to you.",
           "Two-factor authentication isn't available yet.",
@@ -209,7 +209,7 @@ const SECTIONS = [
         a: [
           "Check your spam folder and that the address you entered is right.",
           "Only the newest code works, and another can be asked for every 30 seconds. If several arrived at once, use the one from the most recent email.",
-          "Codes last 10 minutes. If yours has expired, request a new one — the old code stops working as soon as a new one is sent. If nothing arrives at all, email hello@vantaorigin.com and we will verify your account by hand.",
+          "Codes last 10 minutes. If yours has expired, request a new one. The old code stops working as soon as a new one is sent. If nothing arrives at all, email hello@vantaorigin.com and we will verify your account by hand.",
         ],
       },
     ],

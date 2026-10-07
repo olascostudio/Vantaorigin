@@ -15,12 +15,12 @@ async function publicCharacters() {
   const characters = await loadPublicCharacters(24).catch(() => []);
   return characters.map((character) => ({
       id: character.id,
-      title: character.universe ? `${character.alias} — ${character.universe}` : character.alias,
+      title: character.universe ? `${character.alias} · ${character.universe}` : character.alias,
       author: character.creator,
       colour: character.accent || "#fc187b",
       art: character.cover || characterCover,
       excerpt: {
-        lead: character.tagline ? `${character.tagline} — ` : "",
+        lead: character.tagline ? `${character.tagline}. ` : "",
         body: character.backstory,
       },
       to: `/character/${character.slug || character.id}`,
@@ -33,7 +33,7 @@ async function publicCharacters() {
 // What the Hint button offers: real characters that are actually here, so
 // pressing one finds something. Invented names found nothing at all.
 const hintsFrom = (characters) =>
-  [...new Set(characters.flatMap((c) => [c.title?.split(" — ")[0], c.author].filter(Boolean)))].slice(0, 6);
+  [...new Set(characters.flatMap((c) => [c.title?.split(" · ")[0], c.author].filter(Boolean)))].slice(0, 6);
 
 function CharacterCard({ title, author, colour, art, overlay, excerpt, to = "/character" }) {
   return (
@@ -204,7 +204,7 @@ export default function Discover() {
   usePageMeta({
     title: "Discover characters",
     description:
-      "Browse every character published on VantaOrigin — their universe, their story, and the creator behind each one.",
+      "Browse every character published on VantaOrigin: their universe, their story, and the creator behind each one.",
     canonicalPath: "/discover",
   });
 
@@ -245,7 +245,7 @@ export default function Discover() {
             Every World <span className="text-secondary">Begins With</span> A Character.
           </h1>
           <p className="mx-auto mt-8 max-w-[1080px] text-center font-ui text-lg text-neutral-300 sm:text-xl">
-            Characters published by creators on VantaOrigin — their art, their stories, and the
+            Characters published by creators on VantaOrigin: their art, their stories, and the
             people who made them. Every one has a page of its own.
           </p>
 

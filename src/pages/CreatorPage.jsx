@@ -74,8 +74,8 @@ export default function CreatorPage() {
   // likes what they see is asked to make a page of their own.
   const joinPrompt = useJoinPrompt({ enabled: !user && Boolean(page) });
 
-  // Somebody who has not filled in their name is known by their handle — the
-  // API hands back the handle as the name in that case — and saying it twice
+  // Somebody who has not filled in their name is known by their handle, since the
+  // API hands back the handle as the name in that case, and saying it twice
   // reads as a mistake.
   const handle = page?.creator?.username || "";
   const given = page?.creator?.name?.trim() || "";

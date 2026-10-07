@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 
 // Google Form: "Vantaorigin Studio Project Request Form".
-// The /d/e/… link is the public one — the /d/…/edit link only works for editors.
+// The /d/e/… link is the public one. The /d/…/edit link only works for editors.
 const FORM_ID = "1FAIpQLSdN4f5EvDCK9es0eKr9h7oHmBXgeLKZ9yTpsdCEppzL6MdCSw";
 const FORM_URL = `https://docs.google.com/forms/d/e/${FORM_ID}/viewform`;
 
@@ -37,12 +37,12 @@ export default function ProjectRequest() {
         </div>
 
         <p className="mt-4 max-w-[760px] font-ui text-lg text-neutral-300">
-          Tell us what you’re building — your requirements, timeline and budget — and we’ll match
+          Tell us what you’re building, your requirements, timeline and budget, and we’ll match
           you with a vetted creator from the VantaOrigin network.
         </p>
 
         {/* The form is on Google's domain, so its real height can't be read
-            from here — browsers block cross-origin measurement and Google
+            from here. Browsers block cross-origin measurement and Google
             doesn't broadcast it. Sizing to the viewport instead keeps the page
             free of dead space on any screen; the form scrolls inside. */}
         <div className="mt-8 overflow-hidden rounded-2xl bg-white">

@@ -28,7 +28,7 @@ export function countVisits({
   if (!token) {
     if (host === "vantaorigin.com" || host.endsWith(".vantaorigin.com")) {
       console.warn(
-        "VantaOrigin: no visitor counting. VITE_ANALYTICS_TOKEN was not set when this was built — set it for the Production environment and build again (a redeploy that reuses the existing output will not pick it up)."
+        "VantaOrigin: no visitor counting. VITE_ANALYTICS_TOKEN was not set when this was built. Set it for the Production environment and build again (a redeploy that reuses the existing output will not pick it up)."
       );
     }
     return null;

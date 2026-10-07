@@ -29,7 +29,7 @@ export const DEFAULT_CHARACTER = {
   creator: "Joseph Marine",
   tagline: "The One Who Becomes Anyone.",
   backstory:
-    "Born in the underground city of Vantora District 7, Switch Face was once a top-tier illusion engineer—an elite specialist who designed holographic masks for espionage operatives. After a betrayal by his own unit, his face was erased from identity records, leaving him legally nonexistent.",
+    "Born in the underground city of Vantora District 7, Switch Face was once a top-tier illusion engineer, an elite specialist who designed holographic masks for espionage operatives. After a betrayal by his own unit, his face was erased from identity records, leaving him legally nonexistent.",
   core: {
     name: "Facial & Form Morphing Illusion",
     description:

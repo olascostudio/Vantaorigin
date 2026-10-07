@@ -93,7 +93,7 @@ function Sidebar({ activeId, onSelect }) {
         </svg>
       </button>
 
-      {/* One entry per ArtStation album — add an album there, it appears here. */}
+      {/* One entry per ArtStation album. Add an album there, it appears here. */}
       <ul id="service-list" className={`mt-2 flex-col gap-1 lg:mt-6 lg:flex ${open ? "flex" : "hidden"}`}>
         {ALBUMS.map((album) => {
           const active = album.id === activeId;
@@ -127,7 +127,7 @@ function Sidebar({ activeId, onSelect }) {
 
 export default function Marketplace() {
   usePageMeta({
-    title: "VantaOrigin Studio — character art and creative services",
+    title: "VantaOrigin Studio: character art and creative services",
     description:
       "Character illustration, 3D characters and assets, prop design, book covers, cards and comic art by VantaOrigin Studio.",
     canonicalPath: "/marketplace",

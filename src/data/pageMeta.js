@@ -11,7 +11,7 @@ import { useEffect } from "react";
 // Crawlers that do not run JavaScript get the pages the API builds, which
 // have carried their own titles all along; this closes the gap for everyone
 // else.
-const DEFAULT_TITLE = "VantaOrigin — Your characters. One link.";
+const DEFAULT_TITLE = "VantaOrigin: Your characters. One link.";
 const DEFAULT_DESCRIPTION =
   "Create character cards, organize your characters, and share one simple page with anyone who wants to discover them.";
 
