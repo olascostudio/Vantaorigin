@@ -8,7 +8,7 @@ const schema = z.object({
   PORT: z.coerce.number().default(8080),
   HOST: z.string().default("0.0.0.0"),
 
-  // postgres://user:password@host:5432/database — the same shape locally,
+  // postgres://user:password@host:5432/database, the same shape locally,
   // on managed hosting and on a VPS.
   DATABASE_URL: z.string().min(1),
 
@@ -73,7 +73,7 @@ const schema = z.object({
 // They also arrive, now and then, as the example from the instructions:
 // "<the client id>", "<account-id>". A setting like that is worse than a
 // missing one, because everything carries on as though it were real and the
-// failure surfaces somewhere else entirely — Google answering "invalid
+// failure surfaces somewhere else entirely: Google answering "invalid
 // client", a storage endpoint refusing to parse. Anything still wearing
 // angle brackets is treated as not set, and said so out loud.
 export const placeholders = [];

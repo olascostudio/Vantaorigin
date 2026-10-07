@@ -186,7 +186,7 @@ export default async function characterRoutes(app) {
       .returning();
 
     // Published straight away: let the search engines that take a nudge know
-    // now rather than whenever a crawler next comes by. Not waited on — a
+    // now rather than whenever a crawler next comes by. Not waited on, since a
     // slow search engine must never slow down making a character.
     if (character.isPublic) {
       tellSearchEngines(app, { characterId: character.id, username: request.user.username });

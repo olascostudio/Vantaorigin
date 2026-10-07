@@ -126,8 +126,8 @@ export function shell({ preview = "", body, unsubscribeUrl = "", newsletter = fa
                   unsubscribeUrl
                     ? `<p style="margin:8px 0 0;color:${MUTED};font-size:13px;line-height:1.5;">${
                         newsletter
-                          ? `Not for you any more? <a href="${unsubscribeUrl}" style="color:${MUTED};text-decoration:underline;">Unsubscribe</a> — your account, if you have one, stays as it is.`
-                          : `You are also on the creator newsletter. <a href="${unsubscribeUrl}" style="color:${MUTED};text-decoration:underline;">Unsubscribe</a> any time — your account stays as it is.`
+                          ? `Not for you any more? <a href="${unsubscribeUrl}" style="color:${MUTED};text-decoration:underline;">Unsubscribe</a>. Your account, if you have one, stays as it is.`
+                          : `You are also on the creator newsletter. <a href="${unsubscribeUrl}" style="color:${MUTED};text-decoration:underline;">Unsubscribe</a> any time. Your account stays as it is.`
                       }</p>`
                     : ""
                 }

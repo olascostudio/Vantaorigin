@@ -1,5 +1,5 @@
 // Image uploads. The browser posts the file here; the API decides where it
-// lands. Today that is Cloudflare R2, later it could be MinIO on the VPS —
+// lands. Today that is Cloudflare R2, later it could be MinIO on the VPS, and
 // the route and the client code stay the same.
 import { authenticate, verified } from "../auth/auth.js";
 import { CACHE_FOREVER, newKey, storage } from "../adapters/storage.js";

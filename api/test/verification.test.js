@@ -1,6 +1,6 @@
 // An account before its address is confirmed.
 //
-// It exists, it can be signed into and it can look around — but it cannot put
+// It exists, it can be signed into and it can look around, but it cannot put
 // anything into the world until somebody has answered the code we sent.
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";

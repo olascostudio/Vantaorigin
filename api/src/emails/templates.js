@@ -1,4 +1,4 @@
-// The messages themselves. Each returns { subject, html, text } — the plain
+// The messages themselves. Each returns { subject, html, text }. The plain
 // version matters: an email with no text part is treated as more likely to be
 // junk, and some people read their mail that way.
 import { codeBlock, escape, link, p, shell, strong } from "./layout.js";
@@ -48,7 +48,7 @@ export function resetEmail({ user, code, minutes }) {
     ${p("Use the code below to set a new password on your VantaOrigin account:")}
     ${codeBlock(code)}
     ${p(
-      `This code will expire in ${strong(`${minutes} minutes`)} for security purposes. If you did not ask to reset your password, ignore this email — your password stays as it is.`
+      `This code will expire in ${strong(`${minutes} minutes`)} for security purposes. If you did not ask to reset your password, ignore this email, and your password stays as it is.`
     )}
     ${p("Stay secured,", { top: 34 })}
     ${p(strong("VantaOrigin Security Team."), { top: 2 })}
@@ -64,7 +64,7 @@ export function resetEmail({ user, code, minutes }) {
       "",
       `    ${code}`,
       "",
-      `This code will expire in ${minutes} minutes. If you did not ask to reset your password, ignore this email — your password stays as it is.`,
+      `This code will expire in ${minutes} minutes. If you did not ask to reset your password, ignore this email, and your password stays as it is.`,
       "",
       "Stay secured,",
       "VantaOrigin Security Team.",

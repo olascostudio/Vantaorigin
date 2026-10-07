@@ -6,7 +6,7 @@
 // previews as nothing at all.
 //
 // This was a scheduled job on GitHub until its own records showed it had run
-// not once in a day: GitHub throttles schedules hard — the sync beside it
+// not once in a day: GitHub throttles schedules hard, and the sync beside it
 // asks for every fifteen minutes and gets one run every two to six hours. So
 // the service knocks on its own front door instead. The request goes out to
 // the public address and arrives back through the load balancer, which is

@@ -1,8 +1,8 @@
 // File storage behind one small interface: put(), remove(), urlFor(), and --
 // for the pass that shrinks what is already stored -- list() and read().
 //
-// "s3" talks to anything with an S3 API — Cloudflare R2 now, MinIO on a VPS
-// later — so moving means changing S3_ENDPOINT, not this file's callers.
+// "s3" talks to anything with an S3 API: Cloudflare R2 now, MinIO on a VPS
+// later, so moving means changing S3_ENDPOINT, not this file's callers.
 // "memory" keeps uploads in the process, which is enough for local work.
 import { randomUUID } from "node:crypto";
 import { config } from "../config.js";
@@ -207,7 +207,7 @@ async function s3Storage() {
 
 export const storage = config.STORAGE_DRIVER === "s3" ? await s3Storage() : memoryStorage();
 
-// "characters/<uuid>.jpg" — keeps uploads tidy and collision-free.
+// "characters/<uuid>.jpg", which keeps uploads tidy and collision-free.
 export function newKey(folder, filename) {
   const extension = (filename.match(/\.[a-z0-9]+$/i)?.[0] || ".bin").toLowerCase();
   return `${folder}/${randomUUID()}${extension}`;

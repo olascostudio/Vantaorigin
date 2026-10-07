@@ -109,8 +109,8 @@ test("a character page carries the tags a link preview reads", async () => {
   assert.match(res.headers["content-type"], /text\/html/);
 
   const html = res.body;
-  assert.match(html, /<title>Urokojin — The Vantaverse \| VantaOrigin<\/title>/);
-  assert.match(html, /property="og:title" content="Urokojin — The Vantaverse \| VantaOrigin"/);
+  assert.match(html, /<title>Urokojin · The Vantaverse \| VantaOrigin<\/title>/);
+  assert.match(html, /property="og:title" content="Urokojin · The Vantaverse \| VantaOrigin"/);
   assert.match(html, /property="og:image" content="https:\/\/cdn\.example\.com\/urokojin\.jpg"/);
   assert.match(html, /name="twitter:card" content="summary_large_image"/);
   assert.match(
@@ -129,7 +129,7 @@ test("it says who made the character, in words and in schema.org", async () => {
   assert.match(html, /Stormscript/);
   assert.match(html, /THE FINAL VERDICT/);
   assert.match(html, /The First Law/);
-  assert.match(html, /Energy:<\/strong> 9\/10 — Tied to the sky/);
+  assert.match(html, /Energy:<\/strong> 9\/10, Tied to the sky/);
 
   // Two sets of notes now: the work itself, and the trail showing where it
   // sits, which is what puts a path under a search result.
@@ -154,7 +154,7 @@ test("a character page says when it was published and where to go next", async (
 
   assert.match(html, /Published \d{1,2} \w+ \d{4}/);
   assert.match(html, /<h2>More characters by Ola Oriola<\/h2>/);
-  assert.match(html, /Atlas Veyron<\/a> — The Worldbearer/);
+  assert.match(html, /Atlas Veyron<\/a>, The Worldbearer/);
   assert.match(html, /See every character by Ola Oriola/);
   assert.match(html, /Browse all characters/);
   assert.match(html, /aria-label="Breadcrumb"/);
@@ -305,9 +305,9 @@ test("the marketplace lists the studio's work, grouped as the albums are", async
     const html = res.body;
     assert.match(html, /<h1>VantaOrigin Studio<\/h1>/);
     assert.match(html, /<h2>Comics Art<\/h2>/);
-    assert.match(html, /Cover Art for Iron Inferno — by Carlos Idrobo/);
+    assert.match(html, /Cover Art for Iron Inferno, by Carlos Idrobo/);
     assert.match(html, /<h2>Cards &amp; TCG Assets<\/h2>/);
-    assert.match(html, /Card Game Character — by Dizguyken/);
+    assert.match(html, /Card Game Character, by Dizguyken/);
 
     const jsonLd = JSON.parse(html.match(/<script type="application\/ld\+json">(.+?)<\/script>/s)[1]);
     assert.equal(jsonLd.mainEntity.numberOfItems, 2);

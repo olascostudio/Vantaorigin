@@ -179,7 +179,7 @@ export default async function authRoutes(app) {
     if (!sent) {
       return reply.code(502).send({
         error:
-          "We couldn't deliver the code to that address yet — our email domain is still being set up. Email hello@vantaorigin.com and we'll verify your account by hand.",
+          "We couldn't deliver the code to that address yet. Our email domain is still being set up. Email hello@vantaorigin.com and we'll verify your account by hand.",
       });
     }
     return { ...devCode(code), ok: true };

@@ -1,6 +1,6 @@
 // Keeping the list.
 //
-// Two ways on: the form in the footer, and making an account — every account
+// Two ways on: the form in the footer, and making an account, and every account
 // hears from us unless they say otherwise. One way off, and it has to work
 // from an email client with nobody signed in, which is what the token is for.
 //
@@ -25,7 +25,7 @@ const byEmail = async (email) => {
 };
 
 // Adds an address, or brings back one that had left. Returns what happened,
-// for the caller's own use — never for telling the person who asked.
+// for the caller's own use, never for telling the person who asked.
 export async function subscribe(email, source = "footer") {
   const address = tidyEmail(email);
   if (!address || !address.includes("@")) return { ok: false, reason: "not an address" };

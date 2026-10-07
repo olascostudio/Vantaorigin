@@ -78,7 +78,7 @@ export async function usernameFrom(email, name) {
 }
 
 export default async function googleRoutes(app) {
-  // Lets the sign-in screen show the button only when it will work — and,
+  // Lets the sign-in screen show the button only when it will work and,
   // when it will not, says which setting is wrong in terms that can be acted
   // on without reading a server log.
   //

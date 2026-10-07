@@ -1,4 +1,4 @@
-// Deleting an account must actually delete it — and must not be possible
+// Deleting an account must actually delete it, and must not be possible
 // without the password, since a borrowed session should not be enough.
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";

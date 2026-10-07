@@ -33,7 +33,7 @@ const COMMUNITY = [
 // Held for ten minutes so a crawl of a hundred pages fetches it once.
 let portfolioCache = { at: 0, data: null };
 
-// Held between requests, which is the point — and a thing a test must be
+// Held between requests, which is the point, and a thing a test must be
 // able to put back, or one test decides what the next one sees.
 export function forgetPortfolio() {
   portfolioCache = { at: 0, data: null };
@@ -117,7 +117,7 @@ function detailsHtml(details = {}) {
   const entry = (label, value) =>
     value?.name || value?.description
       ? `<li><strong>${escape(label)}:</strong> ${escape(value.name || "")}${
-          value.description ? ` — ${escape(value.description)}` : ""
+          value.description ? `, ${escape(value.description)}` : ""
         }</li>`
       : "";
 
@@ -138,7 +138,7 @@ function detailsHtml(details = {}) {
         .map(
           (stat) =>
             `<li><strong>${escape(stat.attribute)}:</strong> ${escape(String(stat.level))}/10${
-              stat.note ? ` — ${escape(stat.note)}` : ""
+              stat.note ? `, ${escape(stat.note)}` : ""
             }</li>`
         )
         .join("")}</ul>`
@@ -164,7 +164,7 @@ export default async function previewRoutes(app) {
         .select({ url: characterAssets.url })
         .from(characterAssets)
         .where(eq(characterAssets.characterId, character.id)),
-      // The rest of this creator's work, so a reader — and a crawler — has
+      // The rest of this creator's work, so a reader, and a crawler, has
       // somewhere to go from here rather than a dead end.
       db
         .select({ id: characters.id, slug: characters.slug, name: characters.name, tagline: characters.tagline })
@@ -178,7 +178,7 @@ export default async function previewRoutes(app) {
     const canonical = `${SITE}/character/${character.slug || character.id}`;
     const creatorUrl = `${SITE}/creator/${handle}`;
     const maker = fullName(creator);
-    const title = `${character.name}${character.universe ? ` — ${character.universe}` : ""} | VantaOrigin`;
+    const title = `${character.name}${character.universe ? ` · ${character.universe}` : ""} | VantaOrigin`;
     const description = summarise(
       character.tagline
         ? `${character.tagline} A character by ${maker} (${creator.username}) on VantaOrigin. ${character.backstory}`
@@ -258,7 +258,7 @@ export default async function previewRoutes(app) {
         .map(
           (other) =>
             `<li><a href="${SITE}/character/${escape(other.slug || other.id)}">${escape(other.name)}</a>${
-              other.tagline ? ` — ${escape(other.tagline)}` : ""
+              other.tagline ? `, ${escape(other.tagline)}` : ""
             }</li>`
         )
         .join("")}</ul>`
@@ -353,7 +353,7 @@ export default async function previewRoutes(app) {
                 (character) =>
                   `<li><a href="${SITE}/character/${escape(character.slug || character.id)}">${escape(
                     character.name
-                  )}</a>${character.tagline ? ` — ${escape(character.tagline)}` : ""}${
+                  )}</a>${character.tagline ? `, ${escape(character.tagline)}` : ""}${
                     character.universe ? ` (${escape(character.universe)})` : ""
                   }</li>`
               )
@@ -445,7 +445,7 @@ export default async function previewRoutes(app) {
                 return `<li>
         <a href="${SITE}/character/${escape(character.slug || character.id)}">${escape(character.name)}</a>${
                   character.universe ? ` of ${escape(character.universe)}` : ""
-                }${character.tagline ? ` — ${escape(character.tagline)}` : ""}, created by
+                }${character.tagline ? `, ${escape(character.tagline)}` : ""}, created by
         <a href="${SITE}/creator/${escape(handle)}">${escape(fullName(creator))} (${escape(
           creator.username
         )})</a>.${character.backstory ? ` ${escape(summarise(character.backstory, 240))}` : ""}
@@ -517,7 +517,7 @@ ${urls
   //
   // The marketplace draws itself from a file bundled into the app, which a
   // crawler never sees. The same file is published at /portfolio.json, so it
-  // is read from there — once every ten minutes rather than once per crawler.
+  // is read from there, once every ten minutes rather than once per crawler.
   app.get("/preview/marketplace", async (request, reply) => {
     const portfolio = await studioPortfolio().catch(() => null);
     if (!portfolio) {
@@ -528,7 +528,7 @@ ${urls
     const projects = portfolio.projects || [];
     const canonical = `${SITE}/marketplace`;
     const description = summarise(
-      `Character art, 3D, props, covers, cards and comic work by VantaOrigin Studio — ${projects.length} pieces across ${albums.length} kinds of work, made for creators.`
+      `Character art, 3D, props, covers, cards and comic work by VantaOrigin Studio. ${projects.length} pieces across ${albums.length} kinds of work, made for creators.`
     );
 
     const jsonLd = {
@@ -559,7 +559,7 @@ ${urls
         .slice(0, 60)
         .map(
           (project) =>
-            `<li>${escape(project.title)}${project.artist ? ` — by ${escape(project.artist)}` : ""}</li>`
+            `<li>${escape(project.title)}${project.artist ? `, by ${escape(project.artist)}` : ""}</li>`
         )
         .join("")}</ul>`;
       })
@@ -577,7 +577,7 @@ ${urls
     return reply
       .type("text/html; charset=utf-8")
       .header("cache-control", "public, max-age=300, s-maxage=3600")
-      .send(page({ title: "VantaOrigin Studio — creative services", description, canonical, jsonLd, body }));
+      .send(page({ title: "VantaOrigin Studio: creative services", description, canonical, jsonLd, body }));
   });
 
   // ---- where creators gather ----

@@ -2,7 +2,7 @@
 --
 -- /character?id=cba0b9ab-e263-4193-bc97-bd152086268e tells a reader nothing
 -- and gives a search engine nothing; /character/urokojin does both. The old
--- address keeps working — it is in other people's posts — so this is an
+-- address keeps working, because it is in other people's posts, so this is an
 -- addition, not a replacement.
 --
 -- The slug is settled when a character is made and then left alone, even if

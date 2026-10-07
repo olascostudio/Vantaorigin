@@ -1,6 +1,6 @@
 // Email behind one method: send({ to, subject, html, text, replyTo, unsubscribeUrl }).
 //
-// "resend" posts to Resend's HTTP API — no SDK, so there is nothing to remove
+// "resend" posts to Resend's HTTP API with no SDK, so there is nothing to remove
 // if we switch to SMTP or Postmark on a VPS. "console" prints the message,
 // which is what local development uses.
 import { config } from "../config.js";

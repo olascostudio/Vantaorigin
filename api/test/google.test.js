@@ -132,7 +132,7 @@ test("a username is made from the email, and never taken twice", async () => {
 
 
 // What actually happened live: the client id on the server was still the
-// example from the instructions — "<the client id>", angle brackets and all —
+// example from the instructions, "<the client id>", angle brackets and all,
 // so the browser was sent to Google with nonsense and came back with
 // "invalid client". A setting like that is worse than a missing one, because
 // everything carries on as though it were real.

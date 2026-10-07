@@ -209,7 +209,7 @@ async function readExisting() {
 // ArtStation answers the JSON endpoints only for addresses it likes: both
 // GitHub's runners and our own host get a 403 challenge page, while the feed
 // is served to either without complaint. So when the JSON is refused we take
-// what the feed gives — the newest work, its pictures and when it was posted —
+// what the feed gives, the newest work, its pictures and when it was posted,
 // and leave everything an earlier full run learned exactly as it was.
 //
 // The feed says nothing about which album a piece belongs to, so new work
@@ -325,7 +325,7 @@ async function main() {
     return syncFromFeed(previousFile.payload, error.message);
   }
 
-  if (!albums.length) throw new Error("No albums returned — leaving the existing file alone.");
+  if (!albums.length) throw new Error("No albums returned, leaving the existing file alone.");
 
   const projects = [];
   const seen = new Set();

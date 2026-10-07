@@ -111,7 +111,7 @@ test("an unknown page says so", async () => {
 });
 
 // The live bug: a handle typed with capitals was stored with them, while the
-// lookup lowered only the link — so the creator own page said it did not
+// lookup lowered only the link, so the creator own page said it did not
 // exist.
 test("a handle stored with capitals is still found", async () => {
   await app.inject({

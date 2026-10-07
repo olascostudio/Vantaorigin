@@ -80,7 +80,7 @@ export async function buildApp() {
       ok: true,
       storage: config.STORAGE_DRIVER,
       email: config.EMAIL_DRIVER,
-      // Which storage settings arrived — true/false only, never the values.
+      // Which storage settings arrived: true/false only, never the values.
       storageConfig: {
         endpoint: Boolean(config.S3_ENDPOINT),
         bucket: Boolean(config.S3_BUCKET),

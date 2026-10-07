@@ -1,5 +1,5 @@
 // A creator's public page: everything a visitor may see about one creator,
-// in a single request. Reuses the existing tables — no new concepts.
+// in a single request. Reuses the existing tables, with no new concepts.
 import { and, asc, desc, eq } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { characterAssets, characters, highlights, users } from "../db/schema.js";

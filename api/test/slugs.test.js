@@ -56,7 +56,7 @@ after(async () => {
 
 test("a name becomes the readable part of the address", () => {
   assert.equal(slugify("Urokojin"), "urokojin");
-  assert.equal(slugify("Urokojin — The Thunder Judge"), "urokojin-the-thunder-judge");
+  assert.equal(slugify("Urokojin: The Thunder Judge"), "urokojin-the-thunder-judge");
   assert.equal(slugify("  Atlas   Veyron  "), "atlas-veyron");
   assert.equal(slugify("Ọbáàlú"), "obaalu");
   assert.equal(slugify("!!!"), "");

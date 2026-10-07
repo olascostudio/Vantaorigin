@@ -165,7 +165,7 @@ export function verified() {
 
     if (!request.user.emailVerifiedAt) {
       return reply.code(403).send({
-        error: "Confirm your email address first — we sent you a code.",
+        error: "Confirm your email address first. We sent you a code.",
         needsVerification: true,
       });
     }

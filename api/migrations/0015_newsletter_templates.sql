@@ -1,7 +1,7 @@
 -- Letters kept as a starting point.
 --
--- Somebody who has already designed an email — in code, or by arranging
--- blocks until it reads right — should not have to build it again every
+-- Somebody who has already designed an email, in code or by arranging
+-- blocks until it reads right, should not have to build it again every
 -- month. A template is a letter's shape without its moment: the subject line
 -- it usually carries, and the blocks it is made of.
 

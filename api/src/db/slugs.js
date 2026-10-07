@@ -1,6 +1,6 @@
 // Turning a character's name into the part of the address people read.
 //
-// "Urokojin — The Thunder Judge" becomes "urokojin-the-thunder-judge". Two
+// "Urokojin: The Thunder Judge" becomes "urokojin-the-thunder-judge". Two
 // characters may share a name, so the second one carries a short piece of its
 // own id; nobody has to see that unless it is needed.
 import { eq, sql } from "drizzle-orm";
@@ -26,7 +26,7 @@ const taken = async (slug) => {
   return Boolean(row);
 };
 
-// A name nobody can turn into letters — emoji, or another script entirely —
+// A name nobody can turn into letters, emoji or another script entirely,
 // still needs an address, so it falls back to something unique.
 export async function freeSlugFor(name) {
   const base = slugify(name) || "character";

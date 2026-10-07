@@ -1,7 +1,7 @@
 // Telling search engines about a page the moment it exists.
 //
-// Google has no such button for ordinary pages — their Indexing API is for
-// job adverts and live streams, and the old sitemap ping was retired — so
+// Google has no such button for ordinary pages: their Indexing API is for
+// job adverts and live streams, and the old sitemap ping was retired, so
 // there the sitemap and the links between pages do the work.
 //
 // Bing, Yandex and Seznam share one: IndexNow. A URL sent here is usually
