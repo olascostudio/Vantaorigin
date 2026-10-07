@@ -283,3 +283,55 @@ export const newsletterTemplates = pgTable(
     createdIdx: index("newsletter_templates_created_idx").on(table.createdAt),
   })
 );
+
+// Blog posts. The body is HTML, which is what the editor hands back and what
+// both a web page and a crawler can read. The SEO columns are allowed to be
+// empty: empty means "use the real thing" rather than "show nothing".
+export const blogPosts = pgTable(
+  "blog_posts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    slug: text("slug").notNull(),
+    excerpt: text("excerpt").default("").notNull(),
+    body: text("body").default("").notNull(),
+    heroUrl: text("hero_url"),
+    heroAccent: text("hero_accent"),
+    category: text("category").default("").notNull(),
+    tags: jsonb("tags").$type().default([]).notNull(),
+
+    authorId: uuid("author_id").references(() => users.id, { onDelete: "set null" }),
+    status: text("status").default("draft").notNull(),
+    featured: boolean("featured").default(false).notNull(),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    readingMinutes: integer("reading_minutes").default(0).notNull(),
+
+    metaTitle: text("meta_title").default("").notNull(),
+    metaDescription: text("meta_description").default("").notNull(),
+    metaKeywords: jsonb("meta_keywords").$type().default([]).notNull(),
+    canonicalUrl: text("canonical_url").default("").notNull(),
+    ogImageUrl: text("og_image_url"),
+
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    slugIdx: uniqueIndex("blog_posts_slug_key").on(table.slug),
+    publishedIdx: index("blog_posts_published_idx").on(table.status, table.publishedAt),
+  })
+);
+
+// Addresses a post used to have, kept so old links still arrive somewhere.
+export const blogPostSlugs = pgTable(
+  "blog_post_slugs",
+  {
+    slug: text("slug").primaryKey(),
+    postId: uuid("post_id")
+      .notNull()
+      .references(() => blogPosts.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    postIdx: index("blog_post_slugs_post_idx").on(table.postId),
+  })
+);

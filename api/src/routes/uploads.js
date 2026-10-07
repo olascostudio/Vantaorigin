@@ -17,7 +17,7 @@ export default async function uploadRoutes(app) {
       return reply.code(415).send({ error: "Images only (jpeg, png, webp or gif)" });
     }
 
-    const folder = ["avatars", "banners", "covers", "assets", "newsletter"].includes(
+    const folder = ["avatars", "banners", "covers", "assets", "newsletter", "blog"].includes(
       request.query.folder
     )
       ? request.query.folder

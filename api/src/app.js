@@ -9,6 +9,7 @@ import { ZodError } from "zod";
 import { config, isProduction, placeholders } from "./config.js";
 import adminRoutes from "./routes/admin.js";
 import authRoutes from "./routes/auth.js";
+import blogRoutes from "./routes/blog.js";
 import characterRoutes from "./routes/characters.js";
 import highlightRoutes from "./routes/highlights.js";
 import googleRoutes, { googleConfigNote } from "./routes/google.js";
@@ -93,6 +94,7 @@ export async function buildApp() {
 
   await app.register(adminRoutes);
   await app.register(authRoutes);
+  await app.register(blogRoutes);
   await app.register(characterRoutes);
   await app.register(googleRoutes);
   await app.register(highlightRoutes);

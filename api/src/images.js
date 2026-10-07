@@ -17,6 +17,9 @@ export const LIMITS = {
   covers: 1200,
   assets: 1600,
   newsletter: 1200,
+  // A hero runs the full width of an article, and inline pictures sit
+  // inside the column, so one limit covers both.
+  blog: 1600,
 };
 
 export const limitFor = (folder) => LIMITS[folder] ?? 1600;

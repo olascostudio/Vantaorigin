@@ -22,7 +22,11 @@ export const indexNowReady = () => Boolean(config.INDEXNOW_KEY);
 
 // The pages that change when one character is published: the character
 // itself, the creator's page, and the list everything is found from.
-export function pagesTouchedBy({ characterId, username }) {
+export function pagesTouchedBy({ characterId, username, blogSlug }) {
+  // A post changes the blog and its own page, and nothing on the character
+  // side of the site.
+  if (blogSlug) return [`${site()}/blog`, `${site()}/blog/${blogSlug}`];
+
   const urls = [`${site()}/discover`];
   if (characterId) urls.push(`${site()}/character?id=${characterId}`);
   if (username) urls.push(`${site()}/creator/${String(username).replace(/^@+/, "")}`);

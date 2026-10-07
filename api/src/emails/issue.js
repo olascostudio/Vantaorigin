@@ -9,6 +9,7 @@
 // subject or a paragraph can contain < and & without breaking the email, and
 // nothing typed into the editor can introduce HTML of its own.
 import { escape, shell } from "./layout.js";
+import { safeHtml } from "../html.js";
 
 const INK = "#ffffff";
 const BODY = "#e8ecf5";
@@ -48,15 +49,8 @@ const inlinePlain = (text) =>
 // dashboard. And <style> blocks, because an email's styling has to live on
 // the elements themselves: a style tag is ignored by Gmail and would quietly
 // leave the letter looking wrong everywhere it matters.
-const asWritten = (code) =>
-  String(code || "")
-    .replace(/<script\b[\s\S]*?<\/script\s*>/gi, "")
-    .replace(/<script\b[^>]*\/?>/gi, "")
-    .replace(/<style\b[\s\S]*?<\/style\s*>/gi, "")
-    .replace(/\son[a-z]+\s*=\s*"[^"]*"/gi, "")
-    .replace(/\son[a-z]+\s*=\s*'[^']*'/gi, "")
-    .replace(/\son[a-z]+\s*=\s*[^\s>]+/gi, "")
-    .replace(/javascript:/gi, "");
+// Shared with the blog, which stores the same kind of written-by-hand HTML.
+const asWritten = (code) => safeHtml(code);
 
 const blockHtml = (block, first) => {
   const top = first ? 0 : 22;
