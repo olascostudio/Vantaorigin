@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import SectionHeading from "./SectionHeading";
 import hopeBreakerArt from "../assets/landing/pages/hope-breaker.webp";
+import hopeBreakerSmall from "../assets/landing/pages/hope-breaker-small.webp";
 import urokojinArt from "../assets/landing/pages/urokojin.webp";
+import urokojinSmall from "../assets/landing/pages/urokojin-small.webp";
 
 // The characters shown here are real ones, and each is credited to whoever
 // made it -- which is not always the person running this site. Getting that
@@ -19,6 +21,7 @@ const PAGES = [
     tagline: "Marcus Sinclair",
     body: "Conjures weapons out of Nether energy, sees the souls of the living and the dead, and opens portals into the wraith zone.",
     art: hopeBreakerArt,
+    artSmall: hopeBreakerSmall,
     // Somebody else's character, shown with their name on it. There is no
     // page to open until Spif Nation has one of their own.
     to: null,
@@ -31,16 +34,20 @@ const PAGES = [
     tagline: "The Thunder Judge",
     body: "What was left behind when the First Chaos struck the first laws of reality. He was not made to judge; judgment became part of him.",
     art: urokojinArt,
+    artSmall: urokojinSmall,
     to: "/character/urokojin",
     creator: "@Vtgshadowscribe",
   },
 ];
 
-function PageCard({ name, universe, tagline, body, art, to, creator }) {
+function PageCard({ name, universe, tagline, body, art, artSmall, to, creator }) {
   return (
     <article className="relative flex min-h-[520px] w-[85vw] max-w-[578.947px] shrink-0 snap-center flex-col justify-end overflow-hidden rounded-[42.105px] border-[1.053px] border-primary bg-black px-6 pb-[43px] pt-[180px] sm:h-[631.579px] sm:pl-[44px] sm:pr-[45px] lg:w-full">
       <img
         src={art}
+        srcSet={`${artSmall} 640w, ${art} 900w`}
+        // Nearly the full width of a phone, half a desktop.
+        sizes="(max-width: 1023px) 85vw, 578px"
         alt={`Artwork of ${name}`}
         loading="lazy"
         className="absolute inset-0 size-full object-cover object-top"

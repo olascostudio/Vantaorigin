@@ -5,13 +5,18 @@ import bellRing from "../assets/landing/hero/bell-ring.svg";
 import chevronRight from "../assets/landing/hero/chevron-right.svg";
 import gridLine from "../assets/landing/hero/grid-line.svg";
 import glowEllipse from "../assets/landing/hero/glow-ellipse.svg";
-import bottomFade from "../assets/landing/hero/bottom-fade.png";
+import bottomFade from "../assets/landing/hero/bottom-fade.webp";
 import cardBadge from "../assets/landing/hero/card-badge.svg";
 import artVtuber from "../assets/landing/hero/card-vtuber.webp";
+import artVtuberSmall from "../assets/landing/hero/card-vtuber-small.webp";
 import artKnifeDancer from "../assets/landing/hero/card-knife-dancer.webp";
+import artKnifeDancerSmall from "../assets/landing/hero/card-knife-dancer-small.webp";
 import artInkCentaur from "../assets/landing/hero/card-ink-centaur.webp";
+import artInkCentaurSmall from "../assets/landing/hero/card-ink-centaur-small.webp";
 import artHoodedGunman from "../assets/landing/hero/card-hooded-gunman.webp";
+import artHoodedGunmanSmall from "../assets/landing/hero/card-hooded-gunman-small.webp";
 import artWingedWolf from "../assets/landing/hero/card-winged-wolf.webp";
+import artWingedWolfSmall from "../assets/landing/hero/card-winged-wolf-small.webp";
 import curve802 from "../assets/landing/hero/curve-802.svg";
 import curve803 from "../assets/landing/hero/curve-803.svg";
 import curve804 from "../assets/landing/hero/curve-804.svg";
@@ -98,6 +103,15 @@ function HeroBackground() {
 
 const FLIPPED = (deg) => `rotate(${deg}deg) scaleY(-1)`;
 
+const CARD_SIZES = [
+  "(max-width: 639px) 149px",
+  "(max-width: 767px) 186px",
+  "(max-width: 1023px) 223px",
+  "(max-width: 1279px) 298px",
+  "(max-width: 1439px) 335px",
+  "372px",
+].join(", ");
+
 // Positions are relative to the 1307px showcase stage; `x` is the offset of
 // the card's bounding-box centre from the stage centre. Paint order matches
 // Figma (last = on top).
@@ -109,6 +123,7 @@ const SHOWCASE_CARDS = [
     transform: FLIPPED(-162.55),
     bg: "#3a2a6b",
     art: artVtuber,
+    artSmall: artVtuberSmall,
     badge: { box: [21.01, 29.3, 52.317, 53.051], transform: FLIPPED(-176.98) },
   },
   {
@@ -118,6 +133,7 @@ const SHOWCASE_CARDS = [
     transform: FLIPPED(-166.54),
     bg: "#5e1a1a",
     art: artKnifeDancer,
+    artSmall: artKnifeDancerSmall,
     badge: { box: [17.75, 19.65, 50.567, 51.329], transform: FLIPPED(179.04) },
   },
   {
@@ -127,6 +143,7 @@ const SHOWCASE_CARDS = [
     transform: "rotate(-17.45deg)",
     bg: "#c08a5c",
     art: artInkCentaur,
+    artSmall: artInkCentaurSmall,
     badge: { box: [10.61, 25.74, 50.284, 51.051], transform: "rotate(-0.64deg)" },
   },
   {
@@ -136,6 +153,7 @@ const SHOWCASE_CARDS = [
     transform: "rotate(-17.45deg)",
     bg: "#1b3a63",
     art: artHoodedGunman,
+    artSmall: artHoodedGunmanSmall,
     badge: { box: [35.21, 22.53, 50.284, 51.051], transform: "rotate(-0.64deg)" },
   },
   {
@@ -145,6 +163,7 @@ const SHOWCASE_CARDS = [
     transform: "none",
     bg: "#2a2f5e",
     art: artWingedWolf,
+    artSmall: artWingedWolfSmall,
     badge: { box: [23.5, 23.5, 49.724, 50.5], transform: "none" },
   },
 ];
@@ -159,7 +178,7 @@ function CardBadge({ box, transform }) {
   );
 }
 
-function ShowcaseCard({ id, x, box, transform, bg, art, badge }) {
+function ShowcaseCard({ id, x, box, transform, bg, art, artSmall, badge }) {
   const [top, width, height] = box;
   return (
     <div
@@ -174,7 +193,13 @@ function ShowcaseCard({ id, x, box, transform, bg, art, badge }) {
           style={{ backgroundColor: bg }}
         >
           {/* The artwork fills the card and tilts with it, as a card would */}
-          <img src={art} alt="" className="absolute inset-0 size-full object-cover" />
+          <img
+            src={art}
+            srcSet={`${artSmall} 380w, ${art} 744w`}
+            sizes={CARD_SIZES}
+            alt=""
+            className="absolute inset-0 size-full object-cover"
+          />
           <CardBadge {...badge} />
         </div>
       </div>
