@@ -19,14 +19,13 @@ const STUDIO_CARDS = [studioTilt1, studioTilt2, studioTilt3];
 // Long enough for a proper origin, short enough to fit the profile card.
 const ORIGIN_CHAR_LIMIT = 800;
 
-// Every field feeds the character card, so all of them must be filled.
+// A name and a picture make a character worth looking at; everything else
+// is worth adding, but not worth being stopped by. Asking for five things
+// before anybody sees anything is how a person gives up halfway.
 function missingFields(form, cover) {
   const missing = [];
-  if (!cover) missing.push("cover");
-  if (!form.name.trim()) missing.push("name");
-  if (!form.origin.trim()) missing.push("origin");
-  if (!form.universe.trim()) missing.push("universe");
-  if (!form.tagline.trim()) missing.push("tagline");
+  if (!cover) missing.push("a picture");
+  if (!form.name.trim()) missing.push("a name");
   return missing;
 }
 
@@ -406,7 +405,9 @@ export default function CreateCharacter() {
             if (visibility === "public") {
               await saveCharacter({ ...character, visibility: "public" });
             }
-            setCreated(character);
+            // Remembered as it now is, so the screen that follows knows
+            // whether there is a link to hand over.
+            setCreated({ ...character, visibility });
             setModal("success");
           } catch (error) {
             setCreateError(error.message);
@@ -424,6 +425,18 @@ export default function CreateCharacter() {
           name: form.name || identity,
           origin: form.origin,
           cover,
+          // The real character, so the link it hands over is the real link.
+          id: created?.id,
+          slug: created?.slug,
+          visibility: created?.visibility,
+        }}
+        // Thrown, not caught: saveCharacter hands back a plain true/false,
+        // and the modal is what shows the trouble, since the page behind it
+        // is covered.
+        onPublish={async () => {
+          const saved = await saveCharacter({ ...created, visibility: "public" });
+          if (!saved) throw new Error("We couldn't publish that one. Try again?");
+          setCreated({ ...created, visibility: "public" });
         }}
         onClose={() => navigate("/creators-hub", { state: { tab: "Character" } })}
         onAddMore={() => navigate(`/creators-hub/character/profile?id=${created?.id}`)}

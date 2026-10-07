@@ -103,8 +103,44 @@ export function PrivacyModal({ open, onClose, onSave, saving = false }) {
   );
 }
 
-export function SuccessModal({ open, character, onClose, onAddMore }) {
+export function SuccessModal({ open, character, onClose, onAddMore, onPublish }) {
+  const [copied, setCopied] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [problem, setProblem] = useState("");
+
   if (!open) return null;
+
+  const published = character?.visibility === "public";
+  const address = character?.slug
+    ? `vantaorigin.com/character/${character.slug}`
+    : character?.id
+      ? `vantaorigin.com/character/${character.id}`
+      : "";
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(`https://${address}`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2200);
+    } catch {
+      // Some browsers refuse without a gesture they recognise; the address is
+      // on screen to be selected either way.
+      setCopied(false);
+    }
+  };
+
+  const publish = async () => {
+    setPublishing(true);
+    setProblem("");
+    try {
+      await onPublish?.();
+    } catch (error) {
+      // Said here rather than on the page behind this, which they cannot see.
+      setProblem(error.message || "That didn't go through. Try again?");
+    } finally {
+      setPublishing(false);
+    }
+  };
 
   return (
     <Overlay onClose={onClose} label="Character created">
@@ -139,19 +175,59 @@ export function SuccessModal({ open, character, onClose, onAddMore }) {
             )}
           </p>
 
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-8 pb-4">
-            <button
-              type="button"
-              className="rounded-full bg-gradient-to-r from-[#7b3fe4] to-[#e0208c] px-12 py-3 font-ui text-lg font-bold text-white hover:opacity-90"
-            >
-              Share
-            </button>
+          {/* The link is the thing they came for, so it is the thing they
+              are handed. A character kept private has none to give yet. */}
+          {published ? (
+            <div className="mx-auto mt-8 w-full max-w-[460px]">
+              <p className="text-center font-ui text-sm text-neutral-300">
+                Your link. Put it anywhere.
+              </p>
+              <div className="mt-3 flex items-center gap-2 rounded-full border border-white/20 bg-[#1b2233] py-2 pl-5 pr-2">
+                <span className="min-w-0 flex-1 truncate font-ui text-sm text-white">{address}</span>
+                <button
+                  type="button"
+                  onClick={copy}
+                  className="shrink-0 rounded-full bg-gradient-to-r from-[#7b3fe4] to-[#e0208c] px-5 py-2 font-ui text-sm font-bold text-white hover:opacity-90"
+                >
+                  {copied ? "Copied" : "Copy"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="mx-auto mt-8 w-full max-w-[460px] text-center">
+              <p className="font-ui text-sm text-neutral-300">
+                This one is private, so it has no link yet.
+              </p>
+              <button
+                type="button"
+                onClick={publish}
+                disabled={publishing}
+                className="mt-3 rounded-full bg-gradient-to-r from-[#7b3fe4] to-[#e0208c] px-10 py-3 font-ui text-base font-bold text-white hover:opacity-90 disabled:opacity-50"
+              >
+                {publishing ? "Publishing…" : "Publish it and get the link"}
+              </button>
+              {problem && (
+                <p role="alert" className="mt-3 font-ui text-sm text-[#f2415f]">
+                  {problem}
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-4 pb-4">
             <button
               type="button"
               onClick={onAddMore}
-              className="rounded-full bg-gradient-to-r from-[#7b3fe4] to-[#e0208c] px-10 py-3 font-ui text-lg font-bold text-white hover:opacity-90"
+              className="rounded-full border border-white/25 px-8 py-3 font-ui text-base text-white hover:bg-white/10"
             >
-              Add More Info
+              Add more about them
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full px-6 py-3 font-ui text-base text-neutral-300 hover:text-white"
+            >
+              Done for now
             </button>
           </div>
         </div>
