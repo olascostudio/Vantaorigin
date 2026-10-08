@@ -73,6 +73,43 @@ test("writing is closed to everybody but an admin", async () => {
   }
 });
 
+test("a written letter saves, and previews the way it will send", async () => {
+  const made = await app.inject({
+    method: "POST",
+    url: "/admin/newsletter/issues",
+    headers: { cookie: editor },
+    payload: {},
+  });
+  const id = made.json().id;
+
+  const written =
+    "<h2>Written in one go</h2><p>With a <a href=\"https://www.vantaorigin.com\">link</a>.</p>";
+
+  const saved = await app.inject({
+    method: "PATCH",
+    url: `/admin/newsletter/issues/${id}`,
+    headers: { cookie: editor },
+    payload: { subject: "A letter", blocks: [{ type: "rich", html: written }] },
+  });
+
+  // The shape the editor sends has to be a shape the API accepts, or writing
+  // a letter fails at the moment somebody tries to keep it.
+  assert.equal(saved.statusCode, 200, saved.body);
+  assert.equal(saved.json().blocks[0].type, "rich");
+
+  const preview = await app.inject({
+    method: "POST",
+    url: "/admin/newsletter/preview",
+    headers: { cookie: editor },
+    payload: { subject: "A letter", blocks: [{ type: "rich", html: written }] },
+  });
+
+  assert.equal(preview.statusCode, 200);
+  // Gmail drops stylesheets, so the styling has to be on the elements.
+  assert.match(preview.json().html, /<h2 style="[^"]*font-size:22px/);
+  assert.match(preview.json().html, /<a [^>]*text-decoration:underline/);
+});
+
 test("a new draft opens on something to type over", async () => {
   const res = await app.inject({
     method: "POST",
@@ -84,8 +121,11 @@ test("a new draft opens on something to type over", async () => {
   assert.equal(res.statusCode, 201);
   const issue = res.json();
   assert.equal(issue.status, "draft");
-  assert.equal(issue.blocks[0].type, "heading");
-  assert.equal(issue.blocks.length, 2);
+  // One piece of writing, not two blocks: a letter is written in the editor
+  // in one go now rather than assembled out of parts.
+  assert.equal(issue.blocks.length, 1);
+  assert.equal(issue.blocks[0].type, "rich");
+  assert.match(issue.blocks[0].html, /What's new at VantaOrigin/);
 });
 
 test("a draft keeps what is written into it, and says who wrote it", async () => {

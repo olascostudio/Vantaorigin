@@ -1,5 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Skeleton } from "./Loading.jsx";
+
+// The same editor the blog uses, and the same reason for loading it late:
+// it is heavy, and only this screen needs it.
+const RichText = lazy(() => import("./RichText.jsx"));
 import {
   countWaiting,
   discardIssue,
@@ -576,6 +580,14 @@ function Editor({ id, onClose, onTrouble }) {
   const addBlock = (type) =>
     change(() => setBlocks((current) => [...current, withKey(emptyBlock(type))]));
 
+  // A letter is written in one go when it is empty or already one piece of
+  // writing. Anything else was assembled out of blocks before this editor
+  // existed, and keeps those.
+  const written = blocks.length === 0 || (blocks.length === 1 && blocks[0].type === "rich");
+
+  const setWriting = (html) =>
+    change(() => setBlocks([withKey({ type: "rich", html })]));
+
   if (!issue) return <Skeleton className="mt-5 h-[420px] rounded-2xl" />;
 
   return (
@@ -668,37 +680,59 @@ function Editor({ id, onClose, onTrouble }) {
             </label>
           </div>
 
-          {!closed && (
-            <ul className="flex flex-col gap-3">
-              {blocks.map((block, index) => (
-                <BlockCard
-                  key={block._key}
-                  block={block}
-                  index={index}
-                  count={blocks.length}
-                  onChange={(next) => setBlock(block, next)}
-                  onMove={moveBlock}
-                  onRemove={removeBlock}
-                  onTrouble={onTrouble}
+          {!closed && written && (
+            <section className="rounded-2xl border border-white/10 bg-[#0f1420] p-1.5">
+              <Suspense
+                fallback={
+                  <div className="flex h-[520px] items-center justify-center font-ui text-sm text-neutral-400">
+                    Getting the editor ready…
+                  </div>
+                }
+              >
+                <RichText
+                  value={blocks[0]?.html || ""}
+                  onChange={setWriting}
+                  folder="newsletter"
+                  height={520}
+                  placeholder="Write to them the way you would write to one person."
                 />
-              ))}
-            </ul>
+              </Suspense>
+            </section>
           )}
 
-          {!closed && (
-            <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-dashed border-white/15 p-3">
-              <span className="px-2 font-ui text-sm text-neutral-500">Add</span>
-              {KINDS.map((kind) => (
-                <button
-                  key={kind.type}
-                  type="button"
-                  onClick={() => addBlock(kind.type)}
-                  className="rounded-full bg-white/5 px-4 py-2 font-ui text-sm text-neutral-300 hover:bg-white/10 hover:text-white"
-                >
-                  {kind.label}
-                </button>
-              ))}
-            </div>
+          {/* A letter from before this editor existed. It keeps the controls
+              it was made with rather than being thrown away. */}
+          {!closed && !written && (
+            <>
+              <ul className="flex flex-col gap-3">
+                {blocks.map((block, index) => (
+                  <BlockCard
+                    key={block._key}
+                    block={block}
+                    index={index}
+                    count={blocks.length}
+                    onChange={(next) => setBlock(block, next)}
+                    onMove={moveBlock}
+                    onRemove={removeBlock}
+                    onTrouble={onTrouble}
+                  />
+                ))}
+              </ul>
+
+              <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-dashed border-white/15 p-3">
+                <span className="px-2 font-ui text-sm text-neutral-500">Add</span>
+                {KINDS.map((kind) => (
+                  <button
+                    key={kind.type}
+                    type="button"
+                    onClick={() => addBlock(kind.type)}
+                    className="rounded-full bg-white/5 px-4 py-2 font-ui text-sm text-neutral-300 hover:bg-white/10 hover:text-white"
+                  >
+                    {kind.label}
+                  </button>
+                ))}
+              </div>
+            </>
           )}
 
           <SendBar issue={issue} saved={saved} onChanged={setIssue} onTrouble={onTrouble} />

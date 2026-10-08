@@ -23,6 +23,9 @@ import { requireAdmin } from "./admin.js";
 // What a written block may hold. Anything else is refused rather than stored
 // and quietly ignored at sending time.
 const block = z.discriminatedUnion("type", [
+  // A whole letter, written in one go in the editor. The usual shape now;
+  // the parts below are what letters written before it are made of.
+  z.object({ type: z.literal("rich"), html: z.string().max(400_000).default("") }),
   z.object({ type: z.literal("heading"), text: z.string().max(200).default("") }),
   z.object({ type: z.literal("text"), text: z.string().max(20_000).default("") }),
   z.object({

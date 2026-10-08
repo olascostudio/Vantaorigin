@@ -52,6 +52,41 @@ const inlinePlain = (text) =>
 // Shared with the blog, which stores the same kind of written-by-hand HTML.
 const asWritten = (code) => safeHtml(code);
 
+// A letter written in the rich text editor arrives as ordinary HTML: <h2>,
+// <p>, <a>, <ul>. On a web page a stylesheet dresses those. Gmail throws
+// stylesheets away, so the styling has to be put on each element here, or the
+// letter lands as black Times New Roman on white.
+//
+// An element already carrying a style of its own is left alone: the writer
+// meant that one.
+const EMAIL_STYLES = {
+  h1: `margin:28px 0 10px;color:${INK};font-size:26px;line-height:1.3;font-weight:bold;`,
+  h2: `margin:28px 0 10px;color:${INK};font-size:22px;line-height:1.35;font-weight:bold;`,
+  h3: `margin:24px 0 8px;color:${INK};font-size:18px;line-height:1.4;font-weight:bold;`,
+  h4: `margin:22px 0 8px;color:${INK};font-size:16px;line-height:1.4;font-weight:bold;`,
+  p: `margin:0 0 16px;color:${BODY};font-size:16px;line-height:1.65;`,
+  a: `color:${PINK};font-weight:bold;text-decoration:underline;`,
+  ul: `margin:0 0 16px;padding-left:22px;color:${BODY};font-size:16px;line-height:1.65;`,
+  ol: `margin:0 0 16px;padding-left:22px;color:${BODY};font-size:16px;line-height:1.65;`,
+  li: "margin:0 0 6px;",
+  blockquote: `margin:18px 0;padding:2px 0 2px 16px;border-left:3px solid ${PINK};color:${BODY};font-style:italic;`,
+  img: "max-width:100%;height:auto;border-radius:12px;",
+  hr: "border:0;border-top:1px solid rgba(255,255,255,0.22);margin:26px 0;",
+  strong: `color:${INK};`,
+};
+
+const styleForEmail = (html) =>
+  String(html).replace(
+    /<(h1|h2|h3|h4|p|a|ul|ol|li|blockquote|img|hr|strong)(\s[^>]*)?(\/?)>/gi,
+    (whole, tag, attrs, closing) => {
+      const style = EMAIL_STYLES[tag.toLowerCase()];
+      if (!style) return whole;
+      const carried = attrs || "";
+      if (/\sstyle\s*=/i.test(carried)) return whole;
+      return `<${tag}${carried} style="${style}"${closing}>`;
+    }
+  );
+
 const blockHtml = (block, first) => {
   const top = first ? 0 : 22;
 
@@ -105,6 +140,13 @@ const blockHtml = (block, first) => {
         top + 6
       }px 0 0;"><tr><td style="border-top:1px solid #262f42;font-size:0;line-height:0;">&nbsp;</td></tr></table>`;
 
+    // A letter written as rich text: one block holding the whole thing.
+    case "rich": {
+      const written = styleForEmail(asWritten(block.html)).trim();
+      if (!written) return "";
+      return `<div style="margin:${top}px 0 0;">${written}</div>`;
+    }
+
     case "html": {
       const code = asWritten(block.code).trim();
       if (!code) return "";
@@ -130,10 +172,11 @@ const blockText = (block) => {
     }
     case "divider":
       return "--";
+    case "rich":
     case "html":
       // The plain part gets the words out of the markup, so a reader on a
       // text-only client still gets something.
-      return asWritten(block.code)
+      return asWritten(block.code ?? block.html)
         .replace(/<[^>]+>/g, " ")
         .replace(/&nbsp;/g, " ")
         .replace(/\s+/g, " ")
@@ -143,11 +186,12 @@ const blockText = (block) => {
   }
 };
 
-// What an empty issue looks like: one heading and one paragraph, so the editor
-// opens on something to type over rather than on nothing at all.
+// What an empty issue looks like: a heading and a place to start, so the
+// editor opens on something to type over rather than on nothing at all. One
+// piece of writing rather than two blocks, because that is what the editor
+// now hands back.
 export const startingBlocks = () => [
-  { type: "heading", text: "What's new at VantaOrigin" },
-  { type: "text", text: "" },
+  { type: "rich", html: "<h2>What's new at VantaOrigin</h2><p></p>" },
 ];
 
 export function renderIssue(issue, { unsubscribeUrl = "" } = {}) {
