@@ -13,11 +13,12 @@
 import { and, desc, eq } from "drizzle-orm";
 import { config } from "../config.js";
 import { db } from "../db/client.js";
-import { characterAssets, characters, highlights, users } from "../db/schema.js";
+import {
+  blogPosts, characterAssets, characters, highlights, users } from "../db/schema.js";
 import { userByHandle } from "../db/handles.js";
 import { characterByIdOrSlug } from "../db/slugs.js";
 
-const SITE = (config.SITE_URL || "https://www.vantaorigin.com").replace(/\/$/, "");
+export const SITE = (config.SITE_URL || "https://www.vantaorigin.com").replace(/\/$/, "");
 
 // The places creators gather. Kept here as well as on the page itself: two
 // short lists that rarely change beat a request to the app for its own copy.
@@ -53,7 +54,7 @@ async function studioPortfolio() {
   return data;
 }
 
-const escape = (value = "") =>
+export const escape = (value = "") =>
   String(value)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -62,7 +63,7 @@ const escape = (value = "") =>
 
 // A preview box shows a couple of lines; this keeps a whole backstory from
 // spilling into it while leaving whole words intact.
-function summarise(text, limit = 200) {
+export function summarise(text, limit = 200) {
   const clean = String(text || "").replace(/\s+/g, " ").trim();
   if (clean.length <= limit) return clean;
   const cut = clean.slice(0, limit);
@@ -73,7 +74,7 @@ const fullName = (user) =>
   [user.firstName, user.lastName].filter(Boolean).join(" ").trim() ||
   user.username.replace(/^@/, "");
 
-function page({ title, description, canonical, image, jsonLd, body }) {
+export function page({ title, description, canonical, image, jsonLd, body }) {
   const tags = [
     `<title>${escape(title)}</title>`,
     `<meta name="description" content="${escape(description)}" />`,
@@ -465,18 +466,24 @@ export default async function previewRoutes(app) {
 
   // ---- how a crawler finds all of it ----
   app.get("/sitemap.xml", async (request, reply) => {
-    const [published, creators] = await Promise.all([
+    const [published, creators, posts] = await Promise.all([
       db
         .select({ id: characters.id, slug: characters.slug, updatedAt: characters.updatedAt })
         .from(characters)
         .where(eq(characters.isPublic, true))
         .orderBy(desc(characters.updatedAt)),
       db.select({ username: users.username, updatedAt: users.updatedAt }).from(users),
+      db
+        .select({ slug: blogPosts.slug, updatedAt: blogPosts.updatedAt })
+        .from(blogPosts)
+        .where(eq(blogPosts.status, "published"))
+        .orderBy(desc(blogPosts.publishedAt)),
     ]);
 
     const urls = [
       { loc: SITE, priority: "1.0" },
       { loc: `${SITE}/discover`, priority: "0.8" },
+      { loc: `${SITE}/blog`, priority: "0.8" },
       { loc: `${SITE}/marketplace`, priority: "0.6" },
       { loc: `${SITE}/community`, priority: "0.5" },
       { loc: `${SITE}/help`, priority: "0.4" },
@@ -485,6 +492,11 @@ export default async function previewRoutes(app) {
         loc: `${SITE}/creator/${creator.username.replace(/^@/, "")}`,
         lastmod: creator.updatedAt,
         priority: "0.7",
+      })),
+      ...posts.map((post) => ({
+        loc: `${SITE}/blog/${post.slug}`,
+        lastmod: post.updatedAt,
+        priority: "0.8",
       })),
       ...published.map((character) => ({
         loc: `${SITE}/character/${character.slug || character.id}`,
