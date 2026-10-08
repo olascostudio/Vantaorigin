@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
-import PageSkeleton, { Skeleton } from "../components/Loading.jsx";
+import { Skeleton } from "../components/Loading.jsx";
 import NewsletterLetters from "../components/NewsletterEditor.jsx";
 import {
-  amIAdmin,
   forgetSubscriber,
   loadCreators,
   loadFunnel,
@@ -556,7 +555,6 @@ function NewsletterPanel({ onTrouble }) {
 }
 
 export default function Admin() {
-  const [allowed, setAllowed] = useState(null); // null while we ask
   const [overview, setOverview] = useState(null);
   const [tab, setTab] = useState("Reports");
   const [reportFilter, setReportFilter] = useState("open");
@@ -567,19 +565,17 @@ export default function Admin() {
   // Stops a second press while the first is in flight.
   const settling = useRef(false);
 
+  // RequireAdmin has already settled whether this screen may be opened, so
+  // there is nothing to ask here beyond the numbers.
   useEffect(() => {
     let cancelled = false;
-    amIAdmin().then(async (yes) => {
-      if (cancelled) return;
-      setAllowed(yes);
-      if (!yes) return;
-      try {
-        const numbers = await loadOverview();
+    loadOverview()
+      .then((numbers) => {
         if (!cancelled) setOverview(numbers);
-      } catch (error) {
+      })
+      .catch((error) => {
         if (!cancelled) setProblem(error.message);
-      }
-    });
+      });
     return () => {
       cancelled = true;
     };
@@ -588,7 +584,6 @@ export default function Admin() {
   // Each list is fetched the first time its tab is opened, and again when the
   // report filter changes.
   useEffect(() => {
-    if (!allowed) return undefined;
     let cancelled = false;
 
     const load = async () => {
@@ -606,7 +601,7 @@ export default function Admin() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allowed, tab, reportFilter]);
+  }, [tab, reportFilter]);
 
   const settle = async (id, status) => {
     if (settling.current) return;
@@ -632,35 +627,6 @@ export default function Admin() {
     }
   };
 
-  if (allowed === null) {
-    return (
-      <div className="min-h-screen bg-[#1b2233]">
-        <DashboardNav />
-        <PageSkeleton />
-      </div>
-    );
-  }
-
-  // Same answer the API gives: there is nothing here for you.
-  if (!allowed) {
-    return (
-      <div className="min-h-screen bg-[#1b2233]">
-        <DashboardNav />
-        <div className="mx-auto max-w-[520px] px-6 py-24 text-center">
-          <h1 className="font-ui text-3xl font-bold text-white">Page not found</h1>
-          <p className="mt-4 font-ui text-lg text-neutral-300">
-            This page does not exist, or is not yours to open.
-          </p>
-          <Link
-            to="/creators-hub"
-            className="mt-8 inline-block rounded-full bg-gradient-to-r from-[#c2185b] to-[#a855f7] px-8 py-3 font-ui text-base font-bold text-white hover:opacity-90"
-          >
-            Back to your hub
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-[#1b2233] pb-20">

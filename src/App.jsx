@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import Footer from "./components/Footer";
 import RequireAuth from "./components/RequireAuth.jsx";
+import RequireAdmin from "./components/RequireAdmin.jsx";
 import Landing from "./pages/Landing";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
@@ -75,8 +76,26 @@ export default function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/help" element={<Help />} />
         {/* Only opens for an account named in the API setting. */}
-        <Route path="/admin" element={<RequireAuth><Admin /></RequireAuth>} />
-        <Route path="/admin/blog/:id" element={<RequireAuth><BlogEditor /></RequireAuth>} />
+        <Route
+          path="/admin"
+          element={
+            <RequireAuth>
+              <RequireAdmin>
+                <Admin />
+              </RequireAdmin>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/blog/:id"
+          element={
+            <RequireAuth>
+              <RequireAdmin>
+                <BlogEditor />
+              </RequireAdmin>
+            </RequireAuth>
+          }
+        />
         {/* The page a creator shares. It used to be called a Realm, and links
             with that word in them are already out in the world, so they keep
             working. */}
