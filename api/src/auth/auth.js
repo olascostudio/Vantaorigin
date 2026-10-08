@@ -183,5 +183,6 @@ export const publicUser = (user) => ({
   dateOfBirth: user.dateOfBirth,
   avatarUrl: user.avatarUrl,
   bannerUrl: user.bannerUrl,
+  allowEmbeds: user.allowEmbeds !== false,
   emailVerified: Boolean(user.emailVerifiedAt),
 });

@@ -259,7 +259,60 @@ function PersonalTab({ settings, update, onSaved }) {
   );
 }
 
-function AccountTab({ settings, signOut, onSaved }) {
+// Whether a published character may appear inside somebody else's page.
+//
+// Not a privacy control in the usual sense: these characters are already
+// public and readable by anyone. This is about whether the card travels.
+function EmbedSwitch({ allowed, onChange, onSaved }) {
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState("");
+
+  const flip = async (wanted) => {
+    setBusy(true);
+    setProblem("");
+    try {
+      await onChange(wanted);
+      onSaved(wanted ? "Embedding turned on" : "Embedding turned off");
+    } catch (error) {
+      setProblem(error.message || "That would not save");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="mt-10">
+      <h2 className="font-ui text-2xl font-bold text-white">Embedding</h2>
+      <label className="mt-4 flex items-start justify-between gap-5 rounded-xl bg-[#111827] p-5">
+        <span>
+          <span className="font-ui text-base font-medium text-white">
+            Let people put your characters on their own sites
+          </span>
+          <span className="mt-1.5 block font-ui text-sm text-neutral-400">
+            Anyone can copy a small snippet that shows one of your published characters
+            inside their page, linking back to yours. Turning this off does not hide
+            anything: your characters stay public and readable. It only stops the card
+            appearing somewhere else.
+          </span>
+        </span>
+        <input
+          type="checkbox"
+          checked={allowed}
+          disabled={busy}
+          onChange={(event) => flip(event.target.checked)}
+          className="mt-1 size-6 shrink-0 accent-[#e0208c] disabled:opacity-50"
+        />
+      </label>
+      {problem && (
+        <p role="alert" className="mt-2 font-ui text-sm text-[#f2415f]">
+          {problem}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function AccountTab({ settings, signOut, onSaved, onAllowEmbeds }) {
   const navigate = useNavigate();
   const [passwords, setPasswords] = useState({ current: "", next: "", confirm: "" });
   const [error, setError] = useState("");
@@ -314,6 +367,12 @@ function AccountTab({ settings, signOut, onSaved }) {
           Your email is the address you signed up with. Contact support if it needs to change.
         </p>
       </div>
+
+      <EmbedSwitch
+        allowed={settings.allowEmbeds !== false}
+        onChange={onAllowEmbeds}
+        onSaved={onSaved}
+      />
 
       <div className="mt-10 flex flex-wrap items-center justify-between gap-4">
         <h2 className="font-ui text-2xl font-bold text-white">Change Password</h2>
@@ -476,7 +535,13 @@ export default function Settings() {
             <PersonalTab key="personal" settings={settings} update={update} onSaved={onSaved} />
           )}
           {active === "account" && (
-            <AccountTab key="account" settings={settings} signOut={signOut} onSaved={onSaved} />
+            <AccountTab
+              key="account"
+              settings={settings}
+              signOut={signOut}
+              onSaved={onSaved}
+              onAllowEmbeds={(allowEmbeds) => updateProfile({ allowEmbeds })}
+            />
           )}
         </section>
       </div>

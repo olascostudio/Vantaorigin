@@ -12,6 +12,7 @@ import authRoutes from "./routes/auth.js";
 import blogRoutes from "./routes/blog.js";
 import blogPreviewRoutes from "./routes/blog-preview.js";
 import characterRoutes from "./routes/characters.js";
+import embedRoutes from "./routes/embed.js";
 import highlightRoutes from "./routes/highlights.js";
 import googleRoutes, { googleConfigNote } from "./routes/google.js";
 import newsletterRoutes from "./routes/newsletter.js";
@@ -93,11 +94,27 @@ export async function buildApp() {
     };
   });
 
+  // Nothing on this API belongs inside somebody else's page. Dropping a
+  // signed-in dashboard into a hidden frame and collecting the clicks is an
+  // old trick, and a lax session cookie only happens to blunt it.
+  //
+  // The embed route is the exception and sets its own header: a card that
+  // cannot be framed is not an embed. It is public, read-only, and carries
+  // no session.
+  app.addHook("onSend", async (request, reply) => {
+    if (request.url.startsWith("/embed/")) return;
+    reply.header("content-security-policy", "frame-ancestors 'none'");
+    reply.header("x-frame-options", "DENY");
+    reply.header("x-content-type-options", "nosniff");
+    reply.header("referrer-policy", "strict-origin-when-cross-origin");
+  });
+
   await app.register(adminRoutes);
   await app.register(authRoutes);
   await app.register(blogRoutes);
   await app.register(blogPreviewRoutes);
   await app.register(characterRoutes);
+  await app.register(embedRoutes);
   await app.register(googleRoutes);
   await app.register(highlightRoutes);
   await app.register(newsletterRoutes);

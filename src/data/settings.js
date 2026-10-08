@@ -13,6 +13,9 @@ export function toSettings(user) {
     bio: user?.bio || "",
     email: user?.email || "",
     avatar: user?.avatarUrl || null,
+    // Undefined means an older session that predates the setting. Treated
+    // as on, which is the default the API stores.
+    allowEmbeds: user?.allowEmbeds !== false,
     banner: user?.bannerUrl || null,
   };
 }

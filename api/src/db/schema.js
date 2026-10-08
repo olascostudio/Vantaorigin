@@ -27,6 +27,9 @@ export const users = pgTable(
     dateOfBirth: text("date_of_birth").default("").notNull(),
     avatarUrl: text("avatar_url"),
     bannerUrl: text("banner_url"),
+    // Whether this creator's published characters may be shown inside
+    // somebody else's page. Not about secrecy: they are already public.
+    allowEmbeds: boolean("allow_embeds").default(true).notNull(),
     emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),

@@ -301,6 +301,7 @@ export default async function authRoutes(app) {
         dateOfBirth: z.string().max(20).optional(),
         avatarUrl: z.string().nullable().optional(),
         bannerUrl: z.string().nullable().optional(),
+        allowEmbeds: z.boolean().optional(),
       })
       .parse(request.body);
 

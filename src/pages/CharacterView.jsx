@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import DashboardNav from "../components/DashboardNav";
 import CharacterCard from "../components/creator/CharacterCard";
 import { DEFAULT_CHARACTER, likeCharacter, loadCharacter, loadPublicCharacter } from "../data/character";
+import { API_BASE } from "../data/api";
 import { useAuth } from "../data/AuthContext.jsx";
 import { usePageMeta } from "../data/pageMeta";
 import ReportCreator from "../components/ReportCreator.jsx";
@@ -130,6 +131,90 @@ function AssetRail({ assets, characterName }) {
   );
 }
 
+// The snippet somebody pastes into their own page.
+//
+// An iframe rather than a script: it is one line, it cannot touch the page
+// around it, and the card inside it is a few kilobytes of HTML served by the
+// API rather than this whole application.
+function EmbedPanel({ character, onClose }) {
+  const [copied, setCopied] = useState(false);
+  const [theme, setTheme] = useState("dark");
+
+  const address = `${API_BASE}/embed/character/${character.slug || character.id}`;
+  const snippet =
+    `<iframe src="${address}${theme === "light" ? "?theme=light" : ""}" ` +
+    `width="340" height="440" style="border:0;border-radius:18px" ` +
+    `loading="lazy" title="${character.alias} on VantaOrigin"></iframe>`;
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(snippet);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2400);
+    } catch {
+      window.prompt("Copy this", snippet);
+    }
+  };
+
+  return (
+    <div className="mt-4 rounded-2xl border border-white/15 bg-[#141a27] p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="font-ui text-base font-bold text-white">Put this card on your site</h2>
+        <button
+          type="button"
+          onClick={onClose}
+          className="font-ui text-sm text-neutral-400 hover:text-white"
+        >
+          Close
+        </button>
+      </div>
+
+      <p className="mt-1.5 font-ui text-sm text-neutral-400">
+        Paste this wherever you can add HTML. It links back here, and it stays in step:
+        change the character and the card changes with it.
+      </p>
+
+      <div className="mt-4 flex gap-2">
+        {["dark", "light"].map((one) => (
+          <button
+            key={one}
+            type="button"
+            onClick={() => setTheme(one)}
+            aria-pressed={theme === one}
+            className={`rounded-full px-4 py-1.5 font-ui text-sm capitalize ${
+              theme === one ? "bg-white text-black" : "bg-white/10 text-neutral-300 hover:text-white"
+            }`}
+          >
+            {one}
+          </button>
+        ))}
+      </div>
+
+      <pre className="mt-3 overflow-x-auto rounded-xl bg-[#0b0f18] p-4 font-mono text-xs leading-relaxed text-neutral-300">
+{snippet}
+      </pre>
+
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={copy}
+          className="rounded-full bg-gradient-to-r from-[#7b3fe4] to-[#e0208c] px-6 py-2 font-ui text-sm font-bold text-white hover:opacity-90"
+        >
+          {copied ? "Copied" : "Copy the snippet"}
+        </button>
+        <a
+          href={address}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-ui text-sm text-neutral-400 underline hover:text-white"
+        >
+          See the card on its own
+        </a>
+      </div>
+    </div>
+  );
+}
+
 export default function CharacterView({ owner = false }) {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -201,6 +286,7 @@ export default function CharacterView({ owner = false }) {
   // everywhere else. The link is always the public one, even when an owner
   // shares from their own view of the character.
   const [shareNote, setShareNote] = useState("");
+  const [embedding, setEmbedding] = useState(false);
   const share = async () => {
     const link = character?.id
       ? `${window.location.origin}/character/${character.slug || character.id}`
@@ -352,6 +438,22 @@ export default function CharacterView({ owner = false }) {
                 Share
               </button>
 
+              {/* Only for a character that is actually published: there is
+                  nothing to embed until there is a page to link to. */}
+              {character.id && character.visibility !== "private" && (
+                <button
+                  type="button"
+                  onClick={() => setEmbedding((open) => !open)}
+                  aria-expanded={embedding}
+                  className="flex items-center gap-2 rounded-full border border-white/25 px-4 py-2 font-ui text-sm text-white hover:bg-white/10 sm:px-6 sm:py-2.5 sm:text-base"
+                >
+                  <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                    <path d="M8 6 2 12l6 6M16 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  Embed
+                </button>
+              )}
+
               {/* Beside Share, and only on someone else's character. */}
               {!owner && character.id && (
                 <ReportCreator
@@ -361,6 +463,10 @@ export default function CharacterView({ owner = false }) {
                 />
               )}
             </div>
+
+            {embedding && (
+              <EmbedPanel character={character} onClose={() => setEmbedding(false)} />
+            )}
           </div>
 
           {/* ---- Phones & tablets: card, then the story card ---- */}
