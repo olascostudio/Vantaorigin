@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import { Art, TextLine } from "../components/Loading.jsx";
@@ -10,10 +10,7 @@ import {
   uploadBlogImage,
 } from "../data/blog.js";
 
-// The editor is a few hundred kilobytes of TinyMCE. Loading it here rather
-// than importing it at the top keeps it out of every other page's bundle,
-// including the blog people actually read.
-const RichText = lazy(() => import("../components/RichText.jsx"));
+import Writing from "../components/Writing.jsx";
 
 const SITE = "vantaorigin.com";
 
@@ -397,20 +394,12 @@ export default function BlogEditor() {
             </div>
 
             <section className="rounded-2xl border border-white/10 bg-[#0f1420] p-1.5">
-              <Suspense
-                fallback={
-                  <div className="flex h-[560px] items-center justify-center font-ui text-sm text-neutral-400">
-                    Getting the editor ready…
-                  </div>
-                }
-              >
-                <RichText
-                  value={form.body}
-                  onChange={set("body")}
-                  folder="blog"
-                  placeholder="Write the article. Pictures can be dropped straight in."
-                />
-              </Suspense>
+              <Writing
+                value={form.body}
+                onChange={set("body")}
+                folder="blog"
+                placeholder="Write the article. Pictures can be dropped straight in."
+              />
             </section>
 
             <Panel

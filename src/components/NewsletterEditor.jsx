@@ -1,9 +1,7 @@
-import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Skeleton } from "./Loading.jsx";
 
-// The same editor the blog uses, and the same reason for loading it late:
-// it is heavy, and only this screen needs it.
-const RichText = lazy(() => import("./RichText.jsx"));
+import Writing from "./Writing.jsx";
 import {
   countWaiting,
   discardIssue,
@@ -682,21 +680,13 @@ function Editor({ id, onClose, onTrouble }) {
 
           {!closed && written && (
             <section className="rounded-2xl border border-white/10 bg-[#0f1420] p-1.5">
-              <Suspense
-                fallback={
-                  <div className="flex h-[520px] items-center justify-center font-ui text-sm text-neutral-400">
-                    Getting the editor ready…
-                  </div>
-                }
-              >
-                <RichText
-                  value={blocks[0]?.html || ""}
-                  onChange={setWriting}
-                  folder="newsletter"
-                  height={520}
-                  placeholder="Write to them the way you would write to one person."
-                />
-              </Suspense>
+              <Writing
+                value={blocks[0]?.html || ""}
+                onChange={setWriting}
+                folder="newsletter"
+                height={520}
+                placeholder="Write to them the way you would write to one person."
+              />
             </section>
           )}
 

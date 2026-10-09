@@ -28,8 +28,21 @@
         "EMAIL_DRIVER": "console",
         "ADMIN_EMAILS": "boss@vantaorigin.test",
         "PORT": "8080",
-        "STORAGE_DRIVER": "memory"
+        "STORAGE_DRIVER": "memory",
+        "APP_ORIGIN": "http://localhost:5173,http://localhost:4173"
       }
+    },
+    {
+      "name": "vite-preview",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "preview",
+        "--port",
+        "4173",
+        "--strictPort"
+      ],
+      "port": 4173
     }
   ]
 }
