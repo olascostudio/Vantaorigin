@@ -15,7 +15,21 @@ import "tinymce/tinymce";
 import "tinymce/models/dom";
 import "tinymce/themes/silver";
 import "tinymce/icons/default";
-import "tinymce/skins/ui/oxide-dark/skin.js";
+
+// The skin, as CSS we put on the page ourselves.
+//
+// There is a skin.js beside these files, and importing it looks like the
+// obvious thing to do. It is not: it calls tinymce.Resource.add, which only
+// registers the CSS for TinyMCE to fetch later, and `skin: false` below tells
+// TinyMCE never to ask. The two cancel each other out and the editor renders
+// with no styling at all: a default 300x150 iframe inside a full width box,
+// which looks like a dead grey rectangle nobody can type in.
+//
+// So the CSS is imported as text and injected directly. No resource lookup,
+// nothing fetched at runtime, and it either works or the build fails.
+import skinCss from "tinymce/skins/ui/oxide-dark/skin.min.css?inline";
+import contentUiCss from "tinymce/skins/ui/oxide-dark/content.min.css?inline";
+import contentBaseCss from "tinymce/skins/content/dark/content.min.css?inline";
 
 import "tinymce/plugins/advlist";
 import "tinymce/plugins/autolink";
@@ -69,6 +83,17 @@ const TOOLBAR =
   "undo redo | blocks | bold italic underline strikethrough | " +
   "bullist numlist blockquote | link image media table | alignleft aligncenter | removeformat code";
 
+// The editor's own styling belongs to the page, not to one editor, so it goes
+// in once however many editors open.
+const SKIN_TAG = "tinymce-skin";
+const wearTheSkin = () => {
+  if (typeof document === "undefined" || document.getElementById(SKIN_TAG)) return;
+  const tag = document.createElement("style");
+  tag.id = SKIN_TAG;
+  tag.textContent = skinCss;
+  document.head.appendChild(tag);
+};
+
 export default function RichText({
   value,
   onChange,
@@ -77,6 +102,7 @@ export default function RichText({
   placeholder = "Start writing…",
 }) {
   const ref = useRef(null);
+  wearTheSkin();
 
   // A picture dropped into the article goes to the same place every other
   // upload goes, and comes back as a URL the post can keep.
@@ -113,7 +139,9 @@ export default function RichText({
         // to fetch them by name.
         skin: false,
         content_css: false,
-        content_style: CONTENT_STYLE,
+        // Inside the editing frame: TinyMCE's own base styling first, then
+        // the way an article actually looks on the site.
+        content_style: [contentBaseCss, contentUiCss, CONTENT_STYLE].join("\n"),
         plugins:
           "advlist autolink code image link lists media quickbars searchreplace table wordcount",
         toolbar: TOOLBAR,
