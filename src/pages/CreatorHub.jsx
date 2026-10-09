@@ -259,6 +259,36 @@ function AddCharacterSlot({ categoryId }) {
   );
 }
 
+// The first thing a new creator sees, and the only thing between them and a
+// link worth sharing.
+//
+// It used to be a sentence asking them to make a category first. A category
+// is a filing decision about work that does not exist yet, and the character
+// is what they came here for, so that is what this offers. The create flow
+// files it under "My Characters" by itself when there is nowhere to put it.
+function FirstCharacter() {
+  return (
+    <div className="mt-10 rounded-2xl border border-dashed border-white/15 px-6 py-14 text-center sm:py-16">
+      <h3 className="font-ui text-2xl font-bold text-white sm:text-3xl">
+        Make your first character
+      </h3>
+      <p className="mx-auto mt-3 max-w-[430px] font-ui text-base leading-relaxed text-neutral-300">
+        A name and a picture is all it takes. You will have a link to share at the end of it,
+        and the rest can wait until you feel like writing it.
+      </p>
+      <Link
+        to="/creators-hub/character/new"
+        className="mt-7 inline-block rounded-full bg-gradient-to-r from-[#7b3fe4] to-[#e0208c] px-10 py-3.5 font-ui text-base font-bold text-white transition-opacity hover:opacity-90"
+      >
+        Start with a name and a picture
+      </Link>
+      <p className="mx-auto mt-6 max-w-[430px] font-ui text-sm text-neutral-500">
+        Working on more than one project? Add a category above, and file them as you go.
+      </p>
+    </div>
+  );
+}
+
 function CategoryModal({ onClose, onCreate }) {
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
@@ -624,9 +654,7 @@ export default function CreatorHub() {
                 </div>
               </div>
             ) : library.categories.length === 0 ? (
-              <p className="mt-10 rounded-2xl border border-dashed border-white/15 px-6 py-16 text-center font-ui text-lg text-neutral-400">
-                Start with a category for each comic, book or project, then add its characters.
-              </p>
+              <FirstCharacter />
             ) : (
               <div className="mt-8 flex flex-col gap-8">
                 {library.categories.map((category) => {
