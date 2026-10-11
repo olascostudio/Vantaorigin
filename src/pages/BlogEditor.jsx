@@ -71,13 +71,39 @@ function Panel({ title, note, children }) {
 
 // Type a word, press Enter or comma. Used for both kinds of tag, which are
 // not the same thing: one organises the blog, the other is for search.
+// Keywords arrive as a list far more often than one at a time: out of a
+// spreadsheet, a notes app, somebody's suggested set. So a whole list can be
+// pasted in and it breaks itself apart, rather than becoming one long tag
+// that reads as a sentence.
+//
+// Commas, new lines and tabs all count as the break, because a column copied
+// out of a spreadsheet comes across separated by new lines and nobody should
+// have to know that.
+const SEPARATORS = /[,\n\r\t;]+/;
+
 function TagInput({ values, onChange, placeholder }) {
   const [draft, setDraft] = useState("");
 
   const add = (text) => {
-    const wanted = text.trim().replace(/,$/, "");
-    if (!wanted || values.includes(wanted)) return setDraft("");
-    onChange([...values, wanted]);
+    const wanted = String(text || "")
+      .split(SEPARATORS)
+      .map((one) => one.trim())
+      .filter(Boolean);
+
+    if (!wanted.length) return setDraft("");
+
+    // Against what is already there and against the rest of the paste, and
+    // without minding case: "SEO" and "seo" are the same keyword twice.
+    const seen = new Set(values.map((one) => one.toLowerCase()));
+    const fresh = [];
+    for (const one of wanted) {
+      const key = one.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      fresh.push(one);
+    }
+
+    if (fresh.length) onChange([...values, ...fresh]);
     setDraft("");
   };
 
@@ -85,9 +111,16 @@ function TagInput({ values, onChange, placeholder }) {
     <div>
       <input
         value={draft}
+        onPaste={(event) => {
+          const pasted = event.clipboardData?.getData("text") ?? "";
+          // One word pasted behaves like typing it. A list breaks apart.
+          if (!SEPARATORS.test(pasted)) return;
+          event.preventDefault();
+          add(draft ? `${draft},${pasted}` : pasted);
+        }}
         onChange={(event) => {
           const text = event.target.value;
-          if (text.endsWith(",")) add(text);
+          if (SEPARATORS.test(text)) add(text);
           else setDraft(text);
         }}
         onKeyDown={(event) => {
