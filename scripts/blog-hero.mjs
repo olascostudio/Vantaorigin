@@ -34,8 +34,26 @@ const label = flag("label", "The VantaOrigin blog");
 const art = flag("art");
 const out = flag("out", "blog-hero.webp");
 
-if (!title) {
-  console.error("A hero needs a title.\n\n  node scripts/blog-hero.mjs --title \"Your post title\" [--art path] [--label Craft] [--out hero.webp]");
+// A hero made of artwork does not need the title burned into it: the article
+// prints the title right underneath, and the card on the blog prints it
+// beside. Burning it in says the same thing twice.
+//
+// It earns its place in one spot, which is the picture a link preview shows,
+// because there the title is all anybody gets. So: artwork alone for the post,
+// artwork with the title for sharing, and the editor has a slot for each.
+const quiet = args.includes("--no-title");
+
+if (!title && !quiet) {
+  console.error(
+    "A hero needs a title, or --no-title with artwork.\n\n" +
+      "  node scripts/blog-hero.mjs --title \"Your post title\" [--art path] [--label Craft] [--out hero.webp]\n" +
+      "  node scripts/blog-hero.mjs --no-title --art path/to/art.webp --out hero.webp"
+  );
+  process.exit(1);
+}
+
+if (quiet && !art) {
+  console.error("--no-title needs --art: without either there is nothing to show.");
   process.exit(1);
 }
 
@@ -74,11 +92,11 @@ const typeset = (text) => {
   return { size: 44, lines: wrap(text, 44).slice(0, 4) };
 };
 
-const { size, lines } = typeset(title);
+const { size, lines } = quiet ? { size: 0, lines: [] } : typeset(title);
 const lineHeight = Math.round(size * 1.12);
 const blockHeight = lines.length * lineHeight;
 // Sat on the lower half, so artwork keeps its top half visible.
-const firstBaseline = H - PAD - blockHeight + size;
+const firstBaseline = quiet ? H - 44 : H - PAD - blockHeight + size;
 
 const titleSvg = lines
   .map(
@@ -87,13 +105,19 @@ const titleSvg = lines
   )
   .join("\n    ");
 
-const chrome = `
+// Small enough to stay out of the way, there so the picture still says where
+// it came from if somebody saves it.
+const mark = `
+    <text x="${PAD}" y="${H - 44}" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif"
+          font-size="20" fill="#8e97a8">vantaorigin.com</text>`;
+
+const chrome = quiet
+  ? mark
+  : `
     <rect x="${PAD}" y="${firstBaseline - size - 54}" width="64" height="5" rx="2.5" fill="${PINK}"/>
     <text x="${PAD}" y="${firstBaseline - size - 26}" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif"
           font-size="21" font-weight="700" letter-spacing="3" fill="${PINK}">${escape(label.toUpperCase())}</text>
-    ${titleSvg}
-    <text x="${PAD}" y="${H - 44}" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif"
-          font-size="20" fill="#8e97a8">vantaorigin.com</text>`;
+    ${titleSvg}${mark}`;
 
 const layers = [];
 let artwork = null;
@@ -115,6 +139,9 @@ if (art) {
 // and the point of this script is not having to think about that.
 const scrimStrength = async () => {
   if (!artwork) return 0.92;
+  // No words to keep readable, so only enough to settle the artwork onto a
+  // dark page rather than ending at a hard edge.
+  if (quiet) return 0.45;
 
   const top = Math.max(0, firstBaseline - size - 70);
   const region = {
