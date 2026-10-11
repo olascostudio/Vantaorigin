@@ -95,6 +95,48 @@ const chrome = `
     <text x="${PAD}" y="${H - 44}" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif"
           font-size="20" fill="#8e97a8">vantaorigin.com</text>`;
 
+const layers = [];
+let artwork = null;
+
+if (art) {
+  // Artwork is usually taller than this frame, so something gets cropped.
+  // "attention" lets sharp find the busiest part and keep that, which beats
+  // guessing from the top and cutting the character's head off. --focus top
+  // or centre or bottom overrides it when it picks wrong.
+  const focus = flag("focus", "attention");
+  artwork = await sharp(await readFile(art))
+    .resize({ width: W, height: H, fit: "cover", position: focus })
+    .toBuffer();
+  layers.push({ input: artwork, top: 0, left: 0 });
+}
+
+// How dark the scrim needs to be is a question about this particular picture.
+// White text over a pale sky needs more than white text over a night scene,
+// and the point of this script is not having to think about that.
+const scrimStrength = async () => {
+  if (!artwork) return 0.92;
+
+  const top = Math.max(0, firstBaseline - size - 70);
+  const region = {
+    left: 0,
+    top,
+    width: Math.min(W, 1300),
+    height: Math.min(H - top, blockHeight + 120),
+  };
+
+  const { channels } = await sharp(artwork).extract(region).stats();
+  const [r, g, b] = channels.map((channel) => channel.mean);
+  const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+  // Dark art needs little help; a bright patch under the words needs a lot.
+  if (brightness < 0.22) return 0.82;
+  if (brightness < 0.4) return 0.9;
+  if (brightness < 0.6) return 0.95;
+  return 0.97;
+};
+
+const deepest = await scrimStrength();
+
 const background = art
   ? // The artwork carries it; this only darkens the bottom so words stay legible.
     `<rect width="${W}" height="${H}" fill="url(#scrim)"/>`
@@ -112,8 +154,8 @@ const svg = `
     </radialGradient>
     <linearGradient id="scrim" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#000000" stop-opacity="0.12"/>
-      <stop offset="42%" stop-color="#000000" stop-opacity="0.55"/>
-      <stop offset="100%" stop-color="#000000" stop-opacity="0.92"/>
+      <stop offset="42%" stop-color="#000000" stop-opacity="${(deepest * 0.6).toFixed(2)}"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="${deepest}"/>
     </linearGradient>
     <pattern id="grid" width="56" height="56" patternUnits="userSpaceOnUse">
       <path d="M 56 0 L 0 0 0 56" fill="none" stroke="#1a1a1a" stroke-width="1"/>
@@ -123,19 +165,6 @@ const svg = `
   ${chrome}
 </svg>`;
 
-const layers = [];
-
-if (art) {
-  // Artwork is usually taller than this frame, so something gets cropped.
-  // "attention" lets sharp find the busiest part and keep that, which beats
-  // guessing from the top and cutting the character's head off. --focus top
-  // or centre or bottom overrides it when it picks wrong.
-  const focus = flag("focus", "attention");
-  const artwork = await sharp(await readFile(art))
-    .resize({ width: W, height: H, fit: "cover", position: focus })
-    .toBuffer();
-  layers.push({ input: artwork, top: 0, left: 0 });
-}
 layers.push({ input: Buffer.from(svg), top: 0, left: 0 });
 
 const canvas = sharp({
@@ -147,5 +176,5 @@ await writeFile(out, webp);
 
 console.log(
   `  ${basename(out)}  ${W}x${H}  ${Math.round(webp.length / 1024)}KB  ` +
-    `${art ? `over ${basename(art)}` : "typographic"}  ${lines.length} line${lines.length === 1 ? "" : "s"}`
+    `${art ? `over ${basename(art)}, scrim ${deepest}` : "typographic"}  ${lines.length} line${lines.length === 1 ? "" : "s"}`
 );
