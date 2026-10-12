@@ -167,11 +167,27 @@ export async function storeShareImage(post, app) {
   }
 }
 
-// What it is drawn from. If none of this changed, the old one still shows the
-// right thing and there is no reason to draw it again.
+// Bumped whenever the drawing itself changes, which is as much a reason to
+// redraw as the title changing is. Without it, a card drawn by a version that
+// got something wrong stays wrong for ever: its inputs never move, so nothing
+// ever asks for it again. That is exactly how a cardful of empty boxes
+// survived the fix for empty boxes.
+//
+//   1  the first one
+//   2  words drawn as outlines, so a server with no fonts can set them
+const RENDERER = 2;
+
+// What it is drawn from. If none of this changed, and the way it is drawn has
+// not changed either, the old one still shows the right thing.
 export const shareImageInputs = (post) =>
-  [post.title, post.category, post.heroUrl, post.heroFocus].join("\u0000");
+  [RENDERER, post.title, post.category, post.heroUrl, post.heroFocus].join("\u0000");
 
 // A short, stable mark of those inputs, for the file's name.
 const stamp = (post) =>
   createHash("sha256").update(shareImageInputs(post)).digest("hex").slice(0, 10);
+
+// Whether the card on file is the card this post should have. Asked of the
+// stored address rather than of the inputs, because the address carries the
+// mark of everything it was drawn from, the renderer among them.
+export const needsShareImage = (post) =>
+  !post.shareImageUrl || !post.shareImageUrl.includes(`-${stamp(post)}.jpg`);

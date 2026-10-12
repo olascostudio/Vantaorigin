@@ -195,3 +195,37 @@ test("a title too long for three lines is still set, not dropped", async () => {
   assert.ok(size >= 36);
   assert.ok(lines.join(" ").length > 20, "something of the title survived");
 });
+
+test("a card drawn by an older version is replaced, not kept", async () => {
+  const made = await write({ title: "Drawn the old way", status: "published" });
+  const id = made.json().post.id;
+  const proper = made.json().post.seo.ogImageUrl;
+
+  // Exactly the state the live posts were in: a card on file, drawn by a
+  // version that got it wrong, with inputs that are never going to change.
+  const { db } = await import("../src/db/client.js");
+  const { blogPosts } = await import("../src/db/schema.js");
+  const { eq } = await import("drizzle-orm");
+  await db
+    .update(blogPosts)
+    .set({ shareImageUrl: "https://example.com/old/drawn-by-version-one.jpg" })
+    .where(eq(blogPosts.id, id));
+
+  // A save that changes nothing, which is all somebody should have to do.
+  const saved = await change(id, {});
+  const now = saved.json().post.seo.ogImageUrl;
+
+  assert.notEqual(now, "https://example.com/old/drawn-by-version-one.jpg");
+  assert.match(now, /\/share\//);
+  // Same inputs, so it lands back at the address it should always have had.
+  assert.equal(now, proper);
+});
+
+test("a card that is already right is left alone", async () => {
+  const made = await write({ title: "Already correct", status: "published" });
+  const id = made.json().post.id;
+  const before = made.json().post.seo.ogImageUrl;
+
+  const saved = await change(id, { body: "<p>Only the writing moved.</p>" });
+  assert.equal(saved.json().post.seo.ogImageUrl, before);
+});

@@ -10,7 +10,7 @@ import { db } from "../db/client.js";
 import { blogPosts, blogPostSlugs, users } from "../db/schema.js";
 import { requireAdmin } from "./admin.js";
 import { tellSearchEngines } from "../indexnow.js";
-import { shareImageInputs, storeShareImage } from "../blog-share.js";
+import { needsShareImage, storeShareImage } from "../blog-share.js";
 import {
   excerptFrom,
   freeBlogSlug,
@@ -307,14 +307,14 @@ export default async function blogRoutes(app) {
       .where(eq(blogPosts.id, existing.id))
       .returning();
 
-    // When what it is drawn from moved, or when there is no picture yet.
+    // Only when the card on file is not the card this post should have.
     //
     // Redrawing on every edit of the body would be a picture a minute for no
-    // difference. But posts written before any of this existed have nothing
-    // to show, and nothing about them is going to change on its own: without
-    // the second half of this, saving one does nothing and the only way to
-    // get a card is to go and alter the title.
-    if (!existing.shareImageUrl || shareImageInputs(existing) !== shareImageInputs(row)) {
+    // difference, so the address is checked instead: it carries a mark of the
+    // title, the hero, the framing and the way it was drawn, so a post that
+    // has none, or one whose card predates a change to the drawing, gets a
+    // new one and nothing else does.
+    if (needsShareImage(row)) {
       const drawn = await storeShareImage(row, app);
       if (drawn) {
         await db.update(blogPosts).set({ shareImageUrl: drawn }).where(eq(blogPosts.id, row.id));
