@@ -98,7 +98,7 @@ function RelatedCard({ post }) {
             src={post.heroUrl}
             alt=""
             loading="lazy"
-            className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.05]"
+            className="size-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.05]"
           />
         ) : (
           <div className="size-full bg-gradient-to-br from-[#2b1a3d] to-[#141a27]" />
@@ -249,12 +249,17 @@ export default function BlogPost() {
               )}
             </p>
 
+            {/* A fixed shape, whatever was uploaded. Character artwork is
+                usually drawn portrait, and left to its own proportions a
+                1129x1600 picture becomes a wall most of a screen tall before
+                the article has started. Cropped from the top, because that is
+                where faces are. */}
             {post.heroUrl && (
               <div
-                className="mt-8 overflow-hidden rounded-[24px] border-[1.5px] bg-[#1e2637]"
+                className="mt-8 aspect-[16/9] overflow-hidden rounded-[24px] border-[1.5px] bg-[#1e2637]"
                 style={{ borderColor: post.heroAccent || "#fc187b" }}
               >
-                <Art src={post.heroUrl} alt="" className="w-full object-cover" />
+                <Art src={post.heroUrl} alt="" className="size-full object-cover object-top" />
               </div>
             )}
 

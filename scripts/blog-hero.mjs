@@ -121,16 +121,38 @@ const chrome = quiet
 
 const layers = [];
 let artwork = null;
+let chosenFocus = "";
 
 if (art) {
-  // Artwork is usually taller than this frame, so something gets cropped.
-  // "attention" lets sharp find the busiest part and keep that, which beats
-  // guessing from the top and cutting the character's head off. --focus top
-  // or centre or bottom overrides it when it picks wrong.
-  const focus = flag("focus", "attention");
-  artwork = await sharp(await readFile(art))
-    .resize({ width: W, height: H, fit: "cover", position: focus })
-    .toBuffer();
+  const source = await sharp(await readFile(art));
+  const { width: sw = 0, height: sh = 0 } = await source.metadata();
+
+  // Artwork is taller than this frame, so a band of it gets kept and the rest
+  // is cut. Which band is the whole question, and no automatic answer gets it
+  // right: asking sharp for the busiest region on a portrait drawing picks
+  // the middle, which is a torso, and cropping from the top on the same
+  // drawing lands in the sky above the character's head.
+  //
+  // So it is a number instead. --y is where the band sits, 0 at the top of
+  // the picture and 1 at the bottom. 0.3 frames head and shoulders on most
+  // character art, which is what a hero wants. Run it, look at it, nudge it.
+  const tall = sh > sw * 1.1;
+  const wanted = Number(flag("y", tall ? "0.3" : "0.5"));
+  const y = Number.isFinite(wanted) ? Math.min(1, Math.max(0, wanted)) : 0.3;
+  chosenFocus = `y ${y}`;
+
+  // Widened to the frame first, so the band is measured in the picture's own
+  // proportions rather than the output's.
+  const widened = await source.resize({ width: W }).toBuffer();
+  const grown = await sharp(widened).metadata();
+  const spare = Math.max(0, (grown.height ?? H) - H);
+
+  artwork =
+    spare === 0
+      ? await sharp(widened).resize({ width: W, height: H, fit: "cover" }).toBuffer()
+      : await sharp(widened)
+          .extract({ left: 0, top: Math.round(spare * y), width: W, height: H })
+          .toBuffer();
   layers.push({ input: artwork, top: 0, left: 0 });
 }
 
@@ -203,5 +225,5 @@ await writeFile(out, webp);
 
 console.log(
   `  ${basename(out)}  ${W}x${H}  ${Math.round(webp.length / 1024)}KB  ` +
-    `${art ? `over ${basename(art)}, scrim ${deepest}` : "typographic"}  ${lines.length} line${lines.length === 1 ? "" : "s"}`
+    `${art ? `over ${basename(art)}, crop ${chosenFocus}, scrim ${deepest}` : "typographic"}  ${lines.length} line${lines.length === 1 ? "" : "s"}`
 );

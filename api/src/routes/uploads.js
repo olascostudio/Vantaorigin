@@ -48,9 +48,11 @@ export default async function uploadRoutes(app) {
       request.log.warn({ err: error }, "could not shrink that picture");
     }
 
-    // A cover decides the colour its card is trimmed in.
+    // A cover decides the colour its card is trimmed in, and so does a blog
+    // hero: the cards on the blog are trimmed the same way the character
+    // cards are, and without this every one of them falls back to brand pink.
     let accent = null;
-    if (folder === "covers") {
+    if (folder === "covers" || folder === "blog") {
       try {
         accent = await accentOf(body);
       } catch (error) {
