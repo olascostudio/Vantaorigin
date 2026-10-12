@@ -162,3 +162,36 @@ test("a post written before any of this gets one the next time it is saved", asy
   const saved = await change(id, {});
   assert.match(saved.json().post.seo.ogImageUrl, /\/share\//);
 });
+
+test("the words are drawn, not asked for", async () => {
+  const body = await shareImage({ title: "Readable anywhere", label: "Craft" });
+
+  // The strip the title sits in. On a card whose words failed to render this
+  // is flat black; the first version of this shipped exactly that way, as a
+  // row of empty boxes, and nothing in the code complained.
+  const strip = await sharp(body)
+    .extract({ left: 60, top: 400, width: 900, height: 180 })
+    .stats();
+
+  const brightest = Math.max(...strip.channels.map((channel) => channel.max));
+  assert.ok(brightest > 200, `expected white letters, got a brightest pixel of ${brightest}`);
+
+  // And they are shapes rather than text, which is what makes it independent
+  // of whatever fonts the machine underneath happens to have.
+  const { inkOf } = await import("../src/type.js");
+  const drawn = inkOf("Hello", { x: 0, y: 0, size: 40 });
+  assert.match(drawn, /^<path d="/);
+  assert.ok(!drawn.includes("<text"), "a text element would need a font at draw time");
+});
+
+test("a title too long for three lines is still set, not dropped", async () => {
+  const { fitLines } = await import("../src/type.js");
+  const { size, lines } = fitLines(
+    "An extraordinarily long title about worldbuilding and character design that simply refuses to stop going on and on",
+    { room: 1056, sizes: [62, 56, 50, 44, 40, 36], weight: 800, maxLines: 3 }
+  );
+
+  assert.ok(lines.length > 0 && lines.length <= 3, `got ${lines.length} lines`);
+  assert.ok(size >= 36);
+  assert.ok(lines.join(" ").length > 20, "something of the title survived");
+});

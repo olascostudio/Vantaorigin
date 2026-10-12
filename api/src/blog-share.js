@@ -10,6 +10,7 @@
 import { createHash } from "node:crypto";
 import sharp from "sharp";
 import { storage } from "./adapters/storage.js";
+import { fitLines, inkOf } from "./type.js";
 
 const W = 1200;
 const H = 630;
@@ -26,28 +27,15 @@ const escape = (value) =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 
-// Bold sans runs at roughly half the font size per character. Close enough to
-// wrap on, and the size steps down until it fits in three lines.
-const typeset = (text) => {
-  const room = W - PAD * 2;
-  for (const size of [62, 56, 50, 44, 40]) {
-    const max = Math.floor(room / (size * 0.52));
-    const lines = [];
-    let line = "";
-    for (const word of String(text).split(/\s+/)) {
-      const next = line ? `${line} ${word}` : word;
-      if (next.length > max && line) {
-        lines.push(line);
-        line = word;
-      } else {
-        line = next;
-      }
-    }
-    if (line) lines.push(line);
-    if (lines.length <= 3) return { size, lines };
-  }
-  return { size: 36, lines: [String(text).slice(0, 90)] };
-};
+// Measured against the real letters rather than guessed at from an average
+// character width, and stepped down until it fits in three lines.
+const typeset = (text) =>
+  fitLines(text || "VantaOrigin", {
+    room: W - PAD * 2,
+    sizes: [62, 56, 50, 44, 40, 36],
+    weight: 800,
+    maxLines: 3,
+  });
 
 // How dark the bottom needs to be is a question about this one picture: white
 // words over a pale sky need more than white words over a night scene.
@@ -99,10 +87,10 @@ export async function shareImage({ title, label, heroUrl, heroFocus }) {
 
   const deepest = await scrimFor(artwork, Math.max(0, first - size - 60), Math.min(H, block + 110));
 
+  // Outlines, not text elements: nothing is looked up when this is drawn.
   const words = lines
-    .map(
-      (line, index) =>
-        `<text x="${PAD}" y="${first + index * lineHeight}" font-family="Sora, Inter, DejaVu Sans, Segoe UI, Helvetica, Arial, sans-serif" font-size="${size}" font-weight="800" fill="#ffffff" letter-spacing="-0.5">${escape(line)}</text>`
+    .map((line, index) =>
+      inkOf(line, { x: PAD, y: first + index * lineHeight, size, weight: 800, fill: "#ffffff" })
     )
     .join("\n    ");
 
@@ -131,13 +119,16 @@ export async function shareImage({ title, label, heroUrl, heroFocus }) {
          <rect width="${W}" height="${H}" fill="url(#glow)"/>`
   }
     <rect x="${PAD}" y="${first - size - 46}" width="52" height="4" rx="2" fill="${PINK}"/>
-    <text x="${PAD}" y="${first - size - 22}" font-family="Inter, DejaVu Sans, Segoe UI, Helvetica, Arial, sans-serif"
-          font-size="17" font-weight="700" letter-spacing="2.4" fill="${PINK}">${escape(
-            (label || "The VantaOrigin blog").toUpperCase()
-          )}</text>
+    ${inkOf((label || "The VantaOrigin blog").toUpperCase(), {
+      x: PAD,
+      y: first - size - 22,
+      size: 17,
+      weight: 700,
+      fill: PINK,
+      tracking: 2.4,
+    })}
     ${words}
-    <text x="${PAD}" y="${H - 32}" font-family="Inter, DejaVu Sans, Segoe UI, Helvetica, Arial, sans-serif"
-          font-size="17" fill="#8e97a8">vantaorigin.com</text>
+    ${inkOf("vantaorigin.com", { x: PAD, y: H - 32, size: 17, weight: 400, fill: "#8e97a8" })}
 </svg>`;
 
   const layers = [];
