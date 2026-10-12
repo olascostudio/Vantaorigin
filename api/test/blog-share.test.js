@@ -142,3 +142,23 @@ test("a hero that cannot be fetched leaves the post alone", async () => {
   // No drawn picture, so the preview falls back to the hero it was given.
   assert.equal(post.seo.ogImageUrl, "https://localhost:1/not-a-real-host.webp");
 });
+
+test("a post written before any of this gets one the next time it is saved", async () => {
+  // Exactly the state the live posts were in: published, no card, and
+  // nothing about them about to change on its own.
+  const made = await write({ title: "Written before the cards existed", status: "published" });
+  const id = made.json().post.id;
+
+  // Take the card away, as though it had never been drawn.
+  const { db } = await import("../src/db/client.js");
+  const { blogPosts } = await import("../src/db/schema.js");
+  const { eq } = await import("drizzle-orm");
+  await db.update(blogPosts).set({ shareImageUrl: null }).where(eq(blogPosts.id, id));
+
+  const before = await app.inject({ method: "GET", url: "/blog/written-before-the-cards-existed" });
+  assert.ok(!before.json().post.seo.ogImageUrl, "no card to start with");
+
+  // A save that changes nothing at all, which is what somebody would do.
+  const saved = await change(id, {});
+  assert.match(saved.json().post.seo.ogImageUrl, /\/share\//);
+});

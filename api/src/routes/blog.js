@@ -307,9 +307,14 @@ export default async function blogRoutes(app) {
       .where(eq(blogPosts.id, existing.id))
       .returning();
 
-    // Only when what it is drawn from actually moved. Redrawing on every
-    // keystroke of the body would be a picture a minute for no difference.
-    if (shareImageInputs(existing) !== shareImageInputs(row)) {
+    // When what it is drawn from moved, or when there is no picture yet.
+    //
+    // Redrawing on every edit of the body would be a picture a minute for no
+    // difference. But posts written before any of this existed have nothing
+    // to show, and nothing about them is going to change on its own: without
+    // the second half of this, saving one does nothing and the only way to
+    // get a card is to go and alter the title.
+    if (!existing.shareImageUrl || shareImageInputs(existing) !== shareImageInputs(row)) {
       const drawn = await storeShareImage(row, app);
       if (drawn) {
         await db.update(blogPosts).set({ shareImageUrl: drawn }).where(eq(blogPosts.id, row.id));
