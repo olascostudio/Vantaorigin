@@ -317,6 +317,9 @@ export const blogPosts = pgTable(
     metaKeywords: jsonb("meta_keywords").$type().default([]).notNull(),
     canonicalUrl: text("canonical_url").default("").notNull(),
     ogImageUrl: text("og_image_url"),
+    // Drawn from the hero and the title when the post goes out. Separate from
+    // ogImageUrl, which is the one somebody uploaded themselves.
+    shareImageUrl: text("share_image_url"),
 
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),

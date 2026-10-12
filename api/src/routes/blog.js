@@ -10,6 +10,7 @@ import { db } from "../db/client.js";
 import { blogPosts, blogPostSlugs, users } from "../db/schema.js";
 import { requireAdmin } from "./admin.js";
 import { tellSearchEngines } from "../indexnow.js";
+import { shareImageInputs, storeShareImage } from "../blog-share.js";
 import {
   excerptFrom,
   freeBlogSlug,
@@ -226,6 +227,12 @@ export default async function blogRoutes(app) {
       })
       .returning();
 
+    const drawn = await storeShareImage(row, app);
+    if (drawn) {
+      await db.update(blogPosts).set({ shareImageUrl: drawn }).where(eq(blogPosts.id, row.id));
+      row.shareImageUrl = drawn;
+    }
+
     if (publishing) tellSearchEngines(app, { blogSlug: row.slug });
     return reply.code(201).send({ post: toPost(row, request.user) });
   });
@@ -299,6 +306,16 @@ export default async function blogRoutes(app) {
       .set(patch)
       .where(eq(blogPosts.id, existing.id))
       .returning();
+
+    // Only when what it is drawn from actually moved. Redrawing on every
+    // keystroke of the body would be a picture a minute for no difference.
+    if (shareImageInputs(existing) !== shareImageInputs(row)) {
+      const drawn = await storeShareImage(row, app);
+      if (drawn) {
+        await db.update(blogPosts).set({ shareImageUrl: drawn }).where(eq(blogPosts.id, row.id));
+        row.shareImageUrl = drawn;
+      }
+    }
 
     if (row.status === "published") tellSearchEngines(app, { blogSlug: row.slug });
     const writers = await writersFor([row]);

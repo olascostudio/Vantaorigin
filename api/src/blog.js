@@ -66,7 +66,9 @@ export const seoOf = (post) => ({
   metaDescription: post.metaDescription || post.excerpt || excerptFrom(post.body),
   metaKeywords: tagList(post.metaKeywords),
   canonicalUrl: post.canonicalUrl || "",
-  ogImageUrl: post.ogImageUrl || post.heroUrl || null,
+  // A picture somebody chose by hand wins. Then the one drawn for this
+  // post. The bare hero only when there is neither.
+  ogImageUrl: post.ogImageUrl || post.shareImageUrl || post.heroUrl || null,
 });
 
 const author = (writer) => {
