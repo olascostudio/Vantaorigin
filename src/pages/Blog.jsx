@@ -44,7 +44,8 @@ function Lead({ post }) {
           <Art
             src={post.heroUrl}
             alt=""
-            className="size-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.03]"
+            className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            style={{ objectPosition: `50% ${post.heroFocus ?? 50}%` }}
           />
         ) : (
           <div className="size-full bg-gradient-to-br from-[#2b1a3d] to-[#141a27]" />
@@ -99,7 +100,8 @@ function PostCard({ post }) {
             src={post.heroUrl}
             alt=""
             loading="lazy"
-            className="size-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.04]"
+            className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+            style={{ objectPosition: `50% ${post.heroFocus ?? 50}%` }}
           />
         ) : (
           <div className="size-full bg-gradient-to-br from-[#2b1a3d] to-[#141a27]" />

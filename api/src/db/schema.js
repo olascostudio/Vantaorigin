@@ -300,6 +300,9 @@ export const blogPosts = pgTable(
     body: text("body").default("").notNull(),
     heroUrl: text("hero_url"),
     heroAccent: text("hero_accent"),
+    // Where the wide frame sits on a tall picture, as a percentage from the
+    // top. The same number CSS object-position wants.
+    heroFocus: integer("hero_focus").default(50).notNull(),
     category: text("category").default("").notNull(),
     tags: jsonb("tags").$type().default([]).notNull(),
 

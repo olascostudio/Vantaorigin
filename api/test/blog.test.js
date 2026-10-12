@@ -275,3 +275,40 @@ test("only an admin can delete, and then it is gone", async () => {
   const old = await app.inject({ method: "GET", url: "/blog/10-ways-to-improve-your-website" });
   assert.equal(old.statusCode, 404);
 });
+
+test("the writer says which part of a tall picture the frame shows", async () => {
+  const made = await app.inject({
+    method: "POST",
+    url: "/admin/blog",
+    headers: { cookie: boss },
+    payload: { title: "A tall picture", heroUrl: "https://example.com/tall.webp", status: "published" },
+  });
+
+  // Middle until somebody says otherwise, which is what a wide picture wants.
+  assert.equal(made.json().post.heroFocus, 50);
+
+  const moved = await app.inject({
+    method: "PATCH",
+    url: `/admin/blog/${made.json().post.id}`,
+    headers: { cookie: boss },
+    payload: { heroFocus: 28 },
+  });
+  assert.equal(moved.json().post.heroFocus, 28);
+
+  // And it reaches the page, on the article and on the card alike.
+  const read = await app.inject({ method: "GET", url: "/blog/a-tall-picture" });
+  assert.equal(read.json().post.heroFocus, 28);
+
+  const listed = await app.inject({ method: "GET", url: "/blog" });
+  const card = listed.json().posts.find((one) => one.slug === "a-tall-picture");
+  assert.equal(card.heroFocus, 28);
+
+  // Nonsense is refused rather than stored and quietly clamped later.
+  const silly = await app.inject({
+    method: "PATCH",
+    url: `/admin/blog/${made.json().post.id}`,
+    headers: { cookie: boss },
+    payload: { heroFocus: 300 },
+  });
+  assert.equal(silly.statusCode, 400);
+});

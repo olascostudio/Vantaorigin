@@ -26,6 +26,7 @@ const BLANK = {
   body: "",
   heroUrl: null,
   heroAccent: null,
+  heroFocus: 50,
   category: "",
   tags: [],
   status: "draft",
@@ -247,6 +248,7 @@ export default function BlogEditor() {
           body: post.body || "",
           heroUrl: post.heroUrl,
           heroAccent: post.heroAccent,
+          heroFocus: typeof post.heroFocus === "number" ? post.heroFocus : 50,
           category: post.category || "",
           tags: post.tags || [],
           status: post.status,
@@ -281,6 +283,7 @@ export default function BlogEditor() {
         body: form.body,
         heroUrl: form.heroUrl,
         heroAccent: form.heroAccent,
+        heroFocus: form.heroFocus,
         category: form.category,
         tags: form.tags,
         featured: form.featured,
@@ -482,6 +485,41 @@ export default function BlogEditor() {
                 }
                 onCleared={() => setForm((was) => ({ ...was, heroUrl: null, heroAccent: null }))}
               />
+
+              {/* Artwork is drawn tall and a hero is drawn wide, so a band of
+                  the picture is kept and the rest is cut. Which band is a
+                  judgement about this one drawing, so it is made here, with
+                  the thing visible, rather than guessed at by a rule. */}
+              {form.heroUrl && (
+                <div className="flex flex-col gap-2">
+                  <span className="font-ui text-sm text-white">What the frame shows</span>
+                  <div
+                    className="aspect-[16/9] overflow-hidden rounded-xl border"
+                    style={{ borderColor: form.heroAccent || "rgba(255,255,255,0.15)" }}
+                  >
+                    <img
+                      src={form.heroUrl}
+                      alt=""
+                      className="size-full object-cover"
+                      style={{ objectPosition: `50% ${form.heroFocus}%` }}
+                    />
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={form.heroFocus}
+                    onChange={(event) => set("heroFocus")(Number(event.target.value))}
+                    aria-label="Move the frame up or down the picture"
+                    className="w-full accent-[#e0208c]"
+                  />
+                  <p className="font-ui text-xs text-neutral-500">
+                    Drag until the face is in the frame. This is exactly what the card and the
+                    article will show.
+                  </p>
+                </div>
+              )}
               {form.heroAccent && (
                 <p className="flex items-center gap-2 font-ui text-xs text-neutral-400">
                   <span

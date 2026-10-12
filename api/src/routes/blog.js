@@ -30,6 +30,7 @@ const postBody = z.object({
   body: z.string().max(400000).optional(),
   heroUrl: z.string().url().nullable().optional(),
   heroAccent: z.string().max(20).nullable().optional(),
+  heroFocus: z.number().int().min(0).max(100).optional(),
   category: z.string().max(60).optional(),
   tags: z.array(z.string().max(40)).max(20).optional(),
   status: z.enum(["draft", "published"]).optional(),
@@ -209,6 +210,7 @@ export default async function blogRoutes(app) {
         body,
         heroUrl: input.heroUrl ?? null,
         heroAccent: input.heroAccent ?? null,
+        heroFocus: input.heroFocus ?? 50,
         category: input.category || "",
         tags: input.tags || [],
         authorId: request.user.id,
@@ -249,6 +251,7 @@ export default async function blogRoutes(app) {
     set("excerpt", input.excerpt);
     set("heroUrl", input.heroUrl);
     set("heroAccent", input.heroAccent);
+    set("heroFocus", input.heroFocus);
     set("category", input.category);
     set("tags", input.tags);
     set("featured", input.featured);

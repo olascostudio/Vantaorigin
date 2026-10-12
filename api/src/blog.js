@@ -85,6 +85,7 @@ export const toCard = (post, writer) => ({
   excerpt: post.excerpt || excerptFrom(post.body),
   heroUrl: post.heroUrl,
   heroAccent: post.heroAccent,
+  heroFocus: typeof post.heroFocus === "number" ? post.heroFocus : 50,
   category: post.category,
   tags: tagList(post.tags),
   featured: post.featured,
