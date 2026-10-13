@@ -258,7 +258,10 @@ export default function BlogEditor() {
             post.seo.metaDescription === post.excerpt ? "" : post.seo.metaDescription,
           metaKeywords: post.seo.metaKeywords || [],
           canonicalUrl: post.canonical || "",
-          ogImageUrl: post.seo.ogImageUrl === post.heroUrl ? null : post.seo.ogImageUrl,
+          // The one somebody picked, never the one drawn for this post: the
+          // resolved address used to be loaded here, so opening a post and
+          // saving it pinned whatever card existed at that moment.
+          ogImageUrl: post.seo.ogImageChosen ?? null,
         });
       })
       .catch((error) => setProblem(error.message))

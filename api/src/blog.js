@@ -59,6 +59,27 @@ export const excerptFrom = (body, limit = 180) => {
 
 const tagList = (value) => (Array.isArray(value) ? value.filter(Boolean).map(String) : []);
 
+// A picture this system drew for this post, which nobody chose.
+//
+// The editor used to load the resolved preview picture into the field that
+// holds a hand-picked one. It guarded against the hero and not against the
+// drawn card, so opening a post and saving it wrote that card into the column
+// meaning "somebody chose this on purpose". From then on the post was pinned
+// to whatever card happened to exist at the moment it was first opened, and
+// every redraw after that was made correctly and ignored, which is exactly
+// what happened to three posts whose cards were drawn before the lettering
+// worked.
+//
+// A drawn card is recognisable: it lives under /share/ and is named after the
+// post it belongs to. One of those in the hand-picked column was never a
+// choice, so it is not treated as one, and the pinned posts come unstuck
+// without anybody having to go and clear a field.
+export const chosenImage = (post) => {
+  const picked = post.ogImageUrl;
+  if (!picked) return null;
+  return picked.includes(`/share/${post.id}-`) ? null : picked;
+};
+
 // What search engines and link previews are told. Falls back field by field,
 // so filling in one of them does not mean filling in all of them.
 export const seoOf = (post) => ({
@@ -68,7 +89,10 @@ export const seoOf = (post) => ({
   canonicalUrl: post.canonicalUrl || "",
   // A picture somebody chose by hand wins. Then the one drawn for this
   // post. The bare hero only when there is neither.
-  ogImageUrl: post.ogImageUrl || post.shareImageUrl || post.heroUrl || null,
+  ogImageUrl: chosenImage(post) || post.shareImageUrl || post.heroUrl || null,
+  // The hand-picked one on its own, so an editor can show an empty field
+  // when nothing was picked rather than showing it what it drew itself.
+  ogImageChosen: chosenImage(post),
 });
 
 const author = (writer) => {

@@ -349,3 +349,71 @@ test("the font is asked, rather than the picture guessed at", async () => {
   // Glyph 0 is .notdef, and in Inter .notdef is a drawn box.
   assert.equal(unmappable("雷の審判者", { weight: 800 }).fraction, 1);
 });
+
+// ---- the card a post is stuck to ------------------------------------------
+//
+// The editor loaded the resolved preview picture into the field that holds a
+// hand-picked one. Opening a post and saving it therefore wrote the drawn
+// card into the column meaning "somebody chose this", and the post was pinned
+// to whatever card existed at that moment. Three live posts were pinned to a
+// card drawn before the lettering worked, so every redraw afterwards was made
+// correctly, stored correctly, and ignored.
+
+test("a drawn card in the hand-picked column is not treated as a choice", async () => {
+  const { chosenImage } = await import("../src/blog.js");
+  const id = "cffb3ced-3d56-4a60-bb69-3c751d28708b";
+
+  // What a save used to write: this post's own drawn card.
+  assert.equal(
+    chosenImage({ id, ogImageUrl: `https://cdn.example.com/u1/share/${id}-85db2e136a.jpg` }),
+    null
+  );
+
+  // A picture somebody really did choose is still a choice.
+  assert.equal(
+    chosenImage({ id, ogImageUrl: "https://example.com/my-own-banner.jpg" }),
+    "https://example.com/my-own-banner.jpg"
+  );
+
+  // Including one drawn for a different post, which somebody could have
+  // pasted in deliberately.
+  const other = "https://cdn.example.com/u1/share/0000-abc1234567.jpg";
+  assert.equal(chosenImage({ id, ogImageUrl: other }), other);
+
+  assert.equal(chosenImage({ id, ogImageUrl: null }), null);
+});
+
+test("a post pinned to its own old card comes unstuck", async () => {
+  const made = await write({ title: "Pinned to a bad card", status: "published" });
+  const id = made.json().post.id;
+  const drawn = made.json().post.seo.ogImageUrl;
+  assert.match(drawn, /\/share\//);
+
+  // Exactly what the editor used to send back: the drawn card, written into
+  // the column that means somebody picked it.
+  const { db } = await import("../src/db/client.js");
+  const { blogPosts } = await import("../src/db/schema.js");
+  const { eq } = await import("drizzle-orm");
+  await db.update(blogPosts).set({ ogImageUrl: drawn }).where(eq(blogPosts.id, id));
+
+  // Retitling draws a new card, which the pin used to hide for good.
+  const retitled = await change(id, { title: "A different name for it" });
+  const after = retitled.json().post.seo.ogImageUrl;
+
+  assert.notEqual(after, drawn, "the post should not still be showing the old card");
+  assert.match(after, /\/share\//);
+  // And nothing is reported as hand-picked, so the editor shows an empty field.
+  assert.equal(retitled.json().post.seo.ogImageChosen, null);
+});
+
+test("a picture somebody really chose still wins, and is reported as chosen", async () => {
+  const made = await write({
+    title: "My own banner please",
+    ogImageUrl: "https://example.com/chosen.jpg",
+    status: "published",
+  });
+
+  const post = made.json().post;
+  assert.equal(post.seo.ogImageUrl, "https://example.com/chosen.jpg");
+  assert.equal(post.seo.ogImageChosen, "https://example.com/chosen.jpg");
+});
