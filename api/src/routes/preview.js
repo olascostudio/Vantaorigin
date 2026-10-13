@@ -74,6 +74,37 @@ const fullName = (user) =>
   [user.firstName, user.lastName].filter(Boolean).join(" ").trim() ||
   user.username.replace(/^@/, "");
 
+// The same links out of every page drawn for a crawler.
+//
+// A character page is the commonest page on this site and the one most often
+// shared, and it had no link to anything but itself. Search engines read the
+// sitemap, but the crawlers that feed language models mostly follow links,
+// so a reader arriving at one character could not be led to the next one, or
+// to the blog, or to what the site is. The browser pages have carried a
+// footer like this all along; these did not.
+const ONWARD = [
+  ["/", "VantaOrigin"],
+  ["/discover", "Explore characters"],
+  ["/blog", "Blog"],
+  ["/marketplace", "Marketplace"],
+  ["/community", "Community"],
+  ["/about", "About VantaOrigin"],
+  ["/help", "Help"],
+];
+
+// A trailing slash is the same page, and the front page is canonical
+// without one, so both sides are compared without it.
+const trim = (url) => String(url || "").replace(/\/$/, "");
+
+const onwardHtml = (canonical) =>
+  `<footer>
+      <nav aria-label="VantaOrigin">
+        ${ONWARD.filter(([path]) => trim(`${SITE}${path}`) !== trim(canonical))
+          .map(([path, label]) => `<a href="${SITE}${path}">${escape(label)}</a>`)
+          .join("\n        ")}
+      </nav>
+    </footer>`;
+
 export function page({ title, description, canonical, image, jsonLd, body }) {
   const tags = [
     `<title>${escape(title)}</title>`,
@@ -107,6 +138,7 @@ export function page({ title, description, canonical, image, jsonLd, body }) {
   </head>
   <body>
     ${body}
+    ${onwardHtml(canonical)}
   </body>
 </html>
 `;
@@ -641,7 +673,24 @@ ${urls
       .send(page({ title: "Community | VantaOrigin", description, canonical, jsonLd, body }));
   });
 
+  // The file written for language models, which listed the characters and
+  // nothing else: not the blog, not what the site is, not how to use it. An
+  // agent asked about VantaOrigin could name a character and say nothing
+  // about the place the character lives on.
   app.get("/llms.txt", async (request, reply) => {
+    const written = await db
+      .select({
+        title: blogPosts.title,
+        slug: blogPosts.slug,
+        excerpt: blogPosts.excerpt,
+        category: blogPosts.category,
+        publishedAt: blogPosts.publishedAt,
+      })
+      .from(blogPosts)
+      .where(eq(blogPosts.status, "published"))
+      .orderBy(desc(blogPosts.publishedAt))
+      .limit(100);
+
     const rows = await db
       .select({ character: characters, creator: users })
       .from(characters)
@@ -659,6 +708,31 @@ ${urls
       `Site: ${SITE}`,
       `Sitemap: ${SITE}/sitemap.xml`,
       "",
+      "## About this site",
+      "",
+      `- [What VantaOrigin is](${SITE}/about): a home for the characters a creator makes, grouped by project and shared from one page.`,
+      `- [How to use it](${SITE}/help): making a character, publishing it, sharing your page.`,
+      `- [Discover](${SITE}/discover): every character creators have published.`,
+      `- [Marketplace](${SITE}/marketplace): commission work from the creators here.`,
+      `- [Community](${SITE}/community): where the creators gather.`,
+      "",
+      ...(written.length
+        ? [
+            "## Writing",
+            "",
+            `- [The VantaOrigin blog](${SITE}/blog): craft, process and the occasional opinion.`,
+            ...written.map((post) => {
+              const when = post.publishedAt
+                ? new Date(post.publishedAt).toISOString().slice(0, 10)
+                : "";
+              const about = summarise(post.excerpt, 220);
+              return `- [${post.title}](${SITE}/blog/${post.slug})${
+                post.category ? `, ${post.category}` : ""
+              }${when ? `, ${when}` : ""}${about ? `. ${about}` : ""}`;
+            }),
+            "",
+          ]
+        : []),
       "## Characters",
       "",
       ...rows.map(({ character, creator }) => {

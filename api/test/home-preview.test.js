@@ -146,3 +146,33 @@ test("the sitemap stops offering creators who have published nothing", async () 
   assert.ok(!res.body.includes("/creator/quiet"), "an empty profile should not be offered");
   assert.match(res.body, /\/creator\/maker/);
 });
+
+test("every page drawn for a crawler links onward, the blog among them", async () => {
+  // The crawlers that feed language models mostly follow links rather than
+  // reading a sitemap, and the blog was linked from the dashboard and nowhere
+  // else: not from a character, not from a creator, not from the front page.
+  // So nothing could be led to it, which is the whole point of writing it.
+  const pages = ["/preview/home", "/preview/about", "/preview/help", "/preview/creator/maker"];
+
+  for (const url of pages) {
+    const res = await app.inject({ method: "GET", url });
+    assert.equal(res.statusCode, 200, `${url} answered ${res.statusCode}`);
+    assert.match(res.body, /<a href="[^"]*\/blog">Blog<\/a>/, `${url} does not link to the blog`);
+    assert.match(res.body, /<a href="[^"]*\/discover">/, `${url} does not link to discover`);
+  }
+});
+
+test("a page does not offer a link to itself", async () => {
+  // The front page is canonical with no trailing slash and the link carries
+  // one, so without trimming both it would have linked to itself.
+  const home = await app.inject({ method: "GET", url: "/preview/home" });
+  const homeFooter = home.body.slice(home.body.indexOf("<footer>"));
+  assert.ok(!homeFooter.includes(">VantaOrigin</a>"), "the front page should not link to itself");
+
+  const res = await app.inject({ method: "GET", url: "/preview/help" });
+
+  // The footer is a way out of the page, so the page it is on is left off it.
+  const footer = res.body.slice(res.body.indexOf("<footer>"));
+  assert.ok(!footer.includes('/help">Help</a>'), "help should not link to help");
+  assert.match(footer, /\/blog">Blog<\/a>/);
+});

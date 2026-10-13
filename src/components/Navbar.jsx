@@ -6,11 +6,17 @@ import logoWordmark from "../assets/landing/hero/logo-wordmark.svg";
 // Where the landing page can take you. Exploring characters goes to the
 // discovery page itself rather than scrolling to a section about it: somebody
 // who wants to see characters wants the characters.
+//
+// The blog belongs here rather than only behind a sign-in. It was reachable
+// from the dashboard and nowhere else, so a reader had to already have an
+// account to find it, and anything that follows links rather than reading the
+// sitemap had no way in at all.
 const NAV_LINKS = [
   { label: "Explore characters", to: "/discover" },
   { label: "Creators’ Hub", to: "/creators-hub" },
   { label: "Marketplace", to: "/marketplace" },
   { label: "Community", to: "/community" },
+  { label: "Blog", to: "/blog" },
 ];
 
 export default function Navbar() {

@@ -25,6 +25,7 @@ const LINK_COLUMNS = [
     links: [
       { label: "Explore characters", to: "/discover" },
       { label: "Creator Studio", to: "/marketplace" },
+      { label: "Blog", to: "/blog" },
     ],
   },
   {

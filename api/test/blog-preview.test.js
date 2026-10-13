@@ -178,3 +178,53 @@ test("the sitemap lists the blog, and only published posts", async () => {
     "a draft must not be offered to search engines"
   );
 });
+
+test("llms.txt names the writing, not only the characters", async () => {
+  // The file written for language models listed characters and nothing else:
+  // not the blog, not what the site is, not how to use it. An agent asked
+  // about VantaOrigin could name a character and say nothing about the place
+  // the character lives on, and never find an article at all.
+  //
+  // Its own post, because the tests above this one leave the fixture as a
+  // draft and a draft belongs in none of this.
+  const made = await app.inject({
+    method: "POST",
+    url: "/admin/blog",
+    headers: { cookie: boss },
+    payload: {
+      title: "What a character sheet is for",
+      excerpt: "The parts worth writing down, and the parts nobody reads.",
+      category: "Craft",
+      status: "published",
+    },
+  });
+  assert.equal(made.statusCode, 201);
+  const { slug } = made.json().post;
+
+  const res = await app.inject({ method: "GET", url: "/llms.txt" });
+  assert.equal(res.statusCode, 200);
+
+  assert.match(res.body, /## Writing/);
+  assert.ok(res.body.includes(`/blog)`), "the blog itself should be listed");
+  assert.ok(res.body.includes(`/blog/${slug})`), "the post should be listed");
+  assert.match(res.body, /What a character sheet is for/);
+  assert.match(res.body, /The parts worth writing down/);
+
+  // And what the site is, which it never said.
+  assert.match(res.body, /## About this site/);
+  assert.ok(res.body.includes("/about)"));
+  assert.ok(res.body.includes("/help)"));
+});
+
+test("a draft is not offered to an agent either", async () => {
+  const made = await app.inject({
+    method: "POST",
+    url: "/admin/blog",
+    headers: { cookie: boss },
+    payload: { title: "Still being written", status: "draft" },
+  });
+  assert.equal(made.statusCode, 201);
+
+  const res = await app.inject({ method: "GET", url: "/llms.txt" });
+  assert.ok(!res.body.includes("Still being written"), "a draft should not be listed");
+});

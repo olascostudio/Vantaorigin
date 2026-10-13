@@ -163,21 +163,56 @@ test("a post written before any of this gets one the next time it is saved", asy
   assert.match(saved.json().post.seo.ogImageUrl, /\/share\//);
 });
 
-test("the words are drawn, not asked for", async () => {
-  const body = await shareImage({ title: "Readable anywhere", label: "Craft" });
-
-  // The strip the title sits in. On a card whose words failed to render this
-  // is flat black; the first version of this shipped exactly that way, as a
-  // row of empty boxes, and nothing in the code complained.
-  const strip = await sharp(body)
+// How much white the words put on the page, in the strip the title sits in,
+// and the pixels themselves so two cards can be compared.
+const inkIn = async (body) => {
+  const { data, info } = await sharp(body)
     .extract({ left: 60, top: 400, width: 900, height: 180 })
-    .stats();
+    .raw()
+    .toBuffer({ resolveWithObject: true });
 
-  const brightest = Math.max(...strip.channels.map((channel) => channel.max));
-  assert.ok(brightest > 200, `expected white letters, got a brightest pixel of ${brightest}`);
+  let lit = 0;
+  for (let i = 0; i < data.length; i += info.channels) {
+    if (data[i] > 170 && data[i + 1] > 170 && data[i + 2] > 170) lit += 1;
+  }
+  return { lit, of: info.width * info.height, pixels: data };
+};
 
-  // And they are shapes rather than text, which is what makes it independent
-  // of whatever fonts the machine underneath happens to have.
+test("the words are drawn, and they are these words", async () => {
+  // The first version of this shipped as a row of empty boxes, because the
+  // machine it ran on had no fonts, and nothing in the code complained. A
+  // test that asks whether anything in the strip is bright passes on that
+  // card too: an empty box is a white outline. So the question has to be
+  // whether the ink is the shape of these particular words.
+  const plain = await inkIn(await shareImage({ title: "Readable anywhere", label: "Craft" }));
+
+  // Measured at 7.7 per cent for this title. Nothing drawn at all is zero,
+  // and a strip gone solid white is not type either.
+  const covered = (plain.lit / plain.of) * 100;
+  assert.ok(covered > 3 && covered < 40, `the title strip is ${covered.toFixed(1)} per cent ink`);
+
+  // Two titles of exactly the same length, including where the space falls,
+  // in letters of very different weight. Set properly, these cover the strip
+  // quite differently: 13.8 per cent against 7.7. Drawn as one identical box
+  // per character they would come out the same, which is the whole failure.
+  const heavy = await inkIn(await shareImage({ title: "WWWWWWWW MMMMMMMM", label: "Craft" }));
+  assert.ok(
+    heavy.lit > plain.lit * 1.3,
+    `W and M should lay down far more ink than lowercase: ${heavy.lit} against ${plain.lit}`
+  );
+
+  // And not simply more ink in the same places.
+  let differing = 0;
+  for (let i = 0; i < plain.pixels.length; i += 1) {
+    if (plain.pixels[i] !== heavy.pixels[i]) differing += 1;
+  }
+  assert.ok(
+    differing > plain.pixels.length * 0.05,
+    `two unlike titles drew nearly the same picture, ${differing} bytes apart`
+  );
+
+  // They are shapes rather than text, which is what makes any of this
+  // independent of whatever fonts the machine underneath happens to have.
   const { inkOf } = await import("../src/type.js");
   const drawn = inkOf("Hello", { x: 0, y: 0, size: 40 });
   assert.match(drawn, /^<path d="/);

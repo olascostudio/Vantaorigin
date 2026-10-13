@@ -14,8 +14,14 @@ const LINKS = [
   { label: "Community", to: "/community" },
 ];
 
-// Asked once per page load, and only while signed in: an ordinary creator
-// gets false and never sees the link.
+// This bar is on the public pages too: the blog, discover, a character, the
+// marketplace. Somebody arriving from a search result has no account, and was
+// shown a profile bubble reading "A" that led to a sign-in screen, with
+// nothing anywhere on the page offering to make them one. So it has a
+// signed-out face: a way in, and a way to start.
+//
+// Admin is asked once per page load, and only while signed in: an ordinary
+// creator gets false and never sees the link.
 export default function DashboardNav({ active = "Discover" }) {
   const [admin, setAdmin] = useState(false);
   const [open, setOpen] = useState(false);
@@ -50,18 +56,24 @@ export default function DashboardNav({ active = "Discover" }) {
   return (
     <header className="relative z-30 bg-black">
       <div className="flex h-[76px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-12">
-        <Link to="/discover" className="flex shrink-0 items-center gap-2.5" aria-label="VantaOrigin home">
+        <Link
+          to={user ? "/discover" : "/"}
+          className="flex shrink-0 items-center gap-2.5"
+          aria-label="VantaOrigin home"
+        >
           <img src={logoMark} alt="" className="h-[35px] w-[33.892px]" />
           <img src={logoWordmark} alt="" className="hidden h-[20.7px] w-[131.216px] sm:block" />
         </Link>
 
         <nav aria-label="Main" className="hidden lg:block">
-          <ul className="flex items-center gap-[50px] font-ui text-base">
+          <ul className="flex items-center gap-7 font-ui text-base xl:gap-[50px]">
             {LINKS.map(({ label, to }) => (
               <li key={label}>
                 <NavLink
                   to={to}
-                  className={label === active ? "font-medium text-primary" : "text-white hover:opacity-80"}
+                  className={`whitespace-nowrap ${
+                    label === active ? "font-medium text-primary" : "text-white hover:opacity-80"
+                  }`}
                   aria-current={label === active ? "page" : undefined}
                 >
                   {label}
@@ -83,17 +95,34 @@ export default function DashboardNav({ active = "Discover" }) {
         </nav>
 
         <div className="flex shrink-0 items-center gap-3">
-          <Link
-            to="/settings"
-            aria-label="Your profile and settings"
-            className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-secondary to-primary ring-2 ring-white"
-          >
-            {avatar ? (
-              <img src={avatar} alt="" className="size-full object-cover" />
-            ) : (
-              <span className="font-ui text-base font-bold text-white">{initial}</span>
-            )}
-          </Link>
+          {user ? (
+            <Link
+              to="/settings"
+              aria-label="Your profile and settings"
+              className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-secondary to-primary ring-2 ring-white"
+            >
+              {avatar ? (
+                <img src={avatar} alt="" className="size-full object-cover" />
+              ) : (
+                <span className="font-ui text-base font-bold text-white">{initial}</span>
+              )}
+            </Link>
+          ) : (
+            <>
+              <Link
+                to="/signin"
+                className="hidden font-ui text-sm text-white transition-opacity hover:opacity-80 sm:block lg:hidden xl:block"
+              >
+                Sign in
+              </Link>
+              <Link
+                to="/auth"
+                className="bg-primary px-3.5 py-2.5 font-ui text-xs font-semibold text-white shadow-block transition-transform hover:-translate-y-0.5 sm:px-5 sm:py-3 sm:text-sm"
+              >
+                Create your page
+              </Link>
+            </>
+          )}
 
           <button
             type="button"
@@ -149,15 +178,27 @@ export default function DashboardNav({ active = "Discover" }) {
                 </Link>
               </li>
             )}
-            <li>
-              <Link
-                to="/settings"
-                onClick={() => setOpen(false)}
-                className="block rounded-lg px-3 py-4 text-white hover:bg-white/5"
-              >
-                Settings
-              </Link>
-            </li>
+            {user ? (
+              <li>
+                <Link
+                  to="/settings"
+                  onClick={() => setOpen(false)}
+                  className="block rounded-lg px-3 py-4 text-white hover:bg-white/5"
+                >
+                  Settings
+                </Link>
+              </li>
+            ) : (
+              <li>
+                <Link
+                  to="/signin"
+                  onClick={() => setOpen(false)}
+                  className="block rounded-lg px-3 py-4 text-white hover:bg-white/5"
+                >
+                  Sign in
+                </Link>
+              </li>
+            )}
             {user && (
               <li>
                 <button
