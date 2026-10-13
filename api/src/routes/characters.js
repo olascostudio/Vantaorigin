@@ -189,7 +189,11 @@ export default async function characterRoutes(app) {
     // now rather than whenever a crawler next comes by. Not waited on, since a
     // slow search engine must never slow down making a character.
     if (character.isPublic) {
-      tellSearchEngines(app, { characterId: character.id, username: request.user.username });
+      tellSearchEngines(app, {
+        characterId: character.id,
+        characterSlug: character.slug,
+        username: request.user.username,
+      });
     }
 
     return reply.code(201).send(await decorateOne(character, request.user.id));
@@ -215,7 +219,11 @@ export default async function characterRoutes(app) {
 
     // Either newly published, or published work that has changed.
     if (character.isPublic) {
-      tellSearchEngines(app, { characterId: character.id, username: request.user.username });
+      tellSearchEngines(app, {
+        characterId: character.id,
+        characterSlug: character.slug,
+        username: request.user.username,
+      });
     }
 
     return decorateOne(character, request.user.id);

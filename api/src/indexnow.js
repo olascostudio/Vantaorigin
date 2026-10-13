@@ -22,13 +22,20 @@ export const indexNowReady = () => Boolean(config.INDEXNOW_KEY);
 
 // The pages that change when one character is published: the character
 // itself, the creator's page, and the list everything is found from.
-export function pagesTouchedBy({ characterId, username, blogSlug }) {
+export function pagesTouchedBy({ characterId, characterSlug, username, blogSlug }) {
   // A post changes the blog and its own page, and nothing on the character
   // side of the site.
   if (blogSlug) return [`${site()}/blog`, `${site()}/blog/${blogSlug}`];
 
   const urls = [`${site()}/discover`];
-  if (characterId) urls.push(`${site()}/character?id=${characterId}`);
+  // The address the character actually lives at, which is the one the
+  // sitemap offers and the one the page calls canonical. This used to
+  // announce the ?id= form instead: a search engine following it finds a
+  // page pointing somewhere else and has to work out they are the same, so
+  // the nudge was spent on the wrong address. The id still stands in for a
+  // character made before slugs, exactly as the sitemap does it.
+  const at = characterSlug || characterId;
+  if (at) urls.push(`${site()}/character/${at}`);
   if (username) urls.push(`${site()}/creator/${String(username).replace(/^@+/, "")}`);
   return [...new Set(urls)];
 }
