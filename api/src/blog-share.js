@@ -10,7 +10,7 @@
 import { createHash } from "node:crypto";
 import sharp from "sharp";
 import { storage } from "./adapters/storage.js";
-import { fitLines, inkOf } from "./type.js";
+import { fitLines, inkOf, unmappable, widthOf } from "./type.js";
 
 const W = 1200;
 const H = 630;
@@ -77,10 +77,82 @@ const framed = async (heroUrl, focus) => {
   return sharp(widened).extract({ left: 0, top: at, width: W, height: H }).toBuffer();
 };
 
+// Proof that the words are on the picture, measured where they were put.
+//
+// The first version of this shipped as a row of empty boxes, because the
+// machine drawing it had no fonts, and nothing anywhere complained: it was
+// stored, served, and found by a person pasting a link into a chat. A card
+// carries the creator's title and the site's name, which is the entire
+// reason it exists, so one that carries neither is worse than none at all.
+//
+// The box each line was drawn in is known exactly, so coverage is measured
+// inside it rather than over some fixed strip. That makes the answer
+// independent of how long the title is and of whatever artwork sits behind
+// it: a short title fills a small box, and the question is only ever what
+// fraction of its own box the lettering inked.
+const FLOOR = 0.05;
+
+// A stray emoji among fifty letters is one box and nobody minds. A title the
+// font cannot set at all is a row of them, which is the thing that must
+// never be stored again.
+const MOSTLY = 1 / 3;
+
+const settable = (lines) => {
+  const counted = lines.reduce(
+    (sum, line) => {
+      const { total, missing } = unmappable(line, { weight: 800 });
+      return { total: sum.total + total, missing: sum.missing + missing };
+    },
+    { total: 0, missing: 0 }
+  );
+  return counted.total ? 1 - counted.missing / counted.total : 1;
+};
+
+const inkedFraction = async (card, box) => {
+  const { data, info } = await sharp(card)
+    .extract(box)
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  let lit = 0;
+  for (let i = 0; i < data.length; i += info.channels) {
+    if (data[i] > 170 && data[i + 1] > 170 && data[i + 2] > 170) lit += 1;
+  }
+  return lit / (info.width * info.height);
+};
+
+// The widest line, which is the one with the most to say about whether
+// anything was drawn at all.
+export const titleBox = ({ lines, size, first, lineHeight }) => {
+  let best = null;
+  lines.forEach((line, index) => {
+    const width = Math.round(widthOf(line, { size, weight: 800 }));
+    if (!best || width > best.width) {
+      const top = Math.round(first + index * lineHeight - size * 0.76);
+      best = {
+        left: PAD,
+        top: Math.max(0, top),
+        width: Math.max(1, Math.min(width, W - PAD)),
+        height: Math.max(1, Math.min(Math.round(size * 0.86), H - Math.max(0, top))),
+      };
+    }
+  });
+  return best;
+};
+
 export async function shareImage({ title, label, heroUrl, heroFocus }) {
   const artwork = await framed(heroUrl, heroFocus);
 
   const { size, lines } = typeset(title || "VantaOrigin");
+
+  // Asked before anything is drawn, because there is no point drawing it.
+  const canSet = settable(lines);
+  if (canSet < 1 - MOSTLY) {
+    throw new Error(
+      `the font cannot set this title: ${Math.round((1 - canSet) * 100)}% of it has no glyph`
+    );
+  }
+
   const lineHeight = Math.round(size * 1.14);
   const block = lines.length * lineHeight;
   const first = H - PAD - block + size;
@@ -135,10 +207,24 @@ export async function shareImage({ title, label, heroUrl, heroFocus }) {
   if (artwork) layers.push({ input: artwork, top: 0, left: 0 });
   layers.push({ input: Buffer.from(svg), top: 0, left: 0 });
 
-  return sharp({ create: { width: W, height: H, channels: 4, background: INK } })
+  const card = await sharp({ create: { width: W, height: H, channels: 4, background: INK } })
     .composite(layers)
     .jpeg({ quality: 86, mozjpeg: true })
     .toBuffer();
+
+  // Measured before it is allowed anywhere. Throwing here is caught by
+  // storeShareImage, which stores nothing, and the post falls back to its
+  // own hero: a picture of the artwork is a poor card and still a far better
+  // one than a row of boxes where the creator's title should be.
+  const box = titleBox({ lines, size, first, lineHeight });
+  const inked = box ? await inkedFraction(card, box) : 0;
+  if (inked < FLOOR) {
+    throw new Error(
+      `the title did not draw: ${(inked * 100).toFixed(2)}% of its own box is ink`
+    );
+  }
+
+  return card;
 }
 
 // Drawn and stored. Never throws at the caller: a link preview is worth

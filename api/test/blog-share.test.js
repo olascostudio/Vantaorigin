@@ -264,3 +264,88 @@ test("a card that is already right is left alone", async () => {
   const saved = await change(id, { body: "<p>Only the writing moved.</p>" });
   assert.equal(saved.json().post.seo.ogImageUrl, before);
 });
+
+// ---- what must never be stored --------------------------------------------
+//
+// A card carries the creator's title and the site's name. One that carries
+// neither is worse than no card at all, and the first run of these shipped
+// exactly that: a row of empty boxes, stored and served, found by somebody
+// pasting a link into a chat. Outlines fixed the case where the machine had
+// no fonts. These cover the case where the font has no letter, which no
+// amount of looking at the finished picture would catch, because a box inks
+// its area much as a letter does.
+
+test("a title the font cannot set is refused, not drawn as boxes", async () => {
+  await assert.rejects(
+    () => shareImage({ title: "雷の審判者", label: "Story" }),
+    /cannot set this title/
+  );
+  await assert.rejects(() => shareImage({ title: "🔥💀⚡🌙✨", label: "Story" }), /cannot set/);
+});
+
+test("a stray emoji does not cost you the card", async () => {
+  // One box among a line of letters is nobody's problem, and refusing here
+  // would take away a good card over a decoration.
+  const card = await shareImage({ title: "Judge 🔥 of the Vantaverse", label: "Story" });
+  assert.ok(card.length > 2000, "should still be drawn");
+});
+
+test("accents are letters, not missing glyphs", async () => {
+  const card = await shareImage({ title: "Café Noir, a Résumé of Ruin", label: "Story" });
+  assert.ok(card.length > 2000);
+});
+
+test("a post whose title cannot be set still publishes, with its hero", async () => {
+  // The picture is worth having and never worth failing a publish over, so a
+  // refusal has to leave a working post behind it.
+  const made = await write({
+    title: "雷の審判者",
+    heroUrl: "https://example.com/the-artwork.jpg",
+    status: "published",
+  });
+
+  assert.equal(made.statusCode, 201);
+  const post = made.json().post;
+  // No drawn card, so the preview falls back to the artwork itself.
+  assert.equal(post.seo.ogImageUrl, "https://example.com/the-artwork.jpg");
+});
+
+test("the words cover their own box, by a wide margin", async () => {
+  // The guard refuses anything under 5 per cent. Measured here so a renderer
+  // that quietly starts drawing less has somewhere to fail.
+  const { titleBox } = await import("../src/blog-share.js");
+  const { fitLines } = await import("../src/type.js");
+
+  for (const title of ["Hi", "Urokojin, The Thunder Judge", "iiiii lll"]) {
+    const card = await shareImage({ title, label: "Craft" });
+    const { size, lines } = fitLines(title, {
+      room: 1056,
+      sizes: [62, 56, 50, 44, 40, 36],
+      weight: 800,
+      maxLines: 3,
+    });
+    const lineHeight = Math.round(size * 1.14);
+    const first = 630 - 72 - lines.length * lineHeight + size;
+
+    const { data, info } = await sharp(card)
+      .extract(titleBox({ lines, size, first, lineHeight }))
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    let lit = 0;
+    for (let i = 0; i < data.length; i += info.channels) {
+      if (data[i] > 170 && data[i + 1] > 170 && data[i + 2] > 170) lit += 1;
+    }
+    const covered = lit / (info.width * info.height);
+    assert.ok(covered > 0.2, `"${title}" inked only ${(covered * 100).toFixed(1)}% of its box`);
+  }
+});
+
+test("the font is asked, rather than the picture guessed at", async () => {
+  const { unmappable } = await import("../src/type.js");
+
+  assert.equal(unmappable("Urokojin", { weight: 800 }).missing, 0);
+  assert.equal(unmappable("Café Noir", { weight: 800 }).missing, 0);
+  // Glyph 0 is .notdef, and in Inter .notdef is a drawn box.
+  assert.equal(unmappable("雷の審判者", { weight: 800 }).fraction, 1);
+});

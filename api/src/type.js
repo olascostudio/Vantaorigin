@@ -39,6 +39,22 @@ export const widthOf = (text, { size, weight = 400, tracking = 0 }) => {
   return run.advanceWidth * scale + Math.max(0, run.glyphs.length - 1) * tracking;
 };
 
+// How much of this text the font can actually set.
+//
+// Glyph 0 is .notdef, and in Inter .notdef is a drawn box, so a character
+// the font does not have becomes the same empty rectangle that made the
+// first run of these pictures unreadable. Outlines fixed the case where
+// nothing was found at all; this is the case where the letter itself is not
+// in the font, and no amount of looking at the result afterwards finds it,
+// because a box inks its area much as a letter does. Asking the font is
+// exact, so that is what is done.
+export const unmappable = (text, { weight = 400 } = {}) => {
+  const run = face(weight).layout(String(text));
+  const total = run.glyphs.length;
+  const missing = run.glyphs.filter((glyph) => glyph.id === 0).length;
+  return { total, missing, fraction: total ? missing / total : 0 };
+};
+
 // The line as SVG paths, sitting on the baseline at (x, y).
 export const inkOf = (text, { x, y, size, weight = 400, fill = "#ffffff", tracking = 0 }) => {
   const font = face(weight);
