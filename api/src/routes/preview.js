@@ -472,7 +472,20 @@ export default async function previewRoutes(app) {
         .from(characters)
         .where(eq(characters.isPublic, true))
         .orderBy(desc(characters.updatedAt)),
-      db.select({ username: users.username, updatedAt: users.updatedAt }).from(users),
+      // Only creators who have actually published something.
+      //
+      // A page that says "No characters published yet" is a page nobody
+      // searched for, and offering a pile of them in the sitemap asks Google
+      // to spend its crawling here on nothing. It answers by not indexing
+      // them, which is the right answer and fills the report with warnings
+      // about pages that were never worth submitting.
+      //
+      // They come back by themselves the moment somebody publishes.
+      db
+        .selectDistinct({ username: users.username, updatedAt: users.updatedAt })
+        .from(users)
+        .innerJoin(characters, eq(characters.userId, users.id))
+        .where(eq(characters.isPublic, true)),
       db
         .select({ slug: blogPosts.slug, updatedAt: blogPosts.updatedAt })
         .from(blogPosts)

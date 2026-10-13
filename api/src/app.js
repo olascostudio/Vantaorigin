@@ -11,6 +11,7 @@ import adminRoutes from "./routes/admin.js";
 import authRoutes from "./routes/auth.js";
 import blogRoutes from "./routes/blog.js";
 import blogPreviewRoutes from "./routes/blog-preview.js";
+import homePreviewRoutes from "./routes/home-preview.js";
 import characterRoutes from "./routes/characters.js";
 import embedRoutes from "./routes/embed.js";
 import highlightRoutes from "./routes/highlights.js";
@@ -113,6 +114,7 @@ export async function buildApp() {
   await app.register(authRoutes);
   await app.register(blogRoutes);
   await app.register(blogPreviewRoutes);
+  await app.register(homePreviewRoutes);
   await app.register(characterRoutes);
   await app.register(embedRoutes);
   await app.register(googleRoutes);
