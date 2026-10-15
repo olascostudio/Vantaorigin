@@ -482,3 +482,46 @@ test("a stranded send carries on to whoever was still owed it", async () => {
     "whoever was still owed it gets it"
   );
 });
+
+test("a letter written in the editor is not mistaken for an empty one", () => {
+  // The whole reason a real send never left the building while a test copy
+  // arrived in seconds. Everything the editor writes is a `rich` block, and
+  // a rich block keeps its words in `html`. This check read `text` for any
+  // block that was not a picture or a button, so every letter written the
+  // normal way looked empty and was refused before it reached anybody.
+  //
+  // A test copy skips this check entirely, which is exactly why the two
+  // behaved differently and why it was not obvious where to look.
+  const written = { subject: "Hi", blocks: [{ type: "rich", html: "<h2>Hello</h2><p>A whole letter.</p>" }] };
+  assert.equal(whyNotSendable(written, 12), null);
+
+  const pasted = { subject: "Hi", blocks: [{ type: "html", html: "<p>A whole letter.</p>" }] };
+  assert.equal(whyNotSendable(pasted, 12), null);
+
+  // A picture on its own is a letter too.
+  const picture = { subject: "Hi", blocks: [{ type: "rich", html: '<p><img src="https://x.test/a.jpg" /></p>' }] };
+  assert.equal(whyNotSendable(picture, 12), null);
+});
+
+test("a new issue, exactly as the editor makes it, can be sent", async () => {
+  const { startingBlocks } = await import("../src/emails/issue.js");
+
+  assert.equal(whyNotSendable({ subject: "Hi", blocks: startingBlocks() }, 12), null);
+});
+
+test("a letter that really is empty is still refused", () => {
+  // The check is worth keeping: it is what stops a blank letter going to the
+  // whole list. Tags with nothing inside them are not words.
+  for (const blocks of [
+    [{ type: "rich", html: "<p></p><p>&nbsp;</p>" }],
+    [{ type: "html", html: "<div>  </div>" }],
+    [{ type: "divider" }],
+    [],
+  ]) {
+    assert.match(
+      whyNotSendable({ subject: "Hi", blocks }, 12) || "",
+      /nothing written/i,
+      `should have refused: ${JSON.stringify(blocks)}`
+    );
+  }
+});

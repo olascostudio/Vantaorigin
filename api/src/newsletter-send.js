@@ -33,19 +33,42 @@ const sending = new Set();
 
 export const isSending = (issueId) => sending.has(issueId);
 
+// Anything a reader would see once the tags are taken off.
+const showsSomething = (html) =>
+  String(html || "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .trim().length > 0 || /<img\b/i.test(String(html || ""));
+
+// Whether a block has anything in it.
+//
+// This read `block.text` for everything that was not a picture or a button.
+// A letter written in the editor is a `rich` block and keeps its words in
+// `block.html`, so every one of them looked empty, and the send was refused
+// with "There is nothing written in it yet" before it reached anybody. The
+// same went for a letter pasted in as HTML. A test copy never came through
+// here, which is why a test arrived and the letter itself never did.
+const hasContent = (block) => {
+  switch (block?.type) {
+    case "image":
+      return Boolean(block.url);
+    case "button":
+      return Boolean(block.text && block.href);
+    case "rich":
+    case "html":
+      return showsSomething(block.html);
+    default:
+      return Boolean(String(block?.text || "").trim());
+  }
+};
+
 // Nothing goes out half-written.
 export function whyNotSendable(issue, waiting) {
   if (!issue) return "No such issue";
   if (issue.status === "sent") return "This letter has already gone out.";
   if (!String(issue.subject || "").trim()) return "Give it a subject first.";
 
-  const said = (issue.blocks || []).some((block) =>
-    block?.type === "image"
-      ? Boolean(block.url)
-      : block?.type === "button"
-        ? Boolean(block.text && block.href)
-        : Boolean(String(block?.text || "").trim())
-  );
+  const said = (issue.blocks || []).some(hasContent);
   if (!said) return "There is nothing written in it yet.";
   // A send that stopped partway is picked up by the same route, and picking
   // one up when everybody has already been reached is how it gets marked
