@@ -530,6 +530,8 @@ export default async function previewRoutes(app) {
       { loc: `${SITE}/discover`, priority: "0.8" },
       { loc: `${SITE}/blog`, priority: "0.8" },
       { loc: `${SITE}/marketplace`, priority: "0.6" },
+      { loc: `${SITE}/marketplace/how-it-works`, priority: "0.5" },
+      { loc: `${SITE}/marketplace/project-request`, priority: "0.5" },
       { loc: `${SITE}/community`, priority: "0.5" },
       { loc: `${SITE}/help`, priority: "0.4" },
       { loc: `${SITE}/about`, priority: "0.4" },
@@ -628,6 +630,8 @@ ${urls
       <h1>VantaOrigin Studio</h1>
       <p>Creative services for creators: character illustration, 3D characters and assets, prop design, book and cover design, cards and TCG assets, comic art, worldbuilding and brand design.</p>
       ${byAlbum}
+      <p><a href="${SITE}/marketplace/how-it-works">How commissioning works</a>, or
+      <a href="${SITE}/marketplace/project-request">request a project</a>.</p>
       <p><a href="${escape(canonical)}">See the studio on VantaOrigin</a></p>
     </main>`;
 

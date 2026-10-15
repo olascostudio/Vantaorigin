@@ -32,6 +32,32 @@ const QUESTIONS = [
   ["Can other people see my characters?", "Only the ones you publish. A character stays private until you say otherwise."],
 ];
 
+// How a commission runs, word for word out of src/data/marketplace.js.
+//
+// The app's own copy would be the better source to read, but the API ships
+// as a container built from this directory alone, so src/ is not in the
+// image to import. The portfolio gets around that by being published at
+// /portfolio.json and fetched over the wire; six sentences that change about
+// once a year are not worth a request and a failure path, so they are copied
+// here, the way the community links in preview.js are. A test reads the
+// app's file and fails if the two ever drift apart.
+const HOW_IT_WORKS = [
+  ["01", "Post Your Project Brief:", "Tell us what you're building, what you need, your requirements, timeline, and budget."],
+  ["02", "Meet Your Creative:", "We match your project with a vetted creator from the VantaOrigin network whose skills fit your needs."],
+  ["03", "Secure the Payment", "Fund the project through our secure payment process. Payment is held until the agreed project requirements are met."],
+  ["04", "Create & Collaborate", "Work directly with your assigned creative while VantaOrigin provides structure throughout the project."],
+  ["05", "Review & Approve", "Review the completed work and request any revisions included in your project agreement."],
+  ["06", "Project Complete", "Once the agreed deliverables are approved, payment is released to the creator and your project is complete."],
+];
+
+// The Google Form the request page embeds, and the sentence above it.
+const REQUEST_FORM =
+  "https://docs.google.com/forms/d/e/1FAIpQLSdN4f5EvDCK9es0eKr9h7oHmBXgeLKZ9yTpsdCEppzL6MdCSw/viewform";
+
+const REQUEST_PITCH =
+  "Tell us what you’re building, your requirements, timeline and budget, and we’ll match " +
+  "you with a vetted creator from the VantaOrigin network.";
+
 export default async function homePreviewRoutes(app) {
   app.get("/preview/home", async (request, reply) => {
     // A few real characters, so the front page a crawler reads has the site's
@@ -178,5 +204,106 @@ export default async function homePreviewRoutes(app) {
       .type("text/html; charset=utf-8")
       .header("cache-control", "public, max-age=300, s-maxage=3600")
       .send(page({ title: "Help | VantaOrigin", description, canonical, jsonLd, body }));
+  });
+
+  // ---- the two commissioning pages ----
+  //
+  // Every other public page here was given plain HTML before these two, which
+  // is backwards: these are where someone who wants to pay a creator ends up,
+  // and they are the two thin pages on this site actually worth indexing.
+  // Both were the bare shell, five words, all of them the title.
+  app.get("/preview/marketplace/how-it-works", async (request, reply) => {
+    const canonical = `${SITE}/marketplace/how-it-works`;
+    const description =
+      "How a commission runs on VantaOrigin, from the first request through to the finished work.";
+
+    const body = `<main>
+      <h1>How it Works</h1>
+      <p>${escape(description)}</p>
+      <ol>
+        ${HOW_IT_WORKS.map(
+          ([step, title, text]) =>
+            `<li>
+          <h2>${escape(`${step}: ${title}`)}</h2>
+          <p>${escape(text)}</p>
+        </li>`
+        ).join("\n        ")}
+      </ol>
+      <p><a href="${SITE}/marketplace/project-request">Request a project</a>, or
+      <a href="${SITE}/marketplace">see the work the studio has done</a>.</p>
+    </main>`;
+
+    // Steps marked up as steps, the way the help page marks up its questions.
+    // Two of the titles end in a colon because they are written to run into
+    // the sentence under them, which reads as a mistake once it is a name on
+    // its own, so the machine-readable copy drops it. The words a person
+    // reads are left exactly as the page has them.
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      name: "How commissioning works on VantaOrigin",
+      url: canonical,
+      description,
+      step: HOW_IT_WORKS.map(([, title, text], index) => ({
+        "@type": "HowToStep",
+        position: index + 1,
+        name: title.replace(/:$/, ""),
+        text,
+      })),
+    };
+
+    return reply
+      .type("text/html; charset=utf-8")
+      .header("cache-control", "public, max-age=300, s-maxage=3600")
+      .send(
+        page({
+          title: "How commissioning works | VantaOrigin",
+          description,
+          canonical,
+          jsonLd,
+          body,
+        })
+      );
+  });
+
+  app.get("/preview/marketplace/project-request", async (request, reply) => {
+    const canonical = `${SITE}/marketplace/project-request`;
+    const description = "Tell a creator what you need made, and what the work is for.";
+
+    // The page itself is mostly a Google Form in an iframe, which is on
+    // someone else's domain and so cannot be read or reproduced from here.
+    // What is left to give a crawler is the page's own words, the address of
+    // the form, and the shape of what happens once it is sent. The steps are
+    // named rather than quoted in full: they are written out on the page next
+    // door, and two pages carrying the same six paragraphs would leave that
+    // one with nothing of its own.
+    const body = `<main>
+      <h1>Project Request</h1>
+      <p>${escape(description)}</p>
+      <p>${escape(REQUEST_PITCH)}</p>
+      <p><a href="${escape(REQUEST_FORM)}">Open the VantaOrigin Studio project request form</a>.</p>
+      <h2>How commissioning works</h2>
+      <ol>${HOW_IT_WORKS.map(([step, title]) => `<li>${escape(`${step}: ${title}`)}</li>`).join(
+        ""
+      )}</ol>
+      <p><a href="${SITE}/marketplace/how-it-works">Each step in full</a>, or
+      <a href="${SITE}/marketplace">see the work the studio has done</a>.</p>
+    </main>`;
+
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: "Request a project",
+      url: canonical,
+      description,
+      isPartOf: { "@type": "WebSite", name: "VantaOrigin", url: SITE },
+    };
+
+    return reply
+      .type("text/html; charset=utf-8")
+      .header("cache-control", "public, max-age=300, s-maxage=3600")
+      .send(
+        page({ title: "Request a project | VantaOrigin", description, canonical, jsonLd, body })
+      );
   });
 }

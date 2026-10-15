@@ -7,7 +7,8 @@
 // second pass and it is not promised.
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { rm } from "node:fs/promises";
+import { readFile, rm } from "node:fs/promises";
+import { existsSync } from "node:fs";
 
 const dataDir = ".pglite-home-preview-test";
 process.env.DATABASE_URL = `pglite://${dataDir}`;
@@ -17,6 +18,8 @@ process.env.EMAIL_DRIVER = "console";
 const { buildApp } = await import("../src/app.js");
 const { migrate } = await import("../src/db/migrate.js");
 const { endConnection } = await import("../src/db/client.js");
+// The same escaping the pages use, for comparing them with the app's copy.
+const { escape } = await import("../src/routes/preview.js");
 
 let app;
 
@@ -152,7 +155,14 @@ test("every page drawn for a crawler links onward, the blog among them", async (
   // reading a sitemap, and the blog was linked from the dashboard and nowhere
   // else: not from a character, not from a creator, not from the front page.
   // So nothing could be led to it, which is the whole point of writing it.
-  const pages = ["/preview/home", "/preview/about", "/preview/help", "/preview/creator/maker"];
+  const pages = [
+    "/preview/home",
+    "/preview/about",
+    "/preview/help",
+    "/preview/creator/maker",
+    "/preview/marketplace/how-it-works",
+    "/preview/marketplace/project-request",
+  ];
 
   for (const url of pages) {
     const res = await app.inject({ method: "GET", url });
@@ -175,4 +185,71 @@ test("a page does not offer a link to itself", async () => {
   const footer = res.body.slice(res.body.indexOf("<footer>"));
   assert.ok(!footer.includes('/help">Help</a>'), "help should not link to help");
   assert.match(footer, /\/blog">Blog<\/a>/);
+});
+
+test("the commissioning pages carry the words the browser shows", async () => {
+  const how = await app.inject({ method: "GET", url: "/preview/marketplace/how-it-works" });
+  assert.equal(how.statusCode, 200);
+
+  // Five words is the shell. This is the page someone deciding whether to
+  // pay a creator reads before they decide.
+  assert.ok(words(how.body) > 120, `how it works had ${words(how.body)} words`);
+  assert.match(how.body, /<h1>How it Works<\/h1>/);
+  assert.match(how.body, /01: Post Your Project Brief/);
+  assert.match(how.body, /payment is released to the creator/);
+  assert.match(
+    how.body,
+    /rel="canonical" href="[^"]*\/marketplace\/how-it-works"/,
+    "how it works should point at itself"
+  );
+
+  // Steps marked up as steps, the way help marks up its questions.
+  const ld = JSON.parse(how.body.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)[1]);
+  assert.equal(ld["@type"], "HowTo");
+  assert.equal(ld.step.length, 6);
+  assert.equal(ld.step[0].name, "Post Your Project Brief");
+
+  const ask = await app.inject({ method: "GET", url: "/preview/marketplace/project-request" });
+  assert.equal(ask.statusCode, 200);
+
+  // Thinner on purpose: that page is mostly a form on Google's domain, which
+  // cannot be read from here, so what is left is its own words and the way in.
+  assert.ok(words(ask.body) > 70, `project request had ${words(ask.body)} words`);
+  assert.match(ask.body, /<h1>Project Request<\/h1>/);
+  assert.match(ask.body, /vetted creator from the VantaOrigin network/);
+  assert.match(ask.body, /docs\.google\.com\/forms/);
+  assert.match(
+    ask.body,
+    /rel="canonical" href="[^"]*\/marketplace\/project-request"/,
+    "the request page should point at itself"
+  );
+});
+
+test("the steps a crawler reads are the steps the page shows", async () => {
+  // The API ships as a container with only api/ inside it, so the route
+  // keeps its own copy of the commissioning steps instead of importing the
+  // app's. This is the thing that notices when one is edited and the other
+  // is not.
+  const data = new URL("../../src/data/marketplace.js", import.meta.url);
+  const request = new URL("../../src/pages/ProjectRequest.jsx", import.meta.url);
+
+  // Deployed, the app is not checked out beside the API and there is
+  // nothing to compare against.
+  if (!existsSync(data) || !existsSync(request)) return;
+
+  const steps = [
+    ...(await readFile(data, "utf8")).matchAll(/title:\s*"([^"]+)",\s*body:\s*"([^"]+)"/g),
+  ];
+  assert.equal(steps.length, 6, "could not read the steps out of src/data/marketplace.js");
+
+  const how = await app.inject({ method: "GET", url: "/preview/marketplace/how-it-works" });
+  for (const [, title, text] of steps) {
+    assert.ok(how.body.includes(escape(title)), `a crawler is no longer told "${title}"`);
+    assert.ok(how.body.includes(escape(text)), `a crawler is no longer told "${text}"`);
+  }
+
+  const jsx = (await readFile(request, "utf8")).replace(/\s+/g, " ");
+  const ask = await app.inject({ method: "GET", url: "/preview/marketplace/project-request" });
+  const pitch = ask.body.match(/<p>(Tell us what[^<]+)<\/p>/)[1];
+  assert.ok(jsx.includes(pitch), "the request page and the copy drawn for a crawler have drifted");
 });
