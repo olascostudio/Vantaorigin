@@ -114,3 +114,41 @@ test("the paper is light, and the email says so", () => {
     assert.match(html, /name="color-scheme" content="light"/, `${name}: should ask not to be inverted`);
   }
 });
+
+// One handle, in every place the site offers it.
+//
+// The X link pointed at x.com/vantaorigin, which is not the account: it is
+// @studio_Vorigin. It was wrong in the site footer, in the footer of every
+// email, and in the sameAs list the community page hands to search engines,
+// which is the one that tells Google which profile is ours. Three copies of
+// an address drift exactly this way, so they are checked together.
+test("every X link points at the real account", async () => {
+  const { readFileSync } = await import("node:fs");
+
+  const HANDLE = "https://x.com/studio_Vorigin";
+  // Relative to this file, which lives in api/test.
+  const files = [
+    "../../src/components/Footer.jsx",
+    "../src/emails/layout.js",
+    "../src/routes/preview.js",
+  ];
+
+  for (const file of files) {
+    const source = readFileSync(new URL(file, import.meta.url), "utf8");
+    const xLinks = [...source.matchAll(/https:\/\/x\.com\/[A-Za-z0-9_]+/g)].map((m) => m[0]);
+    assert.ok(xLinks.length, `${file} has no X link at all`);
+    for (const link of xLinks) {
+      assert.equal(link, HANDLE, `${file} points at ${link}`);
+    }
+  }
+});
+
+test("the welcome letter has no postscript asking for a reply", () => {
+  const { welcome } = EVERY_EMAIL();
+  const { text } = welcomeEmail({ user: { firstName: "Ola" } });
+
+  assert.ok(!welcome.includes("P.S."), "the postscript is still in the HTML");
+  assert.ok(!text.includes("P.S."), "the postscript is still in the plain text");
+  // The sign-off is what should follow the last paragraph now.
+  assert.match(welcome, /Welcome to VantaOrigin,/);
+});

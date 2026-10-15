@@ -35,7 +35,7 @@ const PANEL = "#ffffff"; // the sheet itself
 // when their mail app refuses to load pictures, so it names the place.
 const SOCIALS = [
   ["Discord", "https://discord.gg/4E5dFcaEAa", "discord.png", 34],
-  ["X", "https://x.com/vantaorigin", "x.png", 24],
+  ["X", "https://x.com/studio_Vorigin", "x.png", 24],
   ["Instagram", "https://www.instagram.com/vantaoriginstudio/", "instagram.png", 26],
 ];
 

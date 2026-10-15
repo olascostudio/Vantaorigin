@@ -52,7 +52,7 @@ const LINK_COLUMNS = [
     width: "sm:min-w-[70.56px]",
     links: [
       { label: "Discord", href: "https://discord.gg/4E5dFcaEAa" },
-      { label: "X", href: "https://x.com/vantaorigin" },
+      { label: "X", href: "https://x.com/studio_Vorigin" },
       { label: "Instagram", href: "https://www.instagram.com/vantaoriginstudio/" },
     ],
   },

@@ -27,7 +27,7 @@ const COMMUNITY = [
   ["TikTok", "https://www.tiktok.com/@vantaorigin"],
   ["Instagram", "https://www.instagram.com/vantaoriginstudio/"],
   ["Facebook", "https://facebook.com/groups/1640856640355085/"],
-  ["X", "https://x.com/vantaorigin"],
+  ["X", "https://x.com/studio_Vorigin"],
 ];
 
 // The studio's portfolio, published by the app's build at /portfolio.json.
@@ -116,6 +116,9 @@ export function page({ title, description, canonical, image, jsonLd, body }) {
     `<meta property="og:description" content="${escape(description)}" />`,
     `<meta property="og:url" content="${escape(canonical)}" />`,
     `<meta name="twitter:card" content="summary_large_image" />`,
+    // The account the card is credited to, so a link shared on X carries the
+    // handle rather than nothing.
+    `<meta name="twitter:site" content="@studio_Vorigin" />`,
     `<meta name="twitter:title" content="${escape(title)}" />`,
     `<meta name="twitter:description" content="${escape(description)}" />`,
   ];

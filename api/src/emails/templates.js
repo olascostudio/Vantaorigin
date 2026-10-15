@@ -105,10 +105,6 @@ export function welcomeEmail({ user, unsubscribeUrl = "" }) {
     ${p(
       "You can also explore other creators, discover their characters, and find creative services through VantaOrigin Studios."
     )}
-    ${p(
-      `${strong("P.S.")} Why did you sign up for VantaOrigin? What are you hoping to create, showcase, or discover here? Just hit "Reply" and let me know. I'd genuinely love to hear from you.`,
-      { top: 26 }
-    )}
     ${p("Welcome to VantaOrigin,", { top: 30 })}
     ${p(`${strong("Ola")}<br />Founder &amp; Leader, VantaOrigin`, { top: 2 })}
   `;
@@ -144,8 +140,6 @@ export function welcomeEmail({ user, unsubscribeUrl = "" }) {
       "  3. Share your page with your audience",
       "",
       "You can also explore other creators, discover their characters, and find creative services through VantaOrigin Studios.",
-      "",
-      'P.S. Why did you sign up for VantaOrigin? What are you hoping to create, showcase, or discover here? Just hit "Reply" and let me know. I\'d genuinely love to hear from you.',
       "",
       "Welcome to VantaOrigin,",
       "Ola",
