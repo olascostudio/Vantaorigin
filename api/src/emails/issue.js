@@ -8,12 +8,8 @@
 // Everything typed by a person is escaped before any markup is added, so a
 // subject or a paragraph can contain < and & without breaking the email, and
 // nothing typed into the editor can introduce HTML of its own.
-import { escape, shell } from "./layout.js";
+import { BODY, INK, PINK, RULE, escape, shell } from "./layout.js";
 import { safeHtml } from "../html.js";
-
-const INK = "#ffffff";
-const BODY = "#e8ecf5";
-const PINK = "#df1871";
 
 // Only addresses a mail client will follow safely. Anything else (javascript:,
 // data:) becomes a dead link rather than a live risk.
@@ -138,7 +134,7 @@ const blockHtml = (block, first) => {
     case "divider":
       return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:${
         top + 6
-      }px 0 0;"><tr><td style="border-top:1px solid #262f42;font-size:0;line-height:0;">&nbsp;</td></tr></table>`;
+      }px 0 0;"><tr><td style="border-top:1px solid ${RULE};font-size:0;line-height:0;">&nbsp;</td></tr></table>`;
 
     // A letter written as rich text: one block holding the whole thing.
     case "rich": {

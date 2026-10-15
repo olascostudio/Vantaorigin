@@ -97,7 +97,7 @@ export function welcomeEmail({ user, unsubscribeUrl = "" }) {
       "VantaOrigin gives you a place to create your own page, build character profiles, showcase your creative work, and share everything through one simple link."
     )}
     ${p(strong("Here are 3 things you can do to get started:"), { top: 26 })}
-    <ol style="margin:10px 0 0;padding-left:22px;color:#e8ecf5;font-size:16px;line-height:1.7;">
+    <ol style="margin:10px 0 0;padding-left:22px;color:#39435a;font-size:16px;line-height:1.7;">
       <li>Create your page</li>
       <li>Add your characters and build their profiles</li>
       <li>Share your page with your audience</li>
