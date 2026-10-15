@@ -6,7 +6,7 @@
 // cannot see a way out of is a newsletter it sends to spam.
 import { z } from "zod";
 import { config } from "../config.js";
-import { subscribe, unsubscribeByToken } from "../newsletter.js";
+import { subscribe, unsubscribeByToken, TEST_TOKEN } from "../newsletter.js";
 
 const SITE = (config.SITE_URL || "https://www.vantaorigin.com").replace(/\/$/, "");
 
@@ -63,14 +63,32 @@ export default async function newsletterRoutes(app) {
 
   // Tapped from an email.
   app.get("/newsletter/unsubscribe", async (request, reply) => {
-    const gone = await unsubscribeByToken(request.query.token);
+    const token = request.query.token;
+
+    // A test copy carries a token belonging to nobody, on purpose. Saying
+    // the link has expired here is alarming and untrue, on the one email
+    // sent to check that a send works.
+    if (token === TEST_TOKEN) {
+      return reply
+        .type("text/html; charset=utf-8")
+        .send(
+          page(
+            "That was a test copy",
+            "Nothing to unsubscribe: a test goes to one address and is not on the list. The real letter carries a link that belongs to the person reading it."
+          )
+        );
+    }
+
+    const gone = await unsubscribeByToken(token);
 
     return reply
       .type("text/html; charset=utf-8")
       .send(
         gone
           ? page("You have been unsubscribed", "You will not get the VantaOrigin newsletter again. Your account, if you have one, is untouched.")
-          : page("That link has expired", "We could not find that subscription. If you are still getting the newsletter, write to hello@vantaorigin.com and we will take you off by hand.")
+          : // Not expired: these links never do. Either the address was
+            // already taken off the list, or the link was not one of ours.
+            page("We could not find that subscription", "It may already have been removed. If you are still getting the newsletter, write to hello@vantaorigin.com and we will take you off by hand.")
       );
   });
 

@@ -89,5 +89,14 @@ export async function unsubscribeByToken(token) {
   return row ?? null;
 }
 
+// The token a test copy carries.
+//
+// A test goes to one address so the letter can be read in a real inbox
+// before anyone else gets it, and it must not be able to take a real person
+// off the list. So it carries a token that belongs to nobody. Clicking it
+// used to land on "that link has expired", which reads like a broken send
+// on the one email whose whole purpose is checking the send is not broken.
+export const TEST_TOKEN = "test-copy-not-a-real-subscription";
+
 export const unsubscribeLink = (site, token) =>
   `${String(site).replace(/\/$/, "")}/newsletter/unsubscribe?token=${encodeURIComponent(token)}`;

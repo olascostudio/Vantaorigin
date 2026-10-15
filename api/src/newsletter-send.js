@@ -16,7 +16,7 @@ import { db } from "./db/client.js";
 import { newsletterIssues, newsletterSubscribers } from "./db/schema.js";
 import { mailer } from "./adapters/email.js";
 import { renderIssue } from "./emails/issue.js";
-import { unsubscribeLink } from "./newsletter.js";
+import { TEST_TOKEN, unsubscribeLink } from "./newsletter.js";
 
 // Resend allows two requests a second on the ordinary plan. Going slower than
 // the limit is free; being refused for going too fast is not.
@@ -88,7 +88,7 @@ async function sendOne(issue, subscriber) {
 // It does not touch the issue or the list: a test is not a send.
 export async function sendTest(issue, to) {
   const letter = renderIssue(issue, {
-    unsubscribeUrl: leaveLinkFor("test-copy-not-a-real-subscription"),
+    unsubscribeUrl: leaveLinkFor(TEST_TOKEN),
   });
 
   await mailer.send({

@@ -176,7 +176,10 @@ test("the same new address offered twice at once makes one row, not an error", a
 test("a made-up token changes nothing and says so kindly", async () => {
   const res = await app.inject({ method: "GET", url: "/newsletter/unsubscribe?token=nonsense" });
   assert.equal(res.statusCode, 200);
-  assert.match(res.body, /expired/i);
+  // It used to say the link had expired. These links have no expiry on them
+  // anywhere, so that was never the reason, and it sent people looking for a
+  // fault that was not there.
+  assert.match(res.body, /could not find that subscription/i);
 });
 
 test("somebody who left and comes back is welcomed back, in place", async () => {
@@ -232,4 +235,62 @@ test("the welcome letter carries a link that really takes you off", async () => 
   } finally {
     mailer.send = realSend;
   }
+});
+
+test("a test copy says so, rather than claiming the link expired", async () => {
+  // A test goes to one address so a letter can be read in a real inbox
+  // before anyone else gets it, and it carries a token belonging to nobody
+  // so it can never take a real person off the list. Clicking it landed on
+  // "that link has expired", which reads like a broken send on the one email
+  // whose only job is checking that the send is not broken.
+  const { TEST_TOKEN } = await import("../src/newsletter.js");
+
+  const res = await app.inject({
+    method: "GET",
+    url: `/newsletter/unsubscribe?token=${encodeURIComponent(TEST_TOKEN)}`,
+  });
+
+  assert.equal(res.statusCode, 200);
+  assert.match(res.body, /That was a test copy/);
+  assert.ok(!res.body.includes("expired"), "nothing here has expired");
+});
+
+test("a link we do not know is not called expired, because none of them expire", async () => {
+  // The token is a permanent lookup key with no expiry anywhere near it, so
+  // the word was wrong in every case it was used.
+  const res = await app.inject({
+    method: "GET",
+    url: "/newsletter/unsubscribe?token=not-a-token-we-ever-issued",
+  });
+
+  assert.equal(res.statusCode, 200);
+  assert.match(res.body, /could not find that subscription/i);
+  assert.ok(!res.body.includes("expired"));
+});
+
+test("the test token never takes a real person off the list", async () => {
+  const { TEST_TOKEN } = await import("../src/newsletter.js");
+
+  await app.inject({
+    method: "POST",
+    url: "/newsletter/subscribe",
+    payload: { email: "leaver@vantaorigin.test" },
+  });
+  const joined = await rowFor("leaver@vantaorigin.test");
+  assert.equal(joined.status, "subscribed");
+
+  await app.inject({ method: "GET", url: `/newsletter/unsubscribe?token=${TEST_TOKEN}` });
+  assert.equal(
+    (await rowFor("leaver@vantaorigin.test")).status,
+    "subscribed",
+    "a test copy took a real person off the list"
+  );
+
+  // Their own link still does what it should.
+  const left = await app.inject({
+    method: "GET",
+    url: `/newsletter/unsubscribe?token=${encodeURIComponent(joined.token)}`,
+  });
+  assert.match(left.body, /You have been unsubscribed/);
+  assert.equal((await rowFor("leaver@vantaorigin.test")).status, "unsubscribed");
 });
