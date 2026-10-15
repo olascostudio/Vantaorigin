@@ -6,11 +6,19 @@ import CharacterShowcase from "../components/CharacterShowcase";
 import ShareLink from "../components/ShareLink";
 import Features from "../components/Features";
 import FinalCta from "../components/FinalCta";
+import { usePageMeta } from "../data/pageMeta";
 
 // Order tells the product story: make a page, see what other creators' pages
 // look like, how it works, what a character profile holds, the one link, then
 // the features and a closing call to action.
 export default function Landing() {
+  usePageMeta({
+    title: "VantaOrigin: Your characters. One link.",
+    description:
+      "Create character cards, organize your characters, and share one simple page with anyone who wants to discover them.",
+    canonicalPath: "/",
+  });
+
   return (
     <>
       <Hero />

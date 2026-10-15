@@ -13,7 +13,18 @@
     />
     <meta name="theme-color" content="#1b2233" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
-    <link rel="canonical" href="https://www.vantaorigin.com/" />
+
+    <!--
+      No canonical here on purpose. This file is served for every address the
+      app draws in the browser, so one written in says that the terms, the
+      contact page and everything else without a crawler route of its own are
+      the front page wearing a different address. Google read it exactly that
+      way and filed them under "alternate page with proper canonical tag",
+      which is its way of saying it believed us.
+
+      A page that knows its own address sets one as it loads; a page that does
+      not is its own canonical by default, which is the right answer.
+    -->
 
     <!--
       What a link to the site itself looks like when it is shared. A link to

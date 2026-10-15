@@ -35,6 +35,14 @@ const setCanonical = (path) => {
   tag.setAttribute("href", `${window.location.origin}${path}`);
 };
 
+// Taken away rather than pointed at the front page. Leaving a page is not a
+// claim that the front page is what you were looking at, and a crawler that
+// reads the head at the wrong moment should find nothing rather than
+// something untrue.
+const clearCanonical = () => {
+  document.querySelector('link[rel="canonical"]')?.remove();
+};
+
 // `title` and `description` may be empty while a page is still loading what
 // it needs; nothing is written until they are known, so a half-written title
 // never flashes into a tab or a bookmark.
@@ -50,7 +58,7 @@ export function usePageMeta({ title, description, canonicalPath } = {}) {
     return () => {
       document.title = DEFAULT_TITLE;
       setDescription(DEFAULT_DESCRIPTION);
-      setCanonical("/");
+      clearCanonical();
     };
   }, [title, description, canonicalPath]);
 }

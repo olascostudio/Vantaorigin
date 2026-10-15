@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
+import { usePageMeta } from "../data/pageMeta";
 
 // Google Form: "Vantaorigin Studio Project Request Form".
 // The /d/e/… link is the public one. The /d/…/edit link only works for editors.
@@ -7,6 +8,12 @@ const FORM_ID = "1FAIpQLSdN4f5EvDCK9es0eKr9h7oHmBXgeLKZ9yTpsdCEppzL6MdCSw";
 const FORM_URL = `https://docs.google.com/forms/d/e/${FORM_ID}/viewform`;
 
 export default function ProjectRequest() {
+  usePageMeta({
+    title: "Request a project",
+    description: "Tell a creator what you need made, and what the work is for.",
+    canonicalPath: "/marketplace/project-request",
+  });
+
   return (
     <div className="min-h-screen bg-[#1b2233]">
       <DashboardNav active="Marketplace" />

@@ -1,8 +1,16 @@
 import { Link } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import { HOW_IT_WORKS } from "../data/marketplace";
+import { usePageMeta } from "../data/pageMeta";
 
 export default function MarketplaceHowItWorks() {
+  usePageMeta({
+    title: "How commissioning works",
+    description:
+      "How a commission runs on VantaOrigin, from the first request through to the finished work.",
+    canonicalPath: "/marketplace/how-it-works",
+  });
+
   return (
     <div className="min-h-screen bg-[#1b2233]">
       <DashboardNav active="Marketplace" />
