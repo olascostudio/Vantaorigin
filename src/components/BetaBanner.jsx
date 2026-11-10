@@ -236,7 +236,7 @@ export default function BetaBanner({ fullBleed = false }) {
   return (
     <>
       <div
-        className={`relative z-20 border-b border-white/10 bg-[#2b2342] ${
+        className={`relative z-20 border-b border-white/10 bg-[#4a1f28] ${
           fullBleed ? "left-1/2 w-screen -translate-x-1/2" : "w-full"
         }`}
       >
@@ -260,13 +260,13 @@ export default function BetaBanner({ fullBleed = false }) {
               >
                 {/* Said once for a screen reader; the second copy is what
                     makes the loop seamless and is not read out. */}
-                <span className="font-ui text-xs text-[#d6cdf0] sm:text-sm">{LINE}</span>
-                <span aria-hidden="true" className="font-ui text-xs text-[#d6cdf0] sm:text-sm">
+                <span className="font-ui text-xs text-[#f0d6dc] sm:text-sm">{LINE}</span>
+                <span aria-hidden="true" className="font-ui text-xs text-[#f0d6dc] sm:text-sm">
                   {LINE}
                 </span>
               </div>
             ) : (
-              <p className="truncate font-ui text-xs text-[#d6cdf0] sm:text-sm">{LINE}</p>
+              <p className="truncate font-ui text-xs text-[#f0d6dc] sm:text-sm">{LINE}</p>
             )}
 
             {/* Off screen, and the thing actually measured: the line at its
@@ -292,7 +292,7 @@ export default function BetaBanner({ fullBleed = false }) {
             type="button"
             onClick={close}
             aria-label="Dismiss this notice"
-            className="-mr-1 shrink-0 rounded-full p-1.5 text-[#d6cdf0] transition-colors hover:bg-white/10 hover:text-white"
+            className="-mr-1 shrink-0 rounded-full p-1.5 text-[#f0d6dc] transition-colors hover:bg-white/10 hover:text-white"
           >
             <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
               <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />

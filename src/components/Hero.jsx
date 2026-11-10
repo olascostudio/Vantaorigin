@@ -15,8 +15,8 @@ import artInkCentaur from "../assets/landing/hero/card-ink-centaur.webp";
 import artInkCentaurSmall from "../assets/landing/hero/card-ink-centaur-small.webp";
 import artHoodedGunman from "../assets/landing/hero/card-hooded-gunman.webp";
 import artHoodedGunmanSmall from "../assets/landing/hero/card-hooded-gunman-small.webp";
-import artWingedWolf from "../assets/landing/hero/card-winged-wolf.webp";
-import artWingedWolfSmall from "../assets/landing/hero/card-winged-wolf-small.webp";
+import artHopeBreaker from "../assets/landing/hero/card-hope-breaker.webp";
+import artHopeBreakerSmall from "../assets/landing/hero/card-hope-breaker-small.webp";
 import curve802 from "../assets/landing/hero/curve-802.svg";
 import curve803 from "../assets/landing/hero/curve-803.svg";
 import curve804 from "../assets/landing/hero/curve-804.svg";
@@ -157,13 +157,17 @@ const SHOWCASE_CARDS = [
     badge: { box: [35.21, 22.53, 50.284, 51.051], transform: "rotate(-0.64deg)" },
   },
   {
-    id: "winged-wolf",
+    // Hope Breaker, by Heartline Comics, published on the site. The card at
+    // the front: the only one not turned, so it is the one actually read.
+    id: "hope-breaker",
     x: -13.55,
     box: [0, 372, 451],
     transform: "none",
-    bg: "#2a2f5e",
-    art: artWingedWolf,
-    artSmall: artWingedWolfSmall,
+    // Taken from the night sky behind the figure, so the edges of the card
+    // do not sit on a colour the artwork never uses.
+    bg: "#243040",
+    art: artHopeBreaker,
+    artSmall: artHopeBreakerSmall,
     badge: { box: [23.5, 23.5, 49.724, 50.5], transform: "none" },
   },
 ];
