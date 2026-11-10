@@ -16,6 +16,12 @@ import {
   users,
 } from "../db/schema.js";
 import { authenticate } from "../auth/auth.js";
+import { addressesIn, subscribe } from "../newsletter.js";
+
+// How many addresses one import may carry. Large enough for a list moved
+// from somewhere else, small enough that a wrong file pasted in is a mistake
+// somebody can undo by hand.
+const IMPORT_LIMIT = 5000;
 
 const adminEmails = () =>
   new Set(
@@ -316,6 +322,54 @@ export default async function adminRoutes(app) {
 
     if (!updated) return reply.code(404).send({ error: "Not on the list" });
     return { ok: true, status: updated.status };
+  });
+
+  // Putting addresses on the list from a file or from something pasted in.
+  //
+  // Erasing a row leaves nothing behind, and the first thing that happened
+  // after the button existed was somebody erased the wrong person and had no
+  // way to put them back. The export has always been there; this is the way
+  // back in, and it is also how a list kept somewhere else arrives.
+  //
+  // Nothing is sent. Somebody added here is on the list and will get the next
+  // letter, but they are not welcomed as though they had just signed up:
+  // these are addresses that were already ours.
+  app.post("/admin/newsletter/import", { preHandler: requireAdmin() }, async (request, reply) => {
+    const { text } = z
+      .object({ text: z.string().max(2_000_000) })
+      .parse(request.body ?? {});
+
+    const addresses = addressesIn(text);
+    if (!addresses.length) {
+      return reply.code(400).send({ error: "No addresses in that." });
+    }
+    if (addresses.length > IMPORT_LIMIT) {
+      return reply.code(400).send({
+        error: `That is ${addresses.length} addresses. ${IMPORT_LIMIT} at a time, so a mistake stays small.`,
+      });
+    }
+
+    // One at a time, and a failure on one address is not allowed to lose the
+    // rest: the point of this screen is getting people back.
+    const results = [];
+    for (const email of addresses) {
+      try {
+        const answer = await subscribe(email, "import");
+        results.push({ email, state: answer.ok ? answer.state : "refused" });
+      } catch (error) {
+        request.log.warn({ err: error, email }, "could not import an address");
+        results.push({ email, state: "failed" });
+      }
+    }
+
+    const tally = (state) => results.filter((row) => row.state === state).length;
+    return {
+      added: tally("added"),
+      returned: tally("returned"),
+      already: tally("already"),
+      failed: tally("failed") + tally("refused"),
+      results,
+    };
   });
 
   // Erasing a row outright, for test entries and for somebody who asks to be

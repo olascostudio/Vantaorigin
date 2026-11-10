@@ -31,6 +31,11 @@ export const forgetSubscriber = (id) => api.delete(`/admin/newsletter/${id}`);
 export const subscribersFileUrl = (status = "subscribed") =>
   `${API_BASE}/admin/newsletter.csv?status=${status}`;
 
+// The way back in. Takes a whole file or whatever was pasted, and the server
+// picks the addresses out of it, so a CSV, a column from a spreadsheet and a
+// line of addresses all arrive the same way.
+export const importSubscribers = (text) => api.post("/admin/newsletter/import", { text });
+
 // Writing the newsletter. A draft is kept as blocks, so the preview below is
 // built the same way the real email will be.
 export const loadIssues = () => api.get("/admin/newsletter/issues");

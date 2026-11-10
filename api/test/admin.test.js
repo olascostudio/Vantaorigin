@@ -371,3 +371,146 @@ test("a shorter window counts fewer people, never more", async () => {
   assert.ok(day.recent.joined <= month.recent.joined);
   assert.ok(month.recent.joined <= month.allTime.joined);
 });
+
+// ---- putting addresses back on the list ------------------------------------
+//
+// Erasing a row leaves nothing behind. The first thing that happened after
+// that button existed was the wrong person being erased, with no way back:
+// the list could be exported and never imported.
+
+const importing = (text) =>
+  app.inject({
+    method: "POST",
+    url: "/admin/newsletter/import",
+    headers: { cookie: boss },
+    payload: { text },
+  });
+
+test("an address erased by mistake can be put back", async () => {
+  await app.inject({
+    method: "POST",
+    url: "/newsletter/subscribe",
+    payload: { email: "lost@vantaorigin.test" },
+  });
+
+  const list = await app.inject({
+    method: "GET",
+    url: "/admin/newsletter?q=lost@vantaorigin.test",
+    headers: { cookie: boss },
+  });
+  const row = list.json().rows[0];
+  assert.ok(row, "should be on the list to start with");
+
+  // Erased the way the screen erases.
+  await app.inject({
+    method: "DELETE",
+    url: `/admin/newsletter/${row.id}`,
+    headers: { cookie: boss },
+  });
+  const gone = await app.inject({
+    method: "GET",
+    url: "/admin/newsletter?q=lost@vantaorigin.test",
+    headers: { cookie: boss },
+  });
+  assert.equal(gone.json().rows.length, 0, "erasing should leave nothing");
+
+  const back = await importing("lost@vantaorigin.test");
+  assert.equal(back.statusCode, 200);
+  assert.equal(back.json().added, 1);
+
+  const found = await app.inject({
+    method: "GET",
+    url: "/admin/newsletter?q=lost@vantaorigin.test",
+    headers: { cookie: boss },
+  });
+  assert.equal(found.json().rows[0].status, "subscribed");
+  assert.equal(found.json().rows[0].source, "import");
+});
+
+test("addresses are found in whatever shape the list arrives in", async () => {
+  const { addressesIn } = await import("../src/newsletter.js");
+
+  // A column copied out of a spreadsheet.
+  assert.deepEqual(addressesIn("a@x.test\nb@x.test\n"), ["a@x.test", "b@x.test"]);
+
+  // A CSV with a header row and the address in the third column.
+  const csv = 'First,Last,Email Address\n"Ola","Oriola","c@x.test"\n"Ada","L","d@x.test"\n';
+  assert.deepEqual(addressesIn(csv), ["c@x.test", "d@x.test"]);
+
+  // A line of them, as somebody would paste out of a mail client.
+  assert.deepEqual(addressesIn("e@x.test, f@x.test; g@x.test"), ["e@x.test", "f@x.test", "g@x.test"]);
+
+  // Names attached, which a mailbox export carries.
+  assert.deepEqual(addressesIn("Ola Oriola <h@x.test>"), ["h@x.test"]);
+
+  // The same person twice is one person, and case is not a difference.
+  assert.deepEqual(addressesIn("I@x.test\ni@x.test"), ["i@x.test"]);
+
+  // Nothing in it is nothing, not a crash.
+  assert.deepEqual(addressesIn(""), []);
+  assert.deepEqual(addressesIn("no addresses here at all"), []);
+});
+
+test("an import says what happened to each address, not just that it worked", async () => {
+  await app.inject({
+    method: "POST",
+    url: "/newsletter/subscribe",
+    payload: { email: "already@vantaorigin.test" },
+  });
+
+  const answer = await importing(
+    "already@vantaorigin.test\nbrandnew@vantaorigin.test\nalready@vantaorigin.test"
+  );
+  const body = answer.json();
+
+  assert.equal(body.added, 1, "the new one");
+  assert.equal(body.already, 1, "the one that was there, counted once");
+  assert.equal(body.results.length, 2, "the same address twice is one address");
+});
+
+test("somebody who had left is brought back by an import", async () => {
+  await app.inject({
+    method: "POST",
+    url: "/newsletter/subscribe",
+    payload: { email: "left@vantaorigin.test" },
+  });
+  const list = await app.inject({
+    method: "GET",
+    url: "/admin/newsletter?q=left@vantaorigin.test",
+    headers: { cookie: boss },
+  });
+  await app.inject({
+    method: "PATCH",
+    url: `/admin/newsletter/${list.json().rows[0].id}`,
+    headers: { cookie: boss },
+    payload: { status: "unsubscribed" },
+  });
+
+  const answer = await importing("left@vantaorigin.test");
+  assert.equal(answer.json().returned, 1);
+
+  const now = await app.inject({
+    method: "GET",
+    url: "/admin/newsletter?q=left@vantaorigin.test",
+    headers: { cookie: boss },
+  });
+  assert.equal(now.json().rows[0].status, "subscribed");
+});
+
+test("an import with nothing in it says so instead of reporting success", async () => {
+  const answer = await importing("there are no addresses in this sentence");
+  assert.equal(answer.statusCode, 400);
+  assert.match(answer.json().error, /No addresses/i);
+});
+
+test("importing is closed to everybody but an admin", async () => {
+  const outsider = await signUp("outsider");
+  const answer = await app.inject({
+    method: "POST",
+    url: "/admin/newsletter/import",
+    headers: { cookie: outsider },
+    payload: { text: "sneaky@vantaorigin.test" },
+  });
+
+  assert.equal(answer.statusCode, 404, "an admin route tells an outsider nothing");
+});

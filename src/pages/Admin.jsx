@@ -5,6 +5,7 @@ import { Skeleton } from "../components/Loading.jsx";
 import NewsletterLetters from "../components/NewsletterEditor.jsx";
 import {
   forgetSubscriber,
+  importSubscribers,
   loadCreators,
   loadFunnel,
   loadOverview,
@@ -330,6 +331,133 @@ function WelcomeAgain({ onTrouble }) {
 
 // Who hears from VantaOrigin. The useful question is usually "is this person
 // on it?", so the search box comes before the list.
+// Putting addresses on the list: a file chosen, or a list pasted in.
+//
+// Erasing a row leaves nothing behind, and the first use of that button was
+// erasing the wrong person with no way back. The list could always be
+// exported and never brought in again, so this is the other half of the
+// Download button it sits beside.
+//
+// The file is read here and sent as text. The server picks the addresses out
+// of whatever arrives, so a CSV, a column copied from a spreadsheet and a
+// line of addresses all work without anybody choosing a format.
+function BringThemBack({ onClose, onDone, onTrouble }) {
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [answer, setAnswer] = useState(null);
+
+  const readFile = async (file) => {
+    if (!file) return;
+    try {
+      setText(await file.text());
+      setAnswer(null);
+    } catch {
+      onTrouble("That file could not be read.");
+    }
+  };
+
+  const send = async () => {
+    setBusy(true);
+    setAnswer(null);
+    try {
+      const result = await importSubscribers(text);
+      setAnswer(result);
+      setText("");
+      await onDone();
+    } catch (error) {
+      onTrouble(error.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="font-ui text-sm font-bold text-white">Import addresses</p>
+          <p className="mt-1 font-ui text-xs leading-relaxed text-neutral-400">
+            A CSV, a column from a spreadsheet, or addresses separated by commas.
+            Nobody is emailed: they go on the list and get the next letter.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="shrink-0 rounded-full px-3 py-1 font-ui text-xs text-neutral-400 hover:text-white"
+        >
+          Close
+        </button>
+      </div>
+
+      <textarea
+        value={text}
+        onChange={(event) => setText(event.target.value)}
+        rows={4}
+        placeholder={"someone@example.com, another@example.com"}
+        aria-label="Addresses to add"
+        className="mt-3 w-full resize-y rounded-lg border border-white/15 bg-black/30 px-4 py-3 font-ui text-sm leading-relaxed text-white outline-none placeholder:text-neutral-600 focus:border-[#6b8ff5]"
+      />
+
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <label className="cursor-pointer rounded-full border border-white/20 px-4 py-2 font-ui text-xs text-neutral-300 transition-colors hover:bg-white/10">
+          Choose a file
+          <input
+            type="file"
+            accept=".csv,.txt,text/csv,text/plain"
+            className="sr-only"
+            onChange={(event) => readFile(event.target.files?.[0])}
+          />
+        </label>
+
+        <button
+          type="button"
+          onClick={send}
+          disabled={busy || !text.trim()}
+          className="rounded-full bg-[#6b8ff5] px-5 py-2 font-ui text-xs font-bold text-[#101725] transition-opacity hover:opacity-90 disabled:opacity-40"
+        >
+          {busy ? "Adding…" : "Add them"}
+        </button>
+      </div>
+
+      {/* Said per address as well as in total: an import that reports only a
+          number leaves you wondering which ones it meant. */}
+      {answer && (
+        <div className="mt-4 rounded-lg border border-white/10 bg-black/20 p-3">
+          <p className="font-ui text-sm text-white">
+            {[
+              answer.added && `${answer.added} added`,
+              answer.returned && `${answer.returned} brought back`,
+              answer.already && `${answer.already} already there`,
+              answer.failed && `${answer.failed} could not be read`,
+            ]
+              .filter(Boolean)
+              .join(", ") || "Nothing to do."}
+          </p>
+          <ul className="mt-2 max-h-40 overflow-y-auto font-ui text-xs leading-relaxed text-neutral-400">
+            {answer.results.map((row) => (
+              <li key={row.email} className="flex justify-between gap-4 py-0.5">
+                <span className="truncate">{row.email}</span>
+                <span
+                  className={
+                    row.state === "added" || row.state === "returned"
+                      ? "shrink-0 text-[#5fdc8a]"
+                      : row.state === "already"
+                        ? "shrink-0 text-neutral-500"
+                        : "shrink-0 text-[#ffb4c4]"
+                  }
+                >
+                  {row.state}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function NewsletterPanel({ onTrouble }) {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
@@ -337,6 +465,7 @@ function NewsletterPanel({ onTrouble }) {
   const [busyId, setBusyId] = useState("");
   // Which row is waiting for a second press before it is erased.
   const [confirming, setConfirming] = useState("");
+  const [importing, setImporting] = useState(false);
 
   // Typing should not send a request per keystroke.
   const [query, setQuery] = useState("");
@@ -385,30 +514,52 @@ function NewsletterPanel({ onTrouble }) {
 
   return (
     <section className="mt-5">
-      <div className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-[#222b3c] p-5">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="font-ui text-base font-bold text-white">
+      {/* The list, and the two ways in and out of it. The welcome letter and
+          the picture shrinking used to sit in the middle of this, between the
+          count and the search, which is not where either belongs: they are
+          occasional jobs, not part of reading the list. They are below the
+          table now. */}
+      <div className="flex flex-col gap-5 rounded-2xl border border-white/10 bg-[#222b3c] p-5">
+        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+          <div className="min-w-0">
+            <p className="font-ui text-xl font-bold leading-tight text-white">
               {counts ? `${counts.subscribed} on the list` : "Counting…"}
             </p>
-            <p className="mt-1 font-ui text-sm text-neutral-400">
+            <p className="mt-1.5 font-ui text-sm leading-relaxed text-neutral-400">
               {counts
                 ? `${counts.unsubscribed} ${counts.unsubscribed === 1 ? "has" : "have"} left. Every new account joins, and can leave from any email we send.`
                 : " "}
             </p>
           </div>
 
-          {/* A file, so the list can be carried to whatever sends the mail. */}
-          <a
-            href={subscribersFileUrl("subscribed")}
-            className="rounded-full border border-white/30 px-5 py-2.5 font-ui text-sm text-white hover:bg-white/10"
-          >
-            Download as CSV
-          </a>
+          {/* Out and in, the same height and side by side, because they are
+              two halves of one thing. A file carries the list to whatever
+              sends the mail; an import brings one back. */}
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setImporting((was) => !was)}
+              aria-expanded={importing}
+              className="h-10 rounded-full border border-white/25 px-5 font-ui text-sm text-white transition-colors hover:bg-white/10"
+            >
+              Import addresses
+            </button>
+            <a
+              href={subscribersFileUrl("subscribed")}
+              className="flex h-10 items-center rounded-full border border-white/25 px-5 font-ui text-sm text-white transition-colors hover:bg-white/10"
+            >
+              Download CSV
+            </a>
+          </div>
         </div>
 
-        <WelcomeAgain onTrouble={onTrouble} />
-        <ShrinkPictures onTrouble={onTrouble} />
+        {importing && (
+          <BringThemBack
+            onClose={() => setImporting(false)}
+            onDone={refresh}
+            onTrouble={onTrouble}
+          />
+        )}
 
         <div className="flex flex-wrap items-center gap-3">
           <label className="min-w-[200px] flex-1">
@@ -473,7 +624,9 @@ function NewsletterPanel({ onTrouble }) {
                         ? "signing up"
                         : row.source === "google"
                           ? "Google sign-up"
-                          : "the footer"}
+                          : row.source === "import"
+                            ? "an import"
+                            : "the footer"}
                     </td>
                     <td className="px-5 py-3 font-ui text-sm">
                       <span className={row.hasAccount ? "text-[#5fdc8a]" : "text-neutral-500"}>
@@ -550,6 +703,16 @@ function NewsletterPanel({ onTrouble }) {
           )}
         </div>
       )}
+
+      {/* Neither of these is about the list. They were between the count and
+          the search, in front of the one job this screen exists for. */}
+      <div className="mt-6 flex flex-col gap-4 rounded-2xl border border-white/10 bg-[#222b3c] p-5">
+        <p className="font-ui text-xs font-bold uppercase tracking-[0.12em] text-neutral-500">
+          Other jobs
+        </p>
+        <WelcomeAgain onTrouble={onTrouble} />
+        <ShrinkPictures onTrouble={onTrouble} />
+      </div>
     </section>
   );
 }

@@ -98,5 +98,22 @@ export async function unsubscribeByToken(token) {
 // on the one email whose whole purpose is checking the send is not broken.
 export const TEST_TOKEN = "test-copy-not-a-real-subscription";
 
+// Every address in whatever was pasted or uploaded.
+//
+// A list arrives in a different shape every time: a column copied out of a
+// spreadsheet, a CSV exported from somewhere else with the address in the
+// fourth column, a line of addresses separated by commas, a mailbox export
+// with names and quotes around everything. Rather than teach this about each
+// shape, every address in the text is picked out and the rest is thrown away.
+// That reads all of them, and a header row costs nothing because "Email
+// Address" is not an address.
+//
+// Lowercased and deduplicated, because the same person twice in a file is
+// one person.
+export const addressesIn = (text) => {
+  const found = String(text || "").match(/[A-Za-z0-9._%+'-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g) || [];
+  return [...new Set(found.map((address) => address.toLowerCase()))];
+};
+
 export const unsubscribeLink = (site, token) =>
   `${String(site).replace(/\/$/, "")}/newsletter/unsubscribe?token=${encodeURIComponent(token)}`;

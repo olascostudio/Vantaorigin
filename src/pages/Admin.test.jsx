@@ -133,8 +133,36 @@ describe("The dashboard", () => {
 
     expect(screen.getByText("7 on the list")).toBeInTheDocument();
     expect(screen.getByText("reader@example.com")).toBeInTheDocument();
+    // Moved below the table: they are occasional jobs, and they used to sit
+    // between the count and the search, in front of the list itself.
     expect(screen.getByText("Send the welcome letter again")).toBeInTheDocument();
     expect(screen.getByText("Shrink the stored pictures")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Download as CSV" })).toBeInTheDocument();
+    expect(screen.getByText("Other jobs")).toBeInTheDocument();
+
+    // The two halves of one thing, side by side.
+    expect(screen.getByRole("link", { name: "Download CSV" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Import addresses" })).toBeInTheDocument();
+  });
+
+  it("opens a way to put addresses back on the list", async () => {
+    // Erasing a row leaves nothing behind. Until this existed the list could
+    // be carried out and never carried back in, so erasing the wrong person
+    // was final.
+    await open();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /^Newsletter/ }));
+    });
+
+    expect(screen.queryByLabelText("Addresses to add")).not.toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Import addresses" }));
+    });
+
+    expect(screen.getByLabelText("Addresses to add")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add them" })).toBeInTheDocument();
+    // Said plainly, because importing a list that then emails everybody is
+    // the thing somebody would be afraid of.
+    expect(screen.getByText(/Nobody is emailed/i)).toBeInTheDocument();
   });
 });
