@@ -20,8 +20,14 @@ describe("Navbar", () => {
     expect(screen.getByRole("link", { name: "Blog" })).toHaveAttribute("href", "/blog");
   });
 
-  it("renders the Create your page CTA", () => {
+  it("offers a way in and a way to start, rather than one door for both", () => {
+    // It said "Create your page", which is what the site wanted rather than
+    // what the visitor wanted, and somebody who already had an account had
+    // to work out that it was also the way back in.
     render(<Navbar />, { wrapper: MemoryRouter });
-    expect(screen.getByRole("link", { name: "Create your page" })).toHaveAttribute("href", "/auth");
+
+    expect(screen.getByRole("link", { name: "Sign up" })).toHaveAttribute("href", "/signup");
+    expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/signin");
+    expect(screen.queryByRole("link", { name: "Create your page" })).not.toBeInTheDocument();
   });
 });

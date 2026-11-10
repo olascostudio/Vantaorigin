@@ -287,11 +287,19 @@ export default function Hero() {
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10">
+            {/* The same two doors as the bar above, said once more where
+                somebody has just finished reading what the site is for. */}
             <Link
-              to="/auth"
+              to="/signup"
               className="mb-[5px] ml-[5px] bg-secondary px-6 py-4 font-ui text-sm font-bold text-white shadow-block transition-transform hover:-translate-y-0.5"
             >
-              Create your page
+              Sign up
+            </Link>
+            <Link
+              to="/signin"
+              className="border-2 border-white/40 px-6 py-4 font-ui text-sm font-bold text-white transition-colors hover:border-white hover:bg-white/10"
+            >
+              Sign in
             </Link>
             <Link
               to="/discover"

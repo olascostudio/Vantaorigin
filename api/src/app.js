@@ -14,6 +14,7 @@ import blogPreviewRoutes from "./routes/blog-preview.js";
 import homePreviewRoutes from "./routes/home-preview.js";
 import characterRoutes from "./routes/characters.js";
 import embedRoutes from "./routes/embed.js";
+import feedbackRoutes from "./routes/feedback.js";
 import highlightRoutes from "./routes/highlights.js";
 import googleRoutes, { googleConfigNote } from "./routes/google.js";
 import newsletterRoutes from "./routes/newsletter.js";
@@ -117,6 +118,7 @@ export async function buildApp() {
   await app.register(homePreviewRoutes);
   await app.register(characterRoutes);
   await app.register(embedRoutes);
+  await app.register(feedbackRoutes);
   await app.register(googleRoutes);
   await app.register(highlightRoutes);
   await app.register(newsletterRoutes);

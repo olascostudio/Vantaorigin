@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import BetaBanner from "./BetaBanner";
 import logoMark from "../assets/landing/hero/logo-mark.svg";
 import logoWordmark from "../assets/landing/hero/logo-wordmark.svg";
 
@@ -32,6 +33,7 @@ export default function Navbar() {
   }, [open]);
 
   return (
+    <>
     <nav
       className="relative mx-auto w-full max-w-[1368px] rounded-[10px] border border-white/10 bg-surface/20 px-4 py-[15px] backdrop-blur-[4px] sm:px-[34px]"
       data-testid="navbar"
@@ -53,13 +55,22 @@ export default function Navbar() {
         </ul>
 
         <div className="flex shrink-0 items-center gap-2">
-          {/* Smaller where the bar is narrow: at full size it crowded out
-              everything else on a phone. */}
+          {/* Two doors rather than one. "Create your page" said what the
+              site wanted and not what the visitor wanted, and somebody who
+              already had an account had to work out that it was also the way
+              back in. Sign in is quieter because most people arriving here
+              are not members yet. */}
           <Link
-            to="/auth"
-            className="bg-primary px-3.5 py-2.5 font-ui text-xs font-semibold text-white shadow-block transition-transform hover:-translate-y-0.5 sm:mb-[5px] sm:ml-[5px] sm:px-6 sm:py-4 sm:text-sm"
+            to="/signin"
+            className="hidden whitespace-nowrap px-3 py-2.5 font-ui text-sm text-white transition-opacity hover:opacity-80 sm:block"
           >
-            Create your page
+            Sign in
+          </Link>
+          <Link
+            to="/signup"
+            className="whitespace-nowrap bg-primary px-3.5 py-2.5 font-ui text-xs font-semibold text-white shadow-block transition-transform hover:-translate-y-0.5 sm:mb-[5px] sm:ml-[5px] sm:px-6 sm:py-4 sm:text-sm"
+          >
+            Sign up
           </Link>
 
           {/* The links were simply absent below this width, with no way to
@@ -102,5 +113,9 @@ export default function Navbar() {
         </ul>
       )}
     </nav>
+    {/* Under the bar, full width, and only on the pages anyone can see:
+        the banner decides that for itself. */}
+    <BetaBanner fullBleed />
+    </>
   );
 }

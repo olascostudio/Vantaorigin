@@ -5,6 +5,7 @@ import logoWordmark from "../assets/landing/hero/logo-wordmark.svg";
 import { useAuth } from "../data/AuthContext.jsx";
 import { amIAdmin } from "../data/admin";
 import VerifyBanner from "./VerifyBanner.jsx";
+import BetaBanner from "./BetaBanner.jsx";
 
 const LINKS = [
   { label: "Discover", to: "/discover" },
@@ -144,6 +145,9 @@ export default function DashboardNav({ active = "Discover" }) {
       </div>
 
       <VerifyBanner />
+      {/* This bar is on the open pages as well as the workspace. The banner
+          takes itself off the private ones. */}
+      <BetaBanner />
 
       {/* Phones and tablets: the same links, folded away until asked for */}
       {open && (

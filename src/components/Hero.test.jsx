@@ -16,10 +16,14 @@ describe("Hero", () => {
 
   it("renders both primary CTAs", () => {
     render(<Hero />, { wrapper: MemoryRouter });
-    // the navbar lives inside the hero, so its CTA matches the same name
-    const signUp = screen.getAllByRole("link", { name: "Create your page" });
+    // The navbar lives inside the hero, so both say the same two things.
+    const signUp = screen.getAllByRole("link", { name: "Sign up" });
     expect(signUp.length).toBeGreaterThan(0);
-    signUp.forEach((link) => expect(link).toHaveAttribute("href", "/auth"));
+    signUp.forEach((link) => expect(link).toHaveAttribute("href", "/signup"));
+
+    const signIn = screen.getAllByRole("link", { name: "Sign in" });
+    expect(signIn.length).toBeGreaterThan(0);
+    signIn.forEach((link) => expect(link).toHaveAttribute("href", "/signin"));
     // Both of them, the navbar's and the hero's, go to the characters
     // themselves rather than scrolling to a section about them.
     const explore = screen.getAllByRole("link", { name: "Explore characters" });
