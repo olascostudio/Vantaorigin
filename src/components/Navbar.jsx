@@ -35,7 +35,7 @@ export default function Navbar() {
   return (
     <>
     <nav
-      className="relative mx-auto w-full max-w-[1368px] rounded-[10px] border border-white/10 bg-surface/20 px-4 py-[15px] backdrop-blur-[4px] sm:px-[34px]"
+      className="relative mx-auto w-full max-w-[1368px] rounded-[10px] border border-white/10 bg-surface/20 px-4 py-[15px] backdrop-blur-[4px] sm:px-[34px] [@media(max-height:760px)]:py-2"
       data-testid="navbar"
     >
       <div className="flex items-center justify-between gap-3 sm:gap-6">

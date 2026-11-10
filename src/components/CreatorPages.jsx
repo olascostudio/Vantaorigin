@@ -17,15 +17,17 @@ const PAGES = [
   {
     id: "hope-breaker",
     name: "Hope Breaker",
-    universe: "Heartline Comics",
+    // As it is published on the site, rather than as it was written here
+    // when the card was a picture of something that did not exist yet.
+    universe: "The Heartline Universe",
     tagline: "Marcus Sinclair",
     body: "Conjures weapons out of Nether energy, sees the souls of the living and the dead, and opens portals into the wraith zone.",
     art: hopeBreakerArt,
     artSmall: hopeBreakerSmall,
-    // Somebody else's character, shown with their name on it. There is no
-    // page to open until Spif Nation has one of their own.
-    to: null,
-    creator: "Spif Nation",
+    // Heartline Comics has published him, so the card opens his page rather
+    // than promising one. The artwork is theirs, from that page.
+    to: "/character/hope-breaker",
+    creator: "@Heartline",
   },
   {
     id: "urokojin",

@@ -240,7 +240,7 @@ export default function BetaBanner({ fullBleed = false }) {
           fullBleed ? "left-1/2 w-screen -translate-x-1/2" : "w-full"
         }`}
       >
-        <div className="mx-auto flex h-10 max-w-[1368px] items-center gap-2 px-3 sm:h-11 sm:gap-4 sm:px-6">
+        <div className="mx-auto flex h-10 max-w-[1368px] items-center gap-2 px-3 sm:h-11 sm:gap-4 sm:px-6 [@media(max-height:760px)]:h-9 [@media(max-height:760px)]:sm:h-9">
           {/* The words. They scroll inside here and nowhere else, so the two
               buttons never move. */}
           <div

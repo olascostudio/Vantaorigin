@@ -15,8 +15,8 @@ import artInkCentaur from "../assets/landing/hero/card-ink-centaur.webp";
 import artInkCentaurSmall from "../assets/landing/hero/card-ink-centaur-small.webp";
 import artHoodedGunman from "../assets/landing/hero/card-hooded-gunman.webp";
 import artHoodedGunmanSmall from "../assets/landing/hero/card-hooded-gunman-small.webp";
-import artHopeBreaker from "../assets/landing/hero/card-hope-breaker.webp";
-import artHopeBreakerSmall from "../assets/landing/hero/card-hope-breaker-small.webp";
+import artWingedWolf from "../assets/landing/hero/card-winged-wolf.webp";
+import artWingedWolfSmall from "../assets/landing/hero/card-winged-wolf-small.webp";
 import curve802 from "../assets/landing/hero/curve-802.svg";
 import curve803 from "../assets/landing/hero/curve-803.svg";
 import curve804 from "../assets/landing/hero/curve-804.svg";
@@ -157,17 +157,13 @@ const SHOWCASE_CARDS = [
     badge: { box: [35.21, 22.53, 50.284, 51.051], transform: "rotate(-0.64deg)" },
   },
   {
-    // Hope Breaker, by Heartline Comics, published on the site. The card at
-    // the front: the only one not turned, so it is the one actually read.
-    id: "hope-breaker",
+    id: "winged-wolf",
     x: -13.55,
     box: [0, 372, 451],
     transform: "none",
-    // Taken from the night sky behind the figure, so the edges of the card
-    // do not sit on a colour the artwork never uses.
-    bg: "#243040",
-    art: artHopeBreaker,
-    artSmall: artHopeBreakerSmall,
+    bg: "#2a2f5e",
+    art: artWingedWolf,
+    artSmall: artWingedWolfSmall,
     badge: { box: [23.5, 23.5, 49.724, 50.5], transform: "none" },
   },
 ];
@@ -214,7 +210,7 @@ function ShowcaseCard({ id, x, box, transform, bg, art, artSmall, badge }) {
 function Showcase() {
   return (
     // Visible window onto the 698px-tall stage; the hero clips the rest.
-    <div className="relative h-[141px] sm:h-[176px] md:h-[211px] lg:h-[clamp(200px,34vh,390px)]">
+    <div className="relative h-[141px] sm:h-[176px] md:h-[211px] lg:h-[clamp(150px,34vh,390px)]">
       <div
         className="absolute left-1/2 top-0 h-[697.786px] w-[1440px] origin-top -translate-x-1/2 scale-[0.4] sm:scale-50 md:scale-[0.6] lg:scale-[0.8] xl:scale-90 min-[1440px]:scale-100"
         data-testid="showcase"
@@ -270,51 +266,57 @@ export default function Hero() {
       <div className="relative flex flex-1 flex-col">
         <Navbar />
 
-        <div className="mx-auto mt-[clamp(18px,2.6vh,101px)] flex max-w-[688px] flex-col items-center gap-[clamp(16px,2.6vh,30px)] text-center">
-          <div className="flex flex-col items-center gap-[clamp(12px,2vh,20px)]">
+        <div className="mx-auto mt-[clamp(8px,2.6vh,101px)] flex max-w-[688px] flex-col items-center gap-[clamp(10px,2.6vh,30px)] text-center">
+          <div className="flex flex-col items-center gap-[clamp(8px,2vh,20px)]">
             <AnnouncementBadge />
 
             <div>
               <h1 className="font-display text-primary">
-                <span className="block text-[40px] leading-[1.15] sm:text-[60px] lg:text-[clamp(50px,7.2vh,85px)] lg:leading-[1.08]">
+                <span className="block text-[40px] leading-[1.15] sm:text-[60px] lg:text-[clamp(38px,7.2vh,85px)] lg:leading-[1.08]">
                   Create <span className="text-white">Your</span>
                 </span>{" "}
-                <span className="block text-[48px] leading-[1.15] sm:text-[73px] lg:text-[clamp(61px,8.8vh,103.68px)] lg:leading-[1.08]">
+                <span className="block text-[48px] leading-[1.15] sm:text-[73px] lg:text-[clamp(46px,8.8vh,103.68px)] lg:leading-[1.08]">
                   <span className="text-white">Character</span> Cards
                 </span>
               </h1>
-              <p className="mx-auto mt-[clamp(8px,1.5vh,16px)] max-w-[700px] font-body text-base tracking-[-0.1px] text-subtext sm:text-xl">
+              <p className="mx-auto mt-[clamp(4px,1.5vh,16px)] max-w-[700px] font-body text-base tracking-[-0.1px] text-subtext sm:text-xl [@media(max-height:760px)]:lg:text-base [@media(max-height:760px)]:lg:leading-snug">
                 Create a home for your characters, organize their profiles, and share your
                 characters with one link.
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10">
+          <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10 [@media(max-height:760px)]:lg:gap-5">
             {/* The same two doors as the bar above, said once more where
                 somebody has just finished reading what the site is for. */}
             <Link
               to="/signup"
-              className="mb-[5px] ml-[5px] bg-secondary px-6 py-4 font-ui text-sm font-bold text-white shadow-block transition-transform hover:-translate-y-0.5"
+              className="mb-[5px] ml-[5px] bg-secondary px-6 py-4 [@media(max-height:760px)]:lg:py-2.5 font-ui text-sm font-bold text-white shadow-block transition-transform hover:-translate-y-0.5"
             >
               Sign up
             </Link>
             <Link
               to="/signin"
-              className="border-2 border-white/40 px-6 py-4 font-ui text-sm font-bold text-white transition-colors hover:border-white hover:bg-white/10"
+              className="border-2 border-white/40 px-6 py-4 [@media(max-height:760px)]:lg:py-2.5 font-ui text-sm font-bold text-white transition-colors hover:border-white hover:bg-white/10"
             >
               Sign in
             </Link>
             <Link
               to="/discover"
-              className="border-2 border-white px-6 py-4 font-ui text-sm font-bold text-white transition-colors hover:bg-white/10"
+              className="border-2 border-white px-6 py-4 [@media(max-height:760px)]:lg:py-2.5 font-ui text-sm font-bold text-white transition-colors hover:bg-white/10"
             >
               Explore characters
             </Link>
           </div>
         </div>
 
-        <div className="-mx-4 pt-[clamp(10px,2.2vh,36px)] lg:mt-auto">
+        {/* On a tall screen the cards sit on the floor of the hero, which
+            is the look. On a short one that pushed them off the bottom: at
+            1366x768 the gap above them was 157px and all you could see was
+            the rounded top edge, about a quarter of a card. Under 900px tall
+            they follow the writing instead, so there is a character on the
+            screen when the page loads rather than the lid of one. */}
+        <div className="-mx-4 pt-[clamp(6px,2.2vh,36px)] [@media(min-height:900px)]:lg:mt-auto">
           <Showcase />
         </div>
       </div>

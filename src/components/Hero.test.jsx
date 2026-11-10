@@ -45,9 +45,7 @@ describe("Hero", () => {
       "knife-dancer",
       "ink-centaur",
       "hooded-gunman",
-      // The card at the front, and the only one not turned: Hope Breaker,
-      // by Heartline Comics, published on the site rather than drawn for it.
-      "hope-breaker",
+      "winged-wolf",
     ]);
   });
 

@@ -39,18 +39,22 @@ describe("Creator pages", () => {
     // Each character is credited to whoever made it. Hope Breaker belongs to
     // Heartline Comics, not to the person running the site, and putting the
     // wrong name under it would be taking somebody else's work.
-    expect(within(cards[0]).getByText("Spif Nation")).toBeInTheDocument();
+    expect(within(cards[0]).getByText("@Heartline")).toBeInTheDocument();
     expect(within(cards[0]).queryByText("@Vtgshadowscribe")).not.toBeInTheDocument();
     expect(within(cards[1]).getByText("@Vtgshadowscribe")).toBeInTheDocument();
 
-    // A published character opens on its own page. One whose creator has no
-    // page here has none to open, and offers none.
+    // Both are published now, so both open on their own page. Hope Breaker
+    // said "Page coming soon" for as long as nobody had put him anywhere;
+    // Heartline Comics has, so the card stops promising and opens it.
     expect(within(cards[1]).getByRole("link", { name: "View page" })).toHaveAttribute(
       "href",
       "/character/urokojin"
     );
-    expect(within(cards[0]).queryByRole("link", { name: "View page" })).not.toBeInTheDocument();
-    expect(within(cards[0]).getByText("Page coming soon")).toBeInTheDocument();
+    expect(within(cards[0]).getByRole("link", { name: "View page" })).toHaveAttribute(
+      "href",
+      "/character/hope-breaker"
+    );
+    expect(screen.queryByText("Page coming soon")).not.toBeInTheDocument();
 
     // membership numbers were invented, so they should be gone
     expect(screen.queryByText(/members/i)).not.toBeInTheDocument();
