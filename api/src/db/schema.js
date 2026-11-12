@@ -344,3 +344,42 @@ export const blogPostSlugs = pgTable(
     postIdx: index("blog_post_slugs_post_idx").on(table.postId),
   })
 );
+
+// Every email that left the building, and what became of it.
+//
+// The address is kept beside the id because plenty of mail goes to people
+// with no account, and because a user who changes their address later should
+// not rewrite what we sent to the old one.
+export const emailLog = pgTable(
+  "email_log",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    email: text("email").notNull(),
+    // One of the four kinds. The database checks this too.
+    class: text("class").notNull(),
+    template: text("template").default("").notNull(),
+    // What Resend called it, which is how a webhook finds this row later.
+    providerMessageId: text("provider_message_id"),
+    status: text("status").default("queued").notNull(),
+    error: text("error"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdx: index("email_log_user_idx").on(table.userId, table.createdAt),
+    providerIdx: index("email_log_provider_idx").on(table.providerMessageId),
+    statusIdx: index("email_log_status_idx").on(table.status, table.createdAt),
+  })
+);
+
+// Addresses we have been told to stop writing to. Keyed by address rather
+// than by user: a bounce is a fact about a mailbox, and the mailbox may
+// belong to nobody here.
+export const suppressionList = pgTable("suppression_list", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: text("email").notNull(),
+  reason: text("reason").notNull(),
+  note: text("note").default("").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});

@@ -17,6 +17,7 @@ import { newsletterIssues, newsletterSubscribers } from "./db/schema.js";
 import { mailer } from "./adapters/email.js";
 import { renderIssue } from "./emails/issue.js";
 import { TEST_TOKEN, unsubscribeLink } from "./newsletter.js";
+import { MARKETING } from "./email-classes.js";
 
 // Resend allows two requests a second on the ordinary plan. Going slower than
 // the limit is free; being refused for going too fast is not.
@@ -101,6 +102,8 @@ async function sendOne(issue, subscriber) {
 
   await mailer.send({
     to: subscriber.email,
+    kind: MARKETING,
+    template: "issue",
     replyTo: config.EMAIL_REPLY_TO,
     unsubscribeUrl: leave,
     ...letter,
@@ -116,6 +119,10 @@ export async function sendTest(issue, to) {
 
   await mailer.send({
     to,
+    // A test copy is the same letter, so it is the same class. It goes to
+    // one address somebody typed, which is why it carries no real token.
+    kind: MARKETING,
+    template: "issue-test",
     replyTo: config.EMAIL_REPLY_TO,
     // Said in the subject, so a test copy is never mistaken for the real one.
     subject: `[Test] ${letter.subject}`,

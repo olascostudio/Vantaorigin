@@ -16,6 +16,7 @@ import { users } from "../db/schema.js";
 import { userByHandle } from "../db/handles.js";
 import { createSession, hashPassword, setSessionCookie } from "../auth/auth.js";
 import { mailer } from "../adapters/email.js";
+import { MARKETING } from "../email-classes.js";
 import { welcomeEmail } from "../emails/templates.js";
 import { subscribeQuietly, unsubscribeLink } from "../newsletter.js";
 
@@ -230,6 +231,9 @@ export default async function googleRoutes(app) {
       try {
         await mailer.send({
           to: email,
+          kind: MARKETING,
+          template: "welcome",
+          userId: user.id,
           replyTo: config.EMAIL_REPLY_TO,
           unsubscribeUrl: leaveLink,
           ...welcomeEmail({ user, unsubscribeUrl: leaveLink }),

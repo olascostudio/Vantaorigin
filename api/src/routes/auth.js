@@ -6,6 +6,7 @@ import { sessions, users } from "../db/schema.js";
 import { mailer } from "../adapters/email.js";
 import { userByHandle } from "../db/handles.js";
 import { resetEmail, verificationEmail, welcomeEmail } from "../emails/templates.js";
+import { MARKETING, TRANSACTIONAL } from "../email-classes.js";
 import { subscribeQuietly, unsubscribeLink } from "../newsletter.js";
 // While emails only print to the terminal (local development), the code is
 // also returned so you can finish the flow without an inbox. Never in
@@ -93,6 +94,11 @@ export default async function authRoutes(app) {
     const code = await issueCode(user.id, "verify_email");
     const sent = await trySend(app, {
       to: email,
+      // Their own sign-up asked for it, and somebody locked out of their
+      // account cannot be made to want it less.
+      kind: TRANSACTIONAL,
+      template: "verification",
+      userId: user.id,
       ...verificationEmail({ user, code, minutes: CODE_TTL_MINUTES }),
     });
 
@@ -108,6 +114,11 @@ export default async function authRoutes(app) {
     // not hold up the answer to a sign-up, so it goes without being waited on.
     trySend(app, {
       to: email,
+      // Not transactional: it is a letter about the place, and it carries a
+      // way out for that reason.
+      kind: MARKETING,
+      template: "welcome",
+      userId: user.id,
       replyTo: config.EMAIL_REPLY_TO,
       unsubscribeUrl: leaveLink,
       ...welcomeEmail({ user, unsubscribeUrl: leaveLink }),
@@ -174,6 +185,9 @@ export default async function authRoutes(app) {
     const code = await issueCode(request.user.id, "verify_email");
     const sent = await trySend(app, {
       to: request.user.email,
+      kind: TRANSACTIONAL,
+      template: "verification",
+      userId: request.user.id,
       ...verificationEmail({ user: request.user, code, minutes: CODE_TTL_MINUTES }),
     });
     if (!sent) {
@@ -201,6 +215,11 @@ export default async function authRoutes(app) {
       sentCode = code;
       await trySend(app, {
         to: user.email,
+        // Somebody locked out of their account still needs this, whatever
+        // they have unsubscribed from.
+        kind: TRANSACTIONAL,
+        template: "reset",
+        userId: user.id,
         ...resetEmail({ user, code, minutes: CODE_TTL_MINUTES }),
       });
     }

@@ -11,6 +11,7 @@
 import { z } from "zod";
 import { config } from "../config.js";
 import { mailer } from "../adapters/email.js";
+import { TRANSACTIONAL } from "../email-classes.js";
 import { escape, p, shell, strong } from "../emails/layout.js";
 
 const body = z.object({
@@ -61,6 +62,9 @@ export default async function feedbackRoutes(app) {
       try {
         await mailer.send({
           to: goesTo(),
+          // To us, not to a user, and caused by one person writing in.
+          kind: TRANSACTIONAL,
+          template: "feedback",
           subject: `Feedback: ${message.slice(0, 60)}${message.length > 60 ? "…" : ""}`,
           html: letter,
           text: [

@@ -14,6 +14,7 @@ import { newsletterIssues, newsletterTemplates, users } from "../db/schema.js";
 import { renderIssue, startingBlocks } from "../emails/issue.js";
 import { countWaiting, deliver, isSending, sendTest, whyNotSendable } from "../newsletter-send.js";
 import { mailer } from "../adapters/email.js";
+import { MARKETING } from "../email-classes.js";
 import { welcomeEmail } from "../emails/templates.js";
 import { subscribe, unsubscribeLink } from "../newsletter.js";
 import { config } from "../config.js";
@@ -270,6 +271,9 @@ export default async function newsletterAdminRoutes(app) {
     try {
       await mailer.send({
         to: address,
+        kind: MARKETING,
+        template: "welcome",
+        userId: user.id,
         replyTo: config.EMAIL_REPLY_TO,
         unsubscribeUrl: leaveLink,
         ...welcomeEmail({ user, unsubscribeUrl: leaveLink }),
