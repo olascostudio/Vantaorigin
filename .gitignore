@@ -25,3 +25,7 @@ api/.pglite*
 
 # Copied from src/data at build time by scripts/publish-portfolio.mjs
 public/portfolio.json
+
+# Claude Code: the model choice is this machine's, not the project's.
+# The agents and CLAUDE.md are shared on purpose; this one is not.
+.claude/settings.local.json
