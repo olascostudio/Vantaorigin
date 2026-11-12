@@ -22,6 +22,7 @@ import {
   isReasonCategory,
   streamFor,
 } from "../email-classes.js";
+import { whyNotEligible } from "../email-eligibility.js";
 
 // Which address a stream sends from. Both fall back to the single address
 // that exists today, so this is inert until the subdomains are in DNS.
@@ -124,6 +125,9 @@ export const mailer = {
     replyTo,
     unsubscribeUrl,
     kind,
+    // Which product notification this is, for the switch the person can
+    // turn off. Required for that class and ignored for the rest.
+    category = null,
     // Why a service announcement is going out. Required for that class and
     // ignored for the rest: it decides both whether a complaint can stop it
     // and which identity it is sent under.
@@ -155,6 +159,15 @@ export const mailer = {
       // thing somebody will come asking about.
       await writeLog({ userId, email: to, class: kind, template, status: "blocked", error: blocked });
       return { blocked: true, reason: blocked };
+    }
+
+    // Asked per recipient, from the database, at the moment of sending. The
+    // caller says who it wants to reach; this decides who it may reach, so a
+    // list assembled an hour ago cannot send to somebody who left since.
+    const ineligible = await whyNotEligible({ email: to, kind, category });
+    if (ineligible) {
+      await writeLog({ userId, email: to, class: kind, template, status: "blocked", error: ineligible });
+      return { blocked: true, reason: ineligible };
     }
 
     const logId = await writeLog({ userId, email: to, class: kind, template, status: "queued" });

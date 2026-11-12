@@ -414,3 +414,46 @@ export const userTermsAcceptance = pgTable(
     userIdx: index("user_terms_acceptance_user_idx").on(table.userId, table.acceptedAt),
   })
 );
+
+// What each person has agreed to hear about. Keyed by user; addresses with
+// no account stay in newsletterSubscribers, because consent from somebody
+// who only typed an address into a footer form is a different record with
+// different evidence behind it.
+export const emailPreferences = pgTable(
+  "email_preferences",
+  {
+    userId: uuid("user_id")
+      .primaryKey()
+      .references(() => users.id, { onDelete: "cascade" }),
+    // pending, subscribed, unsubscribed, bounced, complained. Only
+    // "subscribed" may receive marketing.
+    marketingStatus: text("marketing_status").default("pending").notNull(),
+
+    // On by default, off one at a time.
+    notifyBattleChallenges: boolean("notify_battle_challenges").default(true).notNull(),
+    notifyAffiliateEarnings: boolean("notify_affiliate_earnings").default(true).notNull(),
+    notifyComments: boolean("notify_comments").default(true).notNull(),
+    notifyCharacterActivity: boolean("notify_character_activity").default(true).notNull(),
+
+    // How the consent was given, which is the part that matters when
+    // somebody asks us to prove it.
+    consentAt: timestamp("consent_at", { withTimezone: true }),
+    consentSource: text("consent_source"),
+    consentIp: text("consent_ip"),
+
+    // A quieter option than leaving.
+    pausedUntil: timestamp("paused_until", { withTimezone: true }),
+
+    unsubscribedAt: timestamp("unsubscribed_at", { withTimezone: true }),
+    unsubscribeReason: text("unsubscribe_reason"),
+
+    // Consent we inherited and cannot evidence.
+    needsConsentReview: boolean("needs_consent_review").default(false).notNull(),
+
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    marketingIdx: index("email_preferences_marketing_idx").on(table.marketingStatus),
+  })
+);

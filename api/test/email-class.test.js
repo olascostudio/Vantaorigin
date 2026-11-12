@@ -106,7 +106,7 @@ test("a send that fails is written down too, with the reason", async () => {
     throw new Error("the transport fell over");
   };
   try {
-    await assert.rejects(() => fresh.send(letter({ kind: MARKETING, template: "issue" })));
+    await assert.rejects(() => fresh.send(letter({ kind: TRANSACTIONAL, template: "reset" })));
   } finally {
     console.log = brokenConsole;
     globalThis.fetch = realFetch;
@@ -182,8 +182,8 @@ test("suppression does not care about case or stray spaces", async () => {
 test("an address nobody suppressed is left alone", async () => {
   await suppress("gone@vantaorigin.test", "hard_bounce");
 
-  const answer = await mailer.send(letter({ to: "fine@vantaorigin.test", kind: MARKETING }));
-  assert.ok(!answer.blocked);
+  const answer = await mailer.send(letter({ to: "fine@vantaorigin.test", kind: TRANSACTIONAL }));
+  assert.ok(!answer.blocked, "suppression is the only question this test asks");
 });
 
 // ---- the announcements nobody can opt out of -------------------------------
