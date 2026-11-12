@@ -7,6 +7,7 @@ import {
   integer,
   jsonb,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -383,3 +384,33 @@ export const suppressionList = pgTable("suppression_list", {
   note: text("note").default("").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+// The terms, as versions somebody can be shown to have accepted. The page
+// records what the terms say; this records who agreed to which wording.
+export const termsVersions = pgTable("terms_versions", {
+  version: text("version").primaryKey(),
+  effectiveDate: timestamp("effective_date", { withTimezone: true }).notNull(),
+  summary: text("summary").default("").notNull(),
+  url: text("url").default("/terms").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// One row per person per version, so a later version does not erase that
+// they accepted the earlier one.
+export const userTermsAcceptance = pgTable(
+  "user_terms_acceptance",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    version: text("version")
+      .notNull()
+      .references(() => termsVersions.version, { onDelete: "cascade" }),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }).defaultNow().notNull(),
+    acceptedIp: text("accepted_ip"),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.userId, table.version] }),
+    userIdx: index("user_terms_acceptance_user_idx").on(table.userId, table.acceptedAt),
+  })
+);

@@ -67,7 +67,19 @@ vi.mock("../data/admin", () => ({
   sendTestCopy: vi.fn(),
 }));
 
-vi.mock("../data/api", () => ({ api: { upload: vi.fn() }, API_BASE: "https://api.test" }));
+// The whole surface, not only the part this screen uses: anything in the
+// navbar can reach for the rest, and a mock missing a method throws inside
+// an effect rather than failing a useful assertion.
+vi.mock("../data/api", () => ({
+  api: {
+    get: vi.fn(async () => ({})),
+    post: vi.fn(async () => ({})),
+    patch: vi.fn(async () => ({})),
+    delete: vi.fn(async () => ({})),
+    upload: vi.fn(),
+  },
+  API_BASE: "https://api.test",
+}));
 vi.mock("../data/AuthContext.jsx", () => ({
   useAuth: () => ({ user: { username: "@boss", emailVerifiedAt: "2026-01-01" }, loading: false }),
 }));

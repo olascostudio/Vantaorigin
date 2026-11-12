@@ -45,6 +45,11 @@ const schema = z.object({
   EMAIL_DRIVER: z.enum(["resend", "console"]).default("console"),
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().default("VantaOrigin <noreply@vantaorigin.com>"),
+  // Two streams on two subdomains, so a complaint about the newsletter never
+  // slows a password reset. Both fall back to EMAIL_FROM, so this changes
+  // nothing until the subdomains exist in DNS and are warmed.
+  EMAIL_FROM_TRANSACTIONAL: z.string().optional(),
+  EMAIL_FROM_MARKETING: z.string().optional(),
   // The welcome letter asks for a reply, so replies must reach a person.
   EMAIL_REPLY_TO: z.string().default("hello@vantaorigin.com"),
   // Defaults to the app itself, which serves /emails/banner.jpg.

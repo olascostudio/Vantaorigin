@@ -78,3 +78,57 @@ Sessions are an httpOnly cookie. The browser never sees the database.
 
 No application code changes at any step: the image, the schema and the
 adapters are the same in all three places.
+
+## Email: classes, suppression, and one exception for legal review
+
+Every send declares one of four classes, and `mailer.send()` throws without
+one. There is no other door, so a new route or a script cannot introduce an
+email nobody can account for. Every attempt is written to `email_log`,
+including the ones that never leave.
+
+`suppression_list` holds addresses we have been told to stop writing to:
+
+| Reason | What still goes |
+|---|---|
+| `hard_bounce` | nothing at all |
+| `complaint` | transactional, and the three announcements below |
+| `manual` | transactional, and the three announcements below |
+
+### The exception, which needs legal review
+
+**A `service_announcement` whose `reason_category` is `terms_change`,
+`privacy_change` or `security_notice` is delivered to people who have
+reported us as spam or been suppressed by hand.** It is sent under the
+transactional identity so that it arrives. `downtime` and `account_policy`
+are not in the exception and stay blocked for those people.
+
+The reasoning is that a change to the terms or the privacy policy is the
+document governing somebody's account, and a security notice may be the only
+warning they get that something happened to it. Telling them is an obligation
+that pressing "spam" does not discharge. A maintenance window is not of that
+order.
+
+What a lawyer needs to settle:
+
+1. **Whether the obligation to notify really does override a complaint**, in
+   each of CAN-SPAM, GDPR and Nigeria's NDPA. This code assumes it does for
+   those three categories. That assumption is the whole exception.
+2. **Whether `security_notice` belongs with the other two.** A breach
+   notification is usually mandatory; "we have added two-factor auth" is not,
+   and both would fit under that category as the code is written. The
+   category is a fixed list, not a judgement about the wording inside it.
+3. **Whether sending on the transactional identity is acceptable** when the
+   recipient has complained. It protects delivery of the announcement; it
+   also puts complaint risk on the stream that carries password resets.
+4. **Whether a hard bounce should also be excepted.** It is not: an address
+   that does not exist cannot be told anything, and insisting damages
+   delivery for everybody else. If notification is a duty regardless of
+   deliverability, that needs another route, such as a notice in the app.
+5. **Whether the in-app banner is sufficient notice on its own** for somebody
+   we cannot email at all. The banner shows until they accept, and their
+   acceptance is recorded with a timestamp and an IP in
+   `user_terms_acceptance`.
+
+The exception lives in one function, `blockedBySuppression()` in
+`src/email-classes.js`, and the set is the `UNAVOIDABLE` array above it.
+Changing which categories are excepted is changing that array.

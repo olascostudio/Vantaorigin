@@ -15,7 +15,19 @@ import { sql } from "drizzle-orm";
 import { config } from "../config.js";
 import { db } from "../db/client.js";
 import { emailLog, suppressionList } from "../db/schema.js";
-import { blockedBySuppression, isKind } from "../email-classes.js";
+import {
+  SERVICE_ANNOUNCEMENT,
+  blockedBySuppression,
+  isKind,
+  isReasonCategory,
+  streamFor,
+} from "../email-classes.js";
+
+// Which address a stream sends from. Both fall back to the single address
+// that exists today, so this is inert until the subdomains are in DNS.
+const fromFor = (stream) =>
+  (stream === "transactional" ? config.EMAIL_FROM_TRANSACTIONAL : config.EMAIL_FROM_MARKETING) ||
+  config.EMAIL_FROM;
 
 const consoleTransport = {
   name: "console",
@@ -28,7 +40,7 @@ const consoleTransport = {
 
 const resendTransport = {
   name: "resend",
-  async send({ to, subject, html, text, replyTo, unsubscribeUrl }) {
+  async send({ to, subject, html, text, replyTo, unsubscribeUrl, from }) {
     // The two headers a mail app reads to offer its own unsubscribe button.
     // One-Click tells it the POST needs no confirmation screen.
     const unsubscribeHeaders = unsubscribeUrl
@@ -45,7 +57,7 @@ const resendTransport = {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: config.EMAIL_FROM,
+        from: from || config.EMAIL_FROM,
         to,
         subject,
         html,
@@ -104,7 +116,21 @@ export const mailer = {
 
   // `kind` is required. `template` and `userId` are not, but a send without
   // them is a row in the log that cannot answer "which letter was that".
-  async send({ to, subject, html, text, replyTo, unsubscribeUrl, kind, template = "", userId = null }) {
+  async send({
+    to,
+    subject,
+    html,
+    text,
+    replyTo,
+    unsubscribeUrl,
+    kind,
+    // Why a service announcement is going out. Required for that class and
+    // ignored for the rest: it decides both whether a complaint can stop it
+    // and which identity it is sent under.
+    reasonCategory = null,
+    template = "",
+    userId = null,
+  }) {
     if (!isKind(kind)) {
       // Thrown rather than defaulted. A default would mean the next person to
       // add a send picks the class by accident, which is how a marketing
@@ -114,7 +140,16 @@ export const mailer = {
       );
     }
 
-    const blocked = blockedBySuppression(await suppressionFor(to), kind);
+    // An announcement with no reason is refused the same way a send with no
+    // class is. Without one there is no deciding whether somebody who asked
+    // us to stop still has to hear it.
+    if (kind === SERVICE_ANNOUNCEMENT && !isReasonCategory(reasonCategory)) {
+      throw new Error(
+        `A service announcement needs a reason category. Got ${JSON.stringify(reasonCategory)}; expected one of terms_change, privacy_change, security_notice, downtime, account_policy.`
+      );
+    }
+
+    const blocked = blockedBySuppression(await suppressionFor(to), kind, reasonCategory);
     if (blocked) {
       // Written down and not sent. A send that never happened is exactly the
       // thing somebody will come asking about.
@@ -125,7 +160,15 @@ export const mailer = {
     const logId = await writeLog({ userId, email: to, class: kind, template, status: "queued" });
 
     try {
-      const answer = await transport.send({ to, subject, html, text, replyTo, unsubscribeUrl });
+      const answer = await transport.send({
+        to,
+        subject,
+        html,
+        text,
+        replyTo,
+        unsubscribeUrl,
+        from: fromFor(streamFor(kind, reasonCategory)),
+      });
       await updateLog(logId, { status: "sent", providerMessageId: answer?.id ?? null });
       return answer;
     } catch (error) {

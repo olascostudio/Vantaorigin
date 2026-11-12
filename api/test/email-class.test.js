@@ -70,7 +70,8 @@ test("a class we do not have is refused, rather than passed through", async () =
 
 test("each of the four classes is accepted", async () => {
   for (const kind of [TRANSACTIONAL, SERVICE_ANNOUNCEMENT, PRODUCT_NOTIFICATION, MARKETING]) {
-    await mailer.send(letter({ kind, template: "probe" }));
+    // An announcement needs a reason as well as a class.
+    await mailer.send(letter({ kind, template: "probe", reasonCategory: "downtime" }));
   }
 
   const rows = await logFor("reader@vantaorigin.test");
@@ -133,7 +134,9 @@ test("a hard bounce stops everything, including a password reset", async () => {
   await suppress("gone@vantaorigin.test", "hard_bounce");
 
   for (const kind of [TRANSACTIONAL, SERVICE_ANNOUNCEMENT, PRODUCT_NOTIFICATION, MARKETING]) {
-    const answer = await mailer.send(letter({ to: "gone@vantaorigin.test", kind }));
+    const answer = await mailer.send(
+      letter({ to: "gone@vantaorigin.test", kind, reasonCategory: "downtime" })
+    );
     assert.equal(answer.blocked, true, `${kind} should have been blocked`);
     assert.match(answer.reason, /hard bounce/i);
   }
@@ -147,8 +150,12 @@ test("a complaint stops the mail they did not ask for and leaves the rest", asyn
   const reset = await mailer.send(letter({ to: "cross@vantaorigin.test", kind: TRANSACTIONAL }));
   assert.ok(!reset.blocked, "a password reset should still go");
 
+  // Downtime, because a terms change is the one thing a complaint cannot
+  // stop and that is tested on its own below.
   for (const kind of [MARKETING, SERVICE_ANNOUNCEMENT, PRODUCT_NOTIFICATION]) {
-    const answer = await mailer.send(letter({ to: "cross@vantaorigin.test", kind }));
+    const answer = await mailer.send(
+      letter({ to: "cross@vantaorigin.test", kind, reasonCategory: "downtime" })
+    );
     assert.equal(answer.blocked, true, `${kind} should have been blocked`);
   }
 });
@@ -177,4 +184,112 @@ test("an address nobody suppressed is left alone", async () => {
 
   const answer = await mailer.send(letter({ to: "fine@vantaorigin.test", kind: MARKETING }));
   assert.ok(!answer.blocked);
+});
+
+// ---- the announcements nobody can opt out of -------------------------------
+//
+// Somebody who pressed "spam" has told us to stop, and almost everything
+// stops. A change to the terms or the privacy policy is the document
+// governing their account, and a security notice may be the only warning
+// they get that something happened to it. Telling them is an obligation that
+// an unsubscribe does not discharge.
+//
+// Downtime and account policy are not of that order. A maintenance window is
+// not a change to the contract, and it stays blocked.
+
+const { DOWNTIME, ACCOUNT_POLICY, PRIVACY_CHANGE, SECURITY_NOTICE, TERMS_CHANGE, streamFor } =
+  await import("../src/email-classes.js");
+
+test("a terms change still reaches somebody who reported us as spam", async () => {
+  await suppress("cross@vantaorigin.test", "complaint");
+
+  for (const reasonCategory of [TERMS_CHANGE, PRIVACY_CHANGE, SECURITY_NOTICE]) {
+    const answer = await mailer.send(
+      letter({
+        to: "cross@vantaorigin.test",
+        kind: SERVICE_ANNOUNCEMENT,
+        reasonCategory,
+        template: "announcement",
+      })
+    );
+    assert.ok(!answer.blocked, `${reasonCategory} should have gone through`);
+  }
+});
+
+test("downtime and account policy stay blocked for the same person", async () => {
+  await suppress("cross@vantaorigin.test", "complaint");
+
+  for (const reasonCategory of [DOWNTIME, ACCOUNT_POLICY]) {
+    const answer = await mailer.send(
+      letter({ to: "cross@vantaorigin.test", kind: SERVICE_ANNOUNCEMENT, reasonCategory })
+    );
+    assert.equal(answer.blocked, true, `${reasonCategory} should have been blocked`);
+    assert.match(answer.reason, /nobody can opt out of/);
+  }
+});
+
+test("the same exception applies to an address suppressed by hand", async () => {
+  await suppress("byhand@vantaorigin.test", "manual");
+
+  const terms = await mailer.send(
+    letter({ to: "byhand@vantaorigin.test", kind: SERVICE_ANNOUNCEMENT, reasonCategory: TERMS_CHANGE })
+  );
+  assert.ok(!terms.blocked);
+
+  const downtime = await mailer.send(
+    letter({ to: "byhand@vantaorigin.test", kind: SERVICE_ANNOUNCEMENT, reasonCategory: DOWNTIME })
+  );
+  assert.equal(downtime.blocked, true);
+});
+
+test("a hard bounce stops even a terms change, because the mailbox is gone", async () => {
+  // The exception is about somebody who asked us to stop, not about an
+  // address that cannot receive anything. Insisting here only damages
+  // delivery for everybody else.
+  await suppress("gone@vantaorigin.test", "hard_bounce");
+
+  const answer = await mailer.send(
+    letter({ to: "gone@vantaorigin.test", kind: SERVICE_ANNOUNCEMENT, reasonCategory: TERMS_CHANGE })
+  );
+  assert.equal(answer.blocked, true);
+  assert.match(answer.reason, /hard bounce/i);
+});
+
+test("an announcement that cannot be opted out of goes on the transactional stream", async () => {
+  // So it arrives. The marketing subdomain carries the complaints; an
+  // announcement nobody can refuse must not be delivered from it.
+  assert.equal(streamFor(SERVICE_ANNOUNCEMENT, TERMS_CHANGE), "transactional");
+  assert.equal(streamFor(SERVICE_ANNOUNCEMENT, PRIVACY_CHANGE), "transactional");
+  assert.equal(streamFor(SERVICE_ANNOUNCEMENT, SECURITY_NOTICE), "transactional");
+
+  assert.equal(streamFor(SERVICE_ANNOUNCEMENT, DOWNTIME), "marketing");
+  assert.equal(streamFor(SERVICE_ANNOUNCEMENT, ACCOUNT_POLICY), "marketing");
+
+  assert.equal(streamFor(TRANSACTIONAL, null), "transactional");
+  assert.equal(streamFor(MARKETING, null), "marketing");
+  assert.equal(streamFor(PRODUCT_NOTIFICATION, null), "marketing");
+});
+
+test("an announcement with no reason is refused", async () => {
+  // Without one there is no deciding whether somebody who asked us to stop
+  // still has to hear it, so there is nothing safe to do but refuse.
+  await assert.rejects(
+    () => mailer.send(letter({ kind: SERVICE_ANNOUNCEMENT })),
+    /needs a reason category/i
+  );
+  await assert.rejects(
+    () => mailer.send(letter({ kind: SERVICE_ANNOUNCEMENT, reasonCategory: "because_i_said_so" })),
+    /needs a reason category/i
+  );
+});
+
+test("a reason on the other three classes changes nothing", async () => {
+  // Only announcements have one. Passing it elsewhere should neither help
+  // nor hurt.
+  await suppress("cross@vantaorigin.test", "complaint");
+
+  const marketing = await mailer.send(
+    letter({ to: "cross@vantaorigin.test", kind: MARKETING, reasonCategory: TERMS_CHANGE })
+  );
+  assert.equal(marketing.blocked, true, "a reason must not smuggle marketing past a complaint");
 });

@@ -6,6 +6,7 @@ import { useAuth } from "../data/AuthContext.jsx";
 import { amIAdmin } from "../data/admin";
 import VerifyBanner from "./VerifyBanner.jsx";
 import BetaBanner from "./BetaBanner.jsx";
+import TermsBanner from "./TermsBanner.jsx";
 
 const LINKS = [
   { label: "Discover", to: "/discover" },
@@ -145,6 +146,10 @@ export default function DashboardNav({ active = "Discover" }) {
       </div>
 
       <VerifyBanner />
+      {/* The terms changed and this person has not agreed to the new
+          wording. Above the beta notice: one is a change to the contract,
+          the other is a request for an opinion. */}
+      <TermsBanner />
       {/* This bar is on the open pages as well as the workspace. The banner
           takes itself off the private ones. */}
       <BetaBanner />
