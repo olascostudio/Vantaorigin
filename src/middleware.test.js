@@ -128,12 +128,14 @@ describe("Everyone gets the same page", () => {
     expect(html.match(/<div id="root">/g)).toHaveLength(1);
   });
 
-  it("says the page depends on who asked, and which copy this is", async () => {
+  it("does not claim to vary, and says which copy this is", async () => {
     vi.stubGlobal("fetch", serving());
     const run = await freshMiddleware();
     const answer = await run(new Request("https://www.vantaorigin.com/"));
 
-    expect(answer.headers.get("vary")).toBe("User-Agent");
+    // No Vary: nothing varies, and claiming it does splits one cached page
+    // into a separate copy per user agent string.
+    expect(answer.headers.get("vary")).toBeNull();
     expect(answer.headers.get("x-vanta-render")).toBe("server");
     expect(answer.headers.get("content-type")).toMatch(/text\/html/);
   });

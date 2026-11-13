@@ -147,11 +147,13 @@ export default async function middleware(request) {
       headers: {
         "content-type": "text/html; charset=utf-8",
         "cache-control": "public, max-age=300, s-maxage=3600",
-        // Everybody gets the same document now, so this says nothing a cache
-        // did not already know. Kept because a wrong Vary costs a little
-        // cache efficiency and a missing one costs correctness, and this is
-        // the cheap side of that trade.
-        vary: "User-Agent",
+        // No Vary. There was one while the answer depended on who asked, and
+        // it was right then: without it a proxy could hand one audience the
+        // other's copy. Nothing varies now, and saying it does is not free,
+        // because a cache takes it literally and keeps a separate copy per
+        // user agent string. There are thousands of those, so it would split
+        // one cached page into thousands of cache misses to describe a
+        // variation that no longer exists.
         "x-vanta-render": "server",
       },
     });
