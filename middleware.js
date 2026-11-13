@@ -1,26 +1,24 @@
-// Who gets the written page, and who gets the app.
+// One page, for everyone.
 //
-// The app draws everything in the browser, so anything that does not run
-// JavaScript sees a five word shell. The API renders the same pages as plain
-// HTML at /preview/*, and the job here is deciding which of the two a
-// request should be answered with.
+// The app draws itself in the browser, so for most of this site's life a
+// reader that did not run scripts got a five word shell. That was patched by
+// deciding, per request, whether the thing asking looked like a browser: a
+// crawler got the written page and everybody else got the app.
 //
-// It used to be decided by a list of crawler names, in vercel.json. That
-// list serves whoever we thought to write down and nothing to everybody
-// else, and measured against the live site, nine of ten ordinary fetches got
-// the empty shell: curl, python-requests, node-fetch, axios, Go-http-client,
-// Java, Postman, a bare Mozilla/5.0, and a request with no user-agent at
-// all. A language model reading a page for somebody usually sends one of
-// those rather than announcing itself as a crawler, so the pages were blank
-// for exactly the readers the preview routes were built for.
+// It cannot work, and it did not. A user agent does not say whether a client
+// will run JavaScript; it says what the client decided to call itself. Most
+// fetchers that read a page on somebody's behalf send a full Chrome string,
+// precisely so they are not turned away, and every one of those got the
+// shell: the homepage's title on a blog post, with no article under it.
 //
-// So the question is turned around. It is not "is this a crawler we have
-// heard of", it is "can this thing run the app". A browser says Mozilla/5.0
-// and names a rendering engine; that is true of every mainstream browser and
-// of a headless one driven by an agent, which runs the scripts and so reads
-// the page properly on its own. Anything else is handed the written page.
-// Being wrong now means an unknown reader gets readable HTML instead of
-// nothing, which is the better way round to be wrong.
+// So nothing is sniffed now. Every public address returns the same document
+// to every client: the written page, with its own title, canonical, meta and
+// schema, and the app's script alongside. A reader that cannot run scripts
+// has the whole article. A browser renders that same article, then the app
+// boots and takes over the page. Both get the truth, and neither depends on
+// what the request claimed to be.
+//
+// Private addresses are not in the matcher and have no written copy at all.
 export const config = {
   matcher: [
     "/",
@@ -40,20 +38,8 @@ export const config = {
 
 const API = "https://api.vantaorigin.com";
 
-// Named outright, because several of these arrive looking like a browser.
-// Modern Googlebot sends Mozilla/5.0 with AppleWebKit and Chrome in it, so
-// it has to be recognised before the browser test or it would be handed the
-// app and left to render it.
-const CRAWLER =
-  /(facebookexternalhit|facebookcatalog|twitterbot|linkedinbot|slackbot|slack-imgproxy|discordbot|telegrambot|whatsapp|pinterest|redditbot|embedly|quora link preview|skypeuripreview|vkshare|nuzzel|applebot|bingbot|googlebot|google-extended|duckduckbot|yandex|baiduspider|gptbot|oai-searchbot|chatgpt-user|claudebot|claude-web|anthropic-ai|perplexitybot|perplexity-user|youbot|bytespider|amazonbot|ccbot|diffbot|cohere-ai|meta-externalagent|moonshot|kimi|bot|crawler|spider|preview)/i;
-
-// A browser says Mozilla/5.0 and names an engine. Chrome, Safari, Firefox,
-// Edge and every headless build of them do; curl, a script and an empty
-// user-agent do not.
-const RUNS_SCRIPTS = (agent) => /Mozilla\/5\.0/i.test(agent) && /(AppleWebKit|Gecko|Trident)/i.test(agent);
-
-// Where the written copy of each address lives. A character and a creator
-// carry a name in the path, so those are matched rather than looked up.
+// Where the written copy of each address lives. A character, a creator and a
+// post carry a name in the path, so those are matched rather than listed.
 const writtenPage = (pathname) => {
   const fixed = {
     "/": "/preview/home",
@@ -69,43 +55,103 @@ const writtenPage = (pathname) => {
   if (fixed[pathname]) return `${API}${fixed[pathname]}`;
 
   const named = pathname.match(/^\/(character|creator|blog)\/([^/]+)$/);
-  if (named) return `${API}/preview/${named[1]}/${named[2]}`;
+  return named ? `${API}/preview/${named[1]}/${named[2]}` : null;
+};
 
-  return null;
+// The app's own script and stylesheet, taken from the shell this deployment
+// built.
+//
+// Vite writes a hash into both filenames, so they change whenever the code
+// does. Rather than keep a copy of those names anywhere, the shell is read
+// from this same deployment and the tags lifted out of it. It cannot go
+// stale: a new deploy is a new shell and a new isolate, so the cache below
+// starts empty and fills from the build it belongs to. There is no version
+// of this that points at a script from the last deploy.
+let assetTags = null;
+
+const tagsFromShell = async (origin) => {
+  if (assetTags) return assetTags;
+
+  const res = await fetch(`${origin}/index.html`, { signal: AbortSignal.timeout(4000) });
+  if (!res.ok) throw new Error(`the shell answered ${res.status}`);
+  const shell = await res.text();
+
+  const found = shell.match(
+    /<(?:script|link)[^>]*(?:src|href)="\/assets\/[^"]+"[^>]*>(?:<\/script>)?/g
+  );
+  if (!found?.length) throw new Error("no asset tags in the shell");
+
+  assetTags = found.join("\n    ");
+  return assetTags;
+};
+
+// What the page looks like in the moment before the app takes over.
+//
+// Without this the written page arrives unstyled and white, and a reader on
+// a slow connection sees a bare document flash before the site appears. The
+// app's own stylesheet is loaded alongside, so this only has to hold the
+// background and the text colour steady until it does.
+const PRE_BOOT = `<style>
+      html, body { margin: 0; background: #0e0e0e; color: #e8ecf5; }
+      #root { font-family: Inter, system-ui, sans-serif; line-height: 1.6; }
+      #root > * { max-width: 46rem; margin: 0 auto; padding: 1.5rem 1rem; }
+      #root a { color: #fc187b; }
+      #root img { max-width: 100%; height: auto; }
+    </style>`;
+
+// The written page, wearing the app's scripts, with its content where the
+// app expects to mount.
+const merge = (written, tags) => {
+  const head = written.indexOf("</head>");
+  const bodyOpen = written.indexOf("<body>");
+  const bodyClose = written.lastIndexOf("</body>");
+  if (head < 0 || bodyOpen < 0 || bodyClose < 0) return null;
+
+  const content = written.slice(bodyOpen + "<body>".length, bodyClose).trim();
+
+  return (
+    written.slice(0, head) +
+    `  ${PRE_BOOT}\n    ${tags}\n  ` +
+    written.slice(head, bodyOpen + "<body>".length) +
+    // React replaces whatever is in here when it mounts, so the article is
+    // both what a reader without scripts keeps and what a browser shows
+    // until the app is ready.
+    `\n    <div id="root">${content}</div>\n  ` +
+    written.slice(bodyClose)
+  );
 };
 
 export default async function middleware(request) {
-  const agent = request.headers.get("user-agent") || "";
-
-  // Anything that can run the app is given the app.
-  if (!CRAWLER.test(agent) && RUNS_SCRIPTS(agent)) return undefined;
-
-  const target = writtenPage(new URL(request.url).pathname);
+  const url = new URL(request.url);
+  const target = writtenPage(url.pathname);
   if (!target) return undefined;
 
-  // A reader arriving while the API is down, or getting an error back from
-  // it, gets what it would have got anyway. A page is not worth breaking
-  // over a preview.
+  // A reader arriving while the API is down, or while anything here fails,
+  // gets the app exactly as before. A page is not worth breaking over the
+  // written copy of it.
   try {
-    const answer = await fetch(target, {
-      headers: { "user-agent": agent || "VantaOrigin" },
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!answer.ok) return undefined;
+    const [page, tags] = await Promise.all([
+      fetch(target, {
+        headers: { "user-agent": request.headers.get("user-agent") || "VantaOrigin" },
+        signal: AbortSignal.timeout(5000),
+      }),
+      tagsFromShell(url.origin),
+    ]);
+    if (!page.ok) return undefined;
 
-    return new Response(await answer.text(), {
+    const merged = merge(await page.text(), tags);
+    if (!merged) return undefined;
+
+    return new Response(merged, {
       status: 200,
       headers: {
         "content-type": "text/html; charset=utf-8",
         "cache-control": "public, max-age=300, s-maxage=3600",
-        // This response depends on who asked. Without saying so, a shared
-        // cache between us and the reader is free to hand one audience the
-        // other’s copy: a browser the written page, or worse, a crawler the
-        // empty shell. Vercel does not cache these, but a corporate proxy or
-        // an ISP cache in front of somebody is welcome to.
+        // Everybody gets the same document now, so this says nothing a cache
+        // did not already know. Kept because a wrong Vary costs a little
+        // cache efficiency and a missing one costs correctness, and this is
+        // the cheap side of that trade.
         vary: "User-Agent",
-        // Says which of the two answers this is, so it can be checked from
-        // outside without guessing at word counts.
         "x-vanta-render": "server",
       },
     });

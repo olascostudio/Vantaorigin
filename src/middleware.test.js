@@ -1,159 +1,206 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import middleware, { config } from "../middleware.js";
 
-// Who gets the written page, and who gets the app.
+// One page, for everyone.
 //
-// The rule used to be a list of crawler names. Measured against the live
-// site, nine of ten ordinary fetches got the five word shell: curl,
-// python-requests, node-fetch, axios, Go-http-client, Java, Postman, a bare
-// Mozilla/5.0 and a request with no user-agent at all. A language model
-// reading a page for somebody sends one of those far more often than it
-// announces itself, so the written pages were missing for the readers they
-// were built for.
+// The rule used to be a guess at whether the thing asking was a browser. It
+// could not work: a user agent says what a client calls itself, not whether
+// it will run JavaScript, and most fetchers that read a page on somebody's
+// behalf send a full Chrome string. Every one of those got the shell, which
+// is how a blog post came back carrying the homepage's title.
 //
-// The question is now whether the thing asking can run the app, which is a
-// property of the reader rather than a guess at its name.
+// Now nothing is sniffed. These check that the same document goes to all of
+// them, that it carries the page's own content and tags, that the app's
+// script travels with it, and that a failure anywhere falls back to the app
+// rather than to a broken page.
+
+const WRITTEN = `<!doctype html>
+<html lang="en">
+  <head>
+    <title>How Indie Comics Get Distribution in 2026</title>
+    <meta name="description" content="A long description of the article." />
+    <link rel="canonical" href="https://www.vantaorigin.com/blog/indie-comic-distribution-2026" />
+    <script type="application/ld+json">{"@type":"BlogPosting"}</script>
+  </head>
+  <body>
+    <article><h1>How Indie Comics Get Distribution in 2026</h1><p>The whole article.</p></article>
+    <footer><nav><a href="/blog">Blog</a></nav></footer>
+  </body>
+</html>`;
+
+const SHELL = `<!doctype html>
+<html lang="en">
+  <head>
+    <title>VantaOrigin: Your characters. One link.</title>
+    <script type="module" crossorigin src="/assets/index-DYFxFGZs.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-CsIkaWvU.css">
+  </head>
+  <body><div id="root"></div></body>
+</html>`;
+
+// The shell is read once per isolate, so a test that wants a different one
+// has to start from a module nobody has asked yet.
+const freshMiddleware = async () => {
+  vi.resetModules();
+  // Static specifier: Vite cannot resolve a variable one, and resetModules
+  // is what actually clears the cached shell.
+  const mod = await import("../middleware.js");
+  return mod.default;
+};
+
+const serving = ({ written = WRITTEN, shell = SHELL, pageOk = true, shellOk = true } = {}) =>
+  vi.fn(async (url) =>
+    String(url).includes("/index.html")
+      ? new Response(shell, { status: shellOk ? 200 : 500 })
+      : new Response(written, { status: pageOk ? 200 : 404 })
+  );
 
 const ask = (path, agent) =>
   middleware(
     new Request(`https://www.vantaorigin.com${path}`, {
-      headers: agent === null ? {} : { "user-agent": agent },
+      headers: agent ? { "user-agent": agent } : {},
     })
   );
 
-const BROWSERS = [
-  ["Chrome", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"],
-  ["iPhone Safari", "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1"],
-  ["Firefox", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0"],
-  ["Edge", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0"],
-  // Driven by an agent, but it runs the scripts, so the app is the right
-  // answer: it reads the page properly on its own.
-  ["headless Chrome", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/131.0.0.0 Safari/537.36"],
-];
-
-// Every one of these was measured getting the empty shell.
-const PLAIN_CLIENTS = [
-  ["no user-agent at all", null],
+const AGENTS = [
+  ["no user-agent", null],
   ["curl", "curl/8.4.0"],
   ["python-requests", "python-requests/2.31.0"],
-  ["node-fetch", "node-fetch/1.0"],
-  ["axios", "axios/1.6.2"],
-  ["Go-http-client", "Go-http-client/2.0"],
-  ["Java", "Java/17.0.1"],
-  ["Postman", "PostmanRuntime/7.36.0"],
-  ["a bare Mozilla/5.0", "Mozilla/5.0"],
-  ["an empty string", ""],
+  ["real Chrome", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"],
+  ["a fetcher claiming to be Chrome", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"],
+  ["Googlebot", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"],
+  ["GPTBot", "Mozilla/5.0 (compatible; GPTBot/1.1)"],
 ];
-
-const CRAWLERS = [
-  ["Googlebot, modern", "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Googlebot/2.1; +http://www.google.com/bot.html) Chrome/131.0.0.0 Safari/537.36"],
-  ["Googlebot, old", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"],
-  ["GPTBot", "Mozilla/5.0 (compatible; GPTBot/1.1; +https://openai.com/gptbot)"],
-  ["ClaudeBot", "Mozilla/5.0 (compatible; ClaudeBot/1.0)"],
-  ["facebook", "facebookexternalhit/1.1"],
-];
-
-const served = (body = "<html><body><h1>Urokojin</h1></body></html>") =>
-  vi.fn(async () => new Response(body, { status: 200 }));
 
 afterEach(() => vi.unstubAllGlobals());
 
-describe("A reader that cannot run the app", () => {
-  it("is handed the written page, whatever it calls itself", async () => {
-    const fetched = served();
-    vi.stubGlobal("fetch", fetched);
+describe("Everyone gets the same page", () => {
+  it("serves the article whatever the client calls itself", async () => {
+    vi.stubGlobal("fetch", serving());
+    const run = await freshMiddleware();
 
-    for (const [name, agent] of PLAIN_CLIENTS) {
-      const answer = await ask("/character/urokojin", agent);
+    const bodies = [];
+    for (const [name, agent] of AGENTS) {
+      const answer = await run(
+        new Request("https://www.vantaorigin.com/blog/indie-comic-distribution-2026", {
+          headers: agent ? { "user-agent": agent } : {},
+        })
+      );
       expect(answer, name).toBeInstanceOf(Response);
-      expect(await answer.text(), name).toContain("Urokojin");
-      expect(answer.headers.get("x-vanta-render")).toBe("server");
+      bodies.push(await answer.text());
     }
-    expect(fetched).toHaveBeenCalledTimes(PLAIN_CLIENTS.length);
+
+    // Byte for byte the same, which is the whole point: there is no longer
+    // an audience that gets a different answer.
+    expect(new Set(bodies).size).toBe(1);
+    expect(bodies[0]).toContain("The whole article.");
+    expect(bodies[0]).toContain("How Indie Comics Get Distribution in 2026");
   });
 
-  it("is sent to the written copy of the address it asked for", async () => {
-    const fetched = served();
-    vi.stubGlobal("fetch", fetched);
+  it("keeps the page's own tags, not the shell's", async () => {
+    vi.stubGlobal("fetch", serving());
+    const run = await freshMiddleware();
+    const html = await (await run(new Request("https://www.vantaorigin.com/blog/a-post"))).text();
 
-    const wanted = {
-      "/": "/preview/home",
-      "/about": "/preview/about",
-      "/help": "/preview/help",
-      "/discover": "/preview/discover",
-      "/community": "/preview/community",
-      "/blog": "/preview/blog",
-      "/marketplace": "/preview/marketplace",
-      "/marketplace/how-it-works": "/preview/marketplace/how-it-works",
-      "/marketplace/project-request": "/preview/marketplace/project-request",
-      "/character/urokojin": "/preview/character/urokojin",
-      "/creator/Vtgshadowscribe": "/preview/creator/Vtgshadowscribe",
-      "/blog/why-i-built-vantaorigin": "/preview/blog/why-i-built-vantaorigin",
-    };
-
-    for (const [path, preview] of Object.entries(wanted)) {
-      fetched.mockClear();
-      await ask(path, "curl/8.4.0");
-      expect(fetched.mock.calls[0]?.[0], path).toBe(`https://api.vantaorigin.com${preview}`);
-    }
+    expect(html).toContain("<title>How Indie Comics Get Distribution in 2026</title>");
+    expect(html).toContain('rel="canonical" href="https://www.vantaorigin.com/blog/indie-comic-distribution-2026"');
+    expect(html).toContain('"@type":"BlogPosting"');
+    // And not the shell's title, which is what the bug looked like.
+    expect(html).not.toContain("VantaOrigin: Your characters. One link.");
   });
-});
 
-describe("A browser", () => {
-  it("gets the app, and the API is never called for it", async () => {
-    const fetched = served();
-    vi.stubGlobal("fetch", fetched);
+  it("carries the app's script and stylesheet so a browser can take over", async () => {
+    vi.stubGlobal("fetch", serving());
+    const run = await freshMiddleware();
+    const html = await (await run(new Request("https://www.vantaorigin.com/"))).text();
 
-    for (const [name, agent] of BROWSERS) {
-      expect(await ask("/character/urokojin", agent), name).toBeUndefined();
-    }
-    expect(fetched).not.toHaveBeenCalled();
+    expect(html).toContain('src="/assets/index-DYFxFGZs.js"');
+    expect(html).toContain('href="/assets/index-CsIkaWvU.css"');
   });
-});
 
-describe("A crawler that looks like a browser", () => {
-  it("is still given the written page", async () => {
-    // Modern Googlebot sends Mozilla/5.0 with AppleWebKit and Chrome in it.
-    // Checked before the browser test, or it would be handed the app.
-    const fetched = served();
-    vi.stubGlobal("fetch", fetched);
+  it("puts the article where the app mounts, so React replaces it", async () => {
+    vi.stubGlobal("fetch", serving());
+    const run = await freshMiddleware();
+    const html = await (await run(new Request("https://www.vantaorigin.com/"))).text();
 
-    for (const [name, agent] of CRAWLERS) {
-      const answer = await ask("/character/urokojin", agent);
-      expect(answer, name).toBeInstanceOf(Response);
-    }
-    expect(fetched).toHaveBeenCalledTimes(CRAWLERS.length);
+    const root = html.slice(html.indexOf('<div id="root">'), html.lastIndexOf("</div>"));
+    expect(root).toContain("The whole article.");
+    expect(html.match(/<div id="root">/g)).toHaveLength(1);
+  });
+
+  it("says the page depends on who asked, and which copy this is", async () => {
+    vi.stubGlobal("fetch", serving());
+    const run = await freshMiddleware();
+    const answer = await run(new Request("https://www.vantaorigin.com/"));
+
+    expect(answer.headers.get("vary")).toBe("User-Agent");
+    expect(answer.headers.get("x-vanta-render")).toBe("server");
+    expect(answer.headers.get("content-type")).toMatch(/text\/html/);
   });
 });
 
-describe("When the API cannot answer", () => {
-  it("falls back to the app rather than failing", async () => {
+describe("The asset names come from the build they belong to", () => {
+  it("reads them from this deployment's own shell", async () => {
+    const fetched = serving();
+    vi.stubGlobal("fetch", fetched);
+    const run = await freshMiddleware();
+    await run(new Request("https://www.vantaorigin.com/"));
+
+    const asked = fetched.mock.calls.map((c) => String(c[0]));
+    expect(asked.some((u) => u === "https://www.vantaorigin.com/index.html")).toBe(true);
+  });
+
+  it("reads the shell once and reuses it within a deployment", async () => {
+    // A new deploy is a new isolate, so the cache starts empty and fills
+    // from the build it belongs to. It cannot serve a stale script.
+    const fetched = serving();
+    vi.stubGlobal("fetch", fetched);
+    const run = await freshMiddleware();
+
+    await run(new Request("https://www.vantaorigin.com/"));
+    await run(new Request("https://www.vantaorigin.com/blog"));
+    await run(new Request("https://www.vantaorigin.com/discover"));
+
+    const shellReads = fetched.mock.calls.filter((c) => String(c[0]).includes("/index.html"));
+    expect(shellReads).toHaveLength(1);
+  });
+});
+
+describe("When something is not there", () => {
+  it("falls back to the app if the written page is missing", async () => {
+    vi.stubGlobal("fetch", serving({ pageOk: false }));
+    const run = await freshMiddleware();
+    expect(await run(new Request("https://www.vantaorigin.com/"))).toBeUndefined();
+  });
+
+  it("falls back to the app if the shell cannot be read", async () => {
+    vi.stubGlobal("fetch", serving({ shellOk: false }));
+    const run = await freshMiddleware();
+    expect(await run(new Request("https://www.vantaorigin.com/"))).toBeUndefined();
+  });
+
+  it("falls back to the app if the API never answers", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => { throw new Error("ENOTFOUND"); }));
-    expect(await ask("/character/urokojin", "curl/8.4.0")).toBeUndefined();
+    const run = await freshMiddleware();
+    expect(await run(new Request("https://www.vantaorigin.com/"))).toBeUndefined();
   });
 
-  it("does not pass on an error page as though it were the character", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => new Response("Bad gateway", { status: 502 })));
-    expect(await ask("/character/urokojin", "curl/8.4.0")).toBeUndefined();
-  });
-
-  it("leaves an address it has no written copy of alone", async () => {
-    const fetched = served();
+  it("leaves an address with no written copy alone", async () => {
+    const fetched = serving();
     vi.stubGlobal("fetch", fetched);
-    // Not in the list, so nothing to serve: the app answers.
-    expect(await ask("/settings", "curl/8.4.0")).toBeUndefined();
+    const run = await freshMiddleware();
+
+    expect(await run(new Request("https://www.vantaorigin.com/settings"))).toBeUndefined();
     expect(fetched).not.toHaveBeenCalled();
   });
 });
 
 describe("What it is allowed to touch", () => {
-  it("covers every page that has a written copy, and nothing private", () => {
-    expect(config.matcher).toContain("/");
-    expect(config.matcher).toContain("/character/:slug");
-    expect(config.matcher).toContain("/creator/:username");
-    expect(config.matcher).toContain("/blog/:slug");
-
-    for (const path of ["/settings", "/creators-hub", "/admin", "/signin"]) {
+  it("covers the public pages and nothing private", () => {
+    for (const path of ["/", "/blog/:slug", "/character/:slug", "/creator/:username", "/discover"]) {
+      expect(config.matcher).toContain(path);
+    }
+    for (const path of ["/settings", "/creators-hub", "/admin", "/signin", "/signup"]) {
       expect(config.matcher).not.toContain(path);
     }
   });
