@@ -128,6 +128,47 @@ describe("Everyone gets the same page", () => {
     expect(html.match(/<div id="root">/g)).toHaveLength(1);
   });
 
+  // The bug this is here for shipped, and people saw it.
+  //
+  // The pre-boot styles were written against #root, which is where React
+  // mounts -- so the app landed inside them rather than replacing them, and
+  // every rule went on applying for the life of the page. `#root a` is one
+  // id and one type, which outranks Tailwind's `.text-white`, so every link
+  // on the site turned pink: the navbar's Sign up was pink text on a pink
+  // button, unreadable at 1:1 contrast. `#root > *` capped the app at 46rem
+  // and padded it.
+  //
+  // Nothing in the app can defend itself against a selector that specific,
+  // so the test is not "does it look right" but "does the selector stop
+  // existing": every rule is hung on #pre-boot, the wrapper React destroys.
+  it("hangs its holding styles on something React throws away", async () => {
+    vi.stubGlobal("fetch", serving());
+    const run = await freshMiddleware();
+    const html = await (await run(new Request("https://www.vantaorigin.com/"))).text();
+
+    const styles = html.slice(html.indexOf("<style>"), html.indexOf("</style>"));
+
+    // The article sits in the wrapper, inside the mount point, so replacing
+    // the mount point's children takes the wrapper and the styles with it.
+    expect(html).toContain('<div id="root"><div id="pre-boot">');
+    expect(
+      html.slice(html.indexOf('id="pre-boot"'), html.lastIndexOf("</div>"))
+    ).toContain("The whole article.");
+
+    // Nothing may name #root, or the app wears it forever.
+    for (const rule of styles.split("}")) {
+      expect(rule).not.toMatch(/#root\b/);
+    }
+
+    // Only the page's own frame is allowed outside the wrapper: a background
+    // and a text colour, which is all that has to be held steady.
+    const outside = styles
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.includes("{") && !line.startsWith("#pre-boot"));
+    expect(outside).toEqual(["html, body { margin: 0; background: #0e0e0e; color: #e8ecf5; }"]);
+  });
+
   it("does not claim to vary, and says which copy this is", async () => {
     vi.stubGlobal("fetch", serving());
     const run = await freshMiddleware();

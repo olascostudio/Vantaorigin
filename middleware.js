@@ -91,12 +91,25 @@ const tagsFromShell = async (origin) => {
 // a slow connection sees a bare document flash before the site appears. The
 // app's own stylesheet is loaded alongside, so this only has to hold the
 // background and the text colour steady until it does.
+//
+// Every rule that dresses the content is scoped to #pre-boot, which is the
+// wrapper the written article sits in and which React destroys the moment it
+// mounts. That scoping is the whole point, not tidiness.
+//
+// These were written against #root, and #root is where React mounts: the app
+// landed inside the wrapper rather than replacing it, so the rules outlived
+// the boot and styled the whole site. `#root a` is one id and one type, which
+// beats Tailwind's `.text-white`, so every link on the site rendered pink --
+// the navbar's Sign up was pink text on a pink button, which cannot be read
+// at all -- and `#root > *` capped the app at 46rem and padded it. Nothing in
+// the app can defend itself against a selector that specific, so the fix is
+// to make the selector stop existing instead of trying to outrank it.
 const PRE_BOOT = `<style>
       html, body { margin: 0; background: #0e0e0e; color: #e8ecf5; }
-      #root { font-family: Inter, system-ui, sans-serif; line-height: 1.6; }
-      #root > * { max-width: 46rem; margin: 0 auto; padding: 1.5rem 1rem; }
-      #root a { color: #fc187b; }
-      #root img { max-width: 100%; height: auto; }
+      #pre-boot { font-family: Inter, system-ui, sans-serif; line-height: 1.6; }
+      #pre-boot > * { max-width: 46rem; margin: 0 auto; padding: 1.5rem 1rem; }
+      #pre-boot a { color: #fc187b; }
+      #pre-boot img { max-width: 100%; height: auto; }
     </style>`;
 
 // The written page, wearing the app's scripts, with its content where the
@@ -116,7 +129,13 @@ const merge = (written, tags) => {
     // React replaces whatever is in here when it mounts, so the article is
     // both what a reader without scripts keeps and what a browser shows
     // until the app is ready.
-    `\n    <div id="root">${content}</div>\n  ` +
+    //
+    // The inner wrapper is what the pre-boot styles are hung on. It exists so
+    // that those styles have something to point at that goes away: React
+    // replaces the children of #root, so #pre-boot and every rule naming it
+    // stop applying the instant the app mounts. Styling #root directly meant
+    // they applied forever.
+    `\n    <div id="root"><div id="pre-boot">${content}</div></div>\n  ` +
     written.slice(bodyClose)
   );
 };
