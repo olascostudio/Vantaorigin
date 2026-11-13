@@ -98,6 +98,12 @@ export default async function middleware(request) {
       headers: {
         "content-type": "text/html; charset=utf-8",
         "cache-control": "public, max-age=300, s-maxage=3600",
+        // This response depends on who asked. Without saying so, a shared
+        // cache between us and the reader is free to hand one audience the
+        // other’s copy: a browser the written page, or worse, a crawler the
+        // empty shell. Vercel does not cache these, but a corporate proxy or
+        // an ISP cache in front of somebody is welcome to.
+        vary: "User-Agent",
         // Says which of the two answers this is, so it can be checked from
         // outside without guessing at word counts.
         "x-vanta-render": "server",
