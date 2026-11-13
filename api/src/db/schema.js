@@ -391,6 +391,53 @@ export const suppressionList = pgTable("suppression_list", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+// Who decided to write to a suppressed address again, and why.
+//
+// Lifting removes the suppression row, which would otherwise destroy the
+// only evidence it ever happened. Being on that list means not even a
+// password reset arrives, so coming off it is a decision about somebody's
+// access to their own account.
+export const suppressionLifts = pgTable(
+  "suppression_lifts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    email: text("email").notNull(),
+    wasReason: text("was_reason").notNull(),
+    wasNote: text("was_note").default("").notNull(),
+    wasSuppressedAt: timestamp("was_suppressed_at", { withTimezone: true }),
+    liftedBy: text("lifted_by").notNull(),
+    note: text("note").notNull(),
+    liftedAt: timestamp("lifted_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    emailIdx: index("suppression_lifts_email_idx").on(table.email, table.liftedAt),
+  })
+);
+
+// Every webhook the sender delivered, kept so a replay can be recognised.
+//
+// Webhooks arrive at least once, never exactly once: a provider that does
+// not hear a prompt 200 retries, and the same event lands again. The unique
+// index on provider_event_id is what makes the second one a no-op.
+export const webhookEvents = pgTable(
+  "webhook_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    providerEventId: text("provider_event_id").notNull(),
+    eventType: text("event_type").notNull(),
+    providerMessageId: text("provider_message_id"),
+    email: text("email"),
+    // Kept whole: when something here is wrong later, the question is
+    // always what they actually sent, and a summary cannot answer it.
+    payload: jsonb("payload").notNull(),
+    receivedAt: timestamp("received_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    eventIdx: uniqueIndex("webhook_events_provider_event_id_key").on(table.providerEventId),
+    messageIdx: index("webhook_events_message_idx").on(table.providerMessageId),
+  })
+);
+
 // The terms, as versions somebody can be shown to have accepted. The page
 // records what the terms say; this records who agreed to which wording.
 export const termsVersions = pgTable("terms_versions", {

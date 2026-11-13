@@ -70,3 +70,14 @@ export const saveTemplate = (name, fromIssue) =>
 export const forgetTemplate = (id) => api.delete(`/admin/newsletter/templates/${id}`);
 export const startFromTemplate = (fromTemplate) =>
   api.post("/admin/newsletter/issues", { fromTemplate });
+
+// The suppression list: addresses we have stopped writing to, and the way
+// back. Being on it means not even a password reset arrives, so a wrong
+// entry costs somebody their account.
+export const loadSuppressions = (q = "") =>
+  api.get(`/admin/suppressions${q ? `?q=${encodeURIComponent(q)}` : ""}`);
+
+// `note` is required by the API, not optional: lifting one is a decision
+// about somebody's access, and the record of why is the point.
+export const liftSuppression = (email, note) =>
+  api.delete("/admin/suppressions", { email, note });

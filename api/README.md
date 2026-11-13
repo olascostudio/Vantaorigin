@@ -175,3 +175,112 @@ WHERE p.needs_consent_review;
 Either re-confirm those addresses or stop sending to them. `consent_at` on
 those rows is when the row was made, not when anybody agreed, and it is not
 evidence of consent.
+
+## Webhooks: how the suppression list learns
+
+Before this existed, `suppression_list` was read before every send and
+written by nothing. The machinery to stop writing to dead addresses was all
+there and had no way to find out which addresses were dead.
+
+`POST /webhooks/resend` fills that in. Three things happen, in this order,
+and the order is the design:
+
+1. **The signature is checked.** Nothing else runs first, because everything
+   after it acts on what the body says.
+2. **The event is written to `webhook_events`**, keyed by the sender's own
+   id, with a unique index on it. A replay conflicts, returns no row, and
+   every step below is skipped.
+3. **Only then is anything changed.**
+
+| Event | `email_log.status` | Suppression |
+|---|---|---|
+| `email.delivered` | `delivered` | — |
+| `email.opened` / `email.clicked` | `opened` / `clicked` | — |
+| `email.bounced`, `bounce.type` = `Permanent` | `bounced` | `hard_bounce` |
+| `email.bounced`, anything else | `bounced` | **none** |
+| `email.complained` | `complained` | `complaint` |
+
+Status only moves forward. Retries reorder freely, so a `delivered` arriving
+after an `opened` must not walk the record backwards, and an `opened` after
+a complaint must not bury it.
+
+### Turning it on
+
+Two settings, and it does nothing until both are in place.
+
+1. In the Resend dashboard, add a webhook pointing at
+   `https://api.vantaorigin.com/webhooks/resend`, subscribed to
+   `email.delivered`, `email.bounced`, `email.complained`, `email.opened`
+   and `email.clicked`. Copy the signing secret it shows (`whsec_…`).
+2. Set `RESEND_WEBHOOK_SECRET` to that value in the API's environment.
+
+**With no secret set, every webhook is refused.** That is deliberate and not
+a fallback: this is the one route where an unauthenticated stranger could
+stop somebody else's mail, so a missing environment variable must not read
+as "trust anyone".
+
+### Two things the documentation would not settle
+
+Both are handled by not guessing, and both are worth revisiting once real
+events have arrived.
+
+**Which id matches a send.** The payload carries `data.email_id` and
+`data.message_id`; the docs define both and never say which equals the id
+the send API returned. Guessing wrong means every webhook silently matches
+nothing, so the lookup tries both.
+
+**What a soft bounce is called.** The event page lists `Permanent` and
+`Temporary`. The bounce-types page lists `Permanent`, `Transient` and
+`Undetermined`. They agree only on `Permanent`, so that is the single value
+that suppresses, and everything else — including a string nobody has seen
+before — does not. The asymmetry is deliberate: failing to suppress costs
+one more bounce, while suppressing wrongly stops somebody's mail for good
+and shows up nowhere in the product. Every bounce type is logged, so the
+real set can be read off the log rather than off a page:
+
+```sql
+SELECT payload->'data'->'bounce'->>'type' AS kind, count(*)
+FROM webhook_events WHERE event_type = 'email.bounced' GROUP BY 1;
+```
+
+### What to watch once it is live
+
+```sql
+-- Who we have stopped writing to, and why.
+SELECT reason, count(*) FROM suppression_list GROUP BY reason;
+
+-- Whether anything is actually arriving.
+SELECT status, count(*) FROM email_log
+WHERE created_at > now() - interval '7 days' GROUP BY status;
+```
+
+A hard bounce rate above roughly 2% is where delivery for everybody else
+starts to suffer, which is the entire reason this endpoint exists.
+
+### Getting back off the suppression list
+
+The webhook fills that list and never empties it. For a mailbox that no
+longer exists that is right. For the cases that actually turn up it is not:
+a mail server having a bad hour and answering a permanent refusal it did not
+mean, a corporate filter reporting a newsletter on somebody's behalf, a
+person who pressed the wrong thing and wrote in to say so.
+
+**Admin → Blocked** shows every suppressed address with the sender's own
+diagnostic line beside it, and lifts one in two presses with a required
+reason. `DELETE /admin/suppressions` takes `{ email, note }`; the note is
+not optional.
+
+Lifting deletes the suppression row, which would otherwise destroy the only
+evidence the block ever happened — so what it was, who lifted it, when and
+why is copied to `suppression_lifts` first. Being on the list means not even
+a password reset arrives, so coming off it is a decision about somebody's
+access to their own account and has to be answerable a year later.
+
+If the address really is gone, the next bounce suppresses it again. The
+webhook neither knows nor cares that somebody lifted it, and the lift record
+is what tells the story afterwards.
+
+```sql
+SELECT email, was_reason, lifted_by, note, lifted_at
+FROM suppression_lifts ORDER BY lifted_at DESC;
+```

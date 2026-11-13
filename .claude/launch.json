@@ -29,7 +29,8 @@
         "ADMIN_EMAILS": "boss@vantaorigin.test",
         "PORT": "8080",
         "STORAGE_DRIVER": "memory",
-        "APP_ORIGIN": "http://localhost:5173,http://localhost:4173"
+        "APP_ORIGIN": "http://localhost:5173,http://localhost:4173",
+        "RESEND_WEBHOOK_SECRET": "whsec_bG9jYWwtZGV2LW5vdC1hLXJlYWwtc2VjcmV0"
       }
     },
     {

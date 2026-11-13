@@ -137,7 +137,16 @@ unsubscribed, and is refused for a non-admin. One without a reason category is
 refused. The audit row records sender, time and audience size. The banner
 appears for a user who has not accepted and goes when they do.
 
-### Phase 4 — webhooks and delivery truth
+### Phase 4 — webhooks and delivery truth — DONE
+
+Built as 0027_webhook_events.sql, src/webhooks/signature.js and
+src/routes/webhooks.js. Tests: test/webhooks.test.js. The plan said 0024
+and 0025; the numbers moved because earlier phases took them.
+
+Two things the Resend documentation would not settle, both handled by not
+guessing and both written up in api/README.md: which id in the payload
+matches a send (both are tried), and what a soft bounce is called (only
+"Permanent" suppresses; everything else, known or not, does not).
 
 - `POST /webhooks/resend`, signature verified, rejecting anything unsigned.
 - `delivered`, `bounced`, `complained`, `opened`, `clicked` update `email_log`

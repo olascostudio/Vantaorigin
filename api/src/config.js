@@ -69,6 +69,16 @@ const schema = z.object({
   // file at the site root; without it the pings are simply skipped.
   INDEXNOW_KEY: z.string().default("2b65c57d946548f247cf5236c4dcf43c"),
 
+  // Proves a webhook really came from the sender. Taken from the webhook's
+  // own page in the Resend dashboard, one secret per endpoint.
+  //
+  // Empty by default and that is not a quiet fallback: with no secret the
+  // endpoint refuses every request rather than trusting unsigned ones. A
+  // webhook nobody can forge is the entire reason it may write to the
+  // suppression list, and an endpoint that accepts anything is a way for a
+  // stranger to stop your mail reaching whoever they name.
+  RESEND_WEBHOOK_SECRET: z.string().default(""),
+
   SESSION_TTL_DAYS: z.coerce.number().default(30),
 });
 

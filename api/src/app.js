@@ -24,6 +24,8 @@ import previewRoutes from "./routes/preview.js";
 import creatorRoutes from "./routes/creator.js";
 import reportRoutes from "./routes/reports.js";
 import termsRoutes from "./routes/terms.js";
+import suppressionRoutes from "./routes/suppression.js";
+import webhookRoutes from "./routes/webhooks.js";
 import uploadRoutes from "./routes/uploads.js";
 import { ping } from "./db/client.js";
 
@@ -130,6 +132,8 @@ export async function buildApp() {
   await app.register(creatorRoutes);
   await app.register(reportRoutes);
   await app.register(termsRoutes);
+  await app.register(suppressionRoutes);
+  await app.register(webhookRoutes);
   await app.register(uploadRoutes);
 
   return app;
