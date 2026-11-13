@@ -237,6 +237,9 @@ export const newsletterSubscribers = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
     unsubscribedAt: timestamp("unsubscribed_at", { withTimezone: true }),
+    // A quieter option than leaving, for somebody with no account. The one
+    // on email_preferences cannot serve them: that table is keyed by user.
+    pausedUntil: timestamp("paused_until", { withTimezone: true }),
   },
   (table) => ({
     tokenIdx: uniqueIndex("newsletter_subscribers_token_key").on(table.token),
@@ -258,6 +261,9 @@ export const newsletterIssues = pgTable(
     sentAt: timestamp("sent_at", { withTimezone: true }),
     sentCount: integer("sent_count").default(0).notNull(),
     failedCount: integer("failed_count").default(0).notNull(),
+    // Not sent on purpose: unsubscribed, pending, paused or suppressed.
+    // Neither a success nor a failure, and lumping it with either lies.
+    skippedCount: integer("skipped_count").default(0).notNull(),
     // Who did not get it and what was said, because a count of failures
     // cannot be acted on.
     failures: jsonb("failures").$type().default([]).notNull(),

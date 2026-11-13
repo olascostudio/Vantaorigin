@@ -199,7 +199,16 @@ export default async function newsletterAdminRoutes(app) {
     const address = to || request.user.email;
 
     try {
-      await sendTest(issue, address);
+      const answer = await sendTest(issue, address);
+      // Refused rather than failed: nothing is broken, that address is just
+      // not one we may write to. Said in the words of the refusal, because
+      // "could not be sent" would send somebody hunting for a fault.
+      if (answer?.blocked) {
+        return reply.code(409).send({
+          error: `No test copy went to ${address}: ${answer.reason}`,
+          blocked: true,
+        });
+      }
     } catch (error) {
       request.log.error({ err: error, to: address }, "test copy failed");
       return reply.code(502).send({ error: "That test copy could not be sent." });

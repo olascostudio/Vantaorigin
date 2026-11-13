@@ -12,13 +12,13 @@ import { randomBytes } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { config } from "../config.js";
 import { db } from "../db/client.js";
-import { users } from "../db/schema.js";
+import { emailPreferences, users } from "../db/schema.js";
 import { userByHandle } from "../db/handles.js";
 import { createSession, hashPassword, setSessionCookie } from "../auth/auth.js";
 import { mailer } from "../adapters/email.js";
-import { MARKETING } from "../email-classes.js";
+import { TRANSACTIONAL } from "../email-classes.js";
 import { welcomeEmail } from "../emails/templates.js";
-import { subscribeQuietly, unsubscribeLink } from "../newsletter.js";
+import { confirmLink, subscribeQuietly, unsubscribeLink } from "../newsletter.js";
 
 const AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
@@ -221,6 +221,26 @@ export default async function googleRoutes(app) {
         .returning();
 
       const listed = await subscribeQuietly(app, email, "google");
+
+      // The consent record, the same as a sign-up through the form gets.
+      //
+      // This route made a user and no row at all, so every account arriving
+      // through Google had nothing recording what it had agreed to. The
+      // first thing that saved anything -- a pause, a category switch --
+      // created the row by insert, its marketing_status fell to the column
+      // default of "pending", and the newsletter was refused from then on.
+      // Signing in with Google is not asking for the newsletter either, so
+      // the record says pending honestly rather than by accident.
+      await db
+        .insert(emailPreferences)
+        .values({
+          userId: user.id,
+          marketingStatus: "pending",
+          consentSource: "google",
+          consentIp: request.ip ?? null,
+        })
+        .onConflictDoNothing();
+
       const leaveLink = listed?.subscriber?.token
         ? unsubscribeLink(config.API_PUBLIC_URL, listed.subscriber.token)
         : "";
@@ -231,12 +251,24 @@ export default async function googleRoutes(app) {
       try {
         await mailer.send({
           to: email,
-          kind: MARKETING,
+          // Transactional, for the same reason the sign-up route's copy is:
+          // the account starts pending, so a welcome sent as marketing is a
+          // welcome that can never go. It was marketing here and only
+          // arrived because this route left no preferences row to read.
+          kind: TRANSACTIONAL,
           template: "welcome",
           userId: user.id,
           replyTo: config.EMAIL_REPLY_TO,
           unsubscribeUrl: leaveLink,
-          ...welcomeEmail({ user, unsubscribeUrl: leaveLink }),
+          // And the ask rides along, so arriving through Google is still a
+          // way onto the newsletter that somebody chose.
+          ...welcomeEmail({
+            user,
+            unsubscribeUrl: leaveLink,
+            confirmUrl: listed?.subscriber?.token
+              ? confirmLink(config.API_PUBLIC_URL, listed.subscriber.token)
+              : "",
+          }),
         });
       } catch (error) {
         // Never at the cost of the sign-in itself.

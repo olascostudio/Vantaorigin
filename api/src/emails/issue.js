@@ -190,7 +190,7 @@ export const startingBlocks = () => [
   { type: "rich", html: "<h2>What's new at VantaOrigin</h2><p></p>" },
 ];
 
-export function renderIssue(issue, { unsubscribeUrl = "" } = {}) {
+export function renderIssue(issue, { unsubscribeUrl = "", preferencesUrl = "" } = {}) {
   const blocks = Array.isArray(issue?.blocks) ? issue.blocks : [];
   const shown = blocks.filter((block) => blockHtml(block, false));
 
@@ -207,8 +207,22 @@ export function renderIssue(issue, { unsubscribeUrl = "" } = {}) {
       preview: issue?.preheader || "",
       body: body || "",
       unsubscribeUrl,
+      preferencesUrl,
       newsletter: true,
     }),
-    text: unsubscribeUrl ? `${text}\n\n--\nTo leave the newsletter: ${unsubscribeUrl}` : text,
+    // The plain copy gets the same choices as the pretty one. Some people
+    // read their mail this way, and offering them only "leave" is how a
+    // reader who wanted one fewer email a month ends up gone.
+    text: unsubscribeUrl
+      ? [
+          text,
+          "",
+          "--",
+          ...(preferencesUrl
+            ? [`Choose what you hear about, or pause for a month: ${preferencesUrl}`]
+            : []),
+          `To leave the newsletter: ${unsubscribeUrl}`,
+        ].join("\n")
+      : text,
   };
 }

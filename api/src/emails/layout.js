@@ -95,7 +95,7 @@ export const button = (text, href) => `
 // The newsletter flag picks the header, and changes the footer's reason line:
 // an issue goes to people who joined a list, which is not the same as having
 // an account.
-export function shell({ preview = "", body, unsubscribeUrl = "", newsletter = false }) {
+export function shell({ preview = "", body, unsubscribeUrl = "", preferencesUrl = "", newsletter = false }) {
   const year = new Date().getFullYear();
   const socials = SOCIALS.map(
     ([label, href, file, width]) =>
@@ -157,6 +157,15 @@ export function shell({ preview = "", body, unsubscribeUrl = "", newsletter = fa
                           ? `Not for you any more? <a href="${unsubscribeUrl}" style="color:${MUTED};text-decoration:underline;">Unsubscribe</a>. Your account, if you have one, stays as it is.`
                           : `You are also on the creator newsletter. <a href="${unsubscribeUrl}" style="color:${MUTED};text-decoration:underline;">Unsubscribe</a> any time. Your account stays as it is.`
                       }</p>`
+                    : ""
+                }
+                ${
+                  // Offered beside leaving, not instead of it. Somebody who
+                  // wants one fewer email a month should not have to leave to
+                  // get it, and an unsubscribe that was really "too many" is a
+                  // reader lost to a missing setting.
+                  preferencesUrl
+                    ? `<p style="margin:8px 0 0;color:${MUTED};font-size:13px;line-height:1.5;"><a href="${preferencesUrl}" style="color:${MUTED};text-decoration:underline;">Choose what you hear about</a> &mdash; pause for a month, or hear less.</p>`
                     : ""
                 }
                 <p style="margin:8px 0 0;color:${MUTED};font-size:13px;">© ${year} VantaOrigin.com, All Rights Reserved.</p>

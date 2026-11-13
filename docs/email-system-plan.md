@@ -89,7 +89,12 @@ address gets nothing at all, including a password reset.
 Shippable on its own: from here, every email that leaves the building is
 recorded and classified, which is the thing we cannot currently answer.
 
-### Phase 2 — preferences and consent (0022, 0023)
+### Phase 2 — preferences and consent (0022, 0023) — DONE
+
+Built as 0023_email_preferences.sql, 0024_migrate_newsletter_consent.sql and
+0025_issue_skipped.sql. The numbers moved because 0020-0022 went to Phase 1.
+Tests: test/preferences.test.js, test/consent-import.test.js,
+test/email-eligibility.test.js, test/double-opt-in.test.js.
 
 - `0022_email_preferences.sql` — `email_preferences`: user_id (unique),
   marketing_status (`pending`, `subscribed`, `unsubscribed`, `bounced`,

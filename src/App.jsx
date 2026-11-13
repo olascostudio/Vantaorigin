@@ -29,6 +29,7 @@ import SignIn from "./pages/auth/SignIn";
 import VerifyEmail from "./pages/auth/VerifyEmail";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
+import EmailPreferences from "./pages/EmailPreferences";
 
 // Links shared before the rename carry /realm/ in them. They are somebody
 // else's post, out of our hands, so they land on the same page rather than a
@@ -75,6 +76,8 @@ export default function App() {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/help" element={<Help />} />
+        {/* Opened from a link in an email, so it must work with nobody signed in. */}
+        <Route path="/newsletter/preferences" element={<EmailPreferences />} />
         {/* Only opens for an account named in the API setting. */}
         <Route
           path="/admin"

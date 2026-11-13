@@ -525,3 +525,121 @@ test("a letter that really is empty is still refused", () => {
     );
   }
 });
+
+// A refused copy is neither a success nor a failure.
+//
+// The sender turns one away when the person has unsubscribed, never
+// confirmed, paused, or had their address suppressed. Counting that as sent
+// is a lie told to whoever reads the history later; counting it as failed
+// makes a clean send look broken and sends somebody looking for a fault
+// that is not there. So it is counted on its own.
+test("somebody the sender refuses is counted as skipped, not sent or failed", async () => {
+  const issue = await writtenIssue("The letter with one refusal");
+  await join("refused@example.com");
+  sent = [];
+
+  const working = mailer.send;
+  mailer.send = async (message) => {
+    if (message.to === "refused@example.com") {
+      return { blocked: true, reason: "marketing is unsubscribed, not subscribed" };
+    }
+    return working(message);
+  };
+
+  const result = await deliver(null, issue.id);
+  mailer.send = working;
+
+  assert.equal(result.skipped, 1);
+  assert.equal(result.failed, 0);
+  // And the refused address is not among the copies that went out.
+  assert.ok(!sent.some((message) => message.to === "refused@example.com"));
+
+  const after = (
+    await app.inject({
+      method: "GET",
+      url: `/admin/newsletter/issues/${issue.id}`,
+      headers: { cookie: editor },
+    })
+  ).json();
+
+  assert.equal(after.skippedCount, 1);
+  assert.equal(after.failedCount, 0);
+  assert.ok(after.sentCount > 0);
+  // Nothing in the failure list, because nothing failed.
+  assert.equal((after.failures || []).length, 0);
+});
+
+test("a refused address is still marked, so a second press does not retry it", async () => {
+  const issue = await writtenIssue("The letter sent twice");
+
+  const working = mailer.send;
+  mailer.send = async (message) => {
+    if (message.to === "refused@example.com") {
+      return { blocked: true, reason: "marketing is unsubscribed, not subscribed" };
+    }
+    return working(message);
+  };
+  await deliver(null, issue.id);
+
+  sent = [];
+  const again = await deliver(null, issue.id);
+  mailer.send = working;
+
+  // Nobody is owed it any more, refused included: a send that reopened the
+  // refusals would hand everybody else a second copy to reach them.
+  assert.equal(sent.length, 0);
+  assert.equal(again.skipped, 1);
+});
+
+// Both copies of every letter offer the gentler choices.
+//
+// Caught by rendering a letter by hand: the pretty version had the link and
+// the plain one did not, so a reader on a plain-text mail client was offered
+// "leave" and nothing else. That is the exact reader this whole screen
+// exists for -- somebody who wanted one fewer email a month and would
+// otherwise take the only door on offer.
+test("every copy offers the choices, in the plain version as well as the pretty one", async () => {
+  const issue = await writtenIssue("The letter with a way to hear less");
+  sent = [];
+  await deliver(null, issue.id);
+
+  assert.ok(sent.length > 0);
+  for (const message of sent) {
+    const token = message.unsubscribeUrl.split("token=")[1];
+    const choices = `/newsletter/preferences?token=${token}`;
+
+    assert.ok(message.html.includes(choices), "the HTML copy offers them");
+    assert.ok(message.text.includes(choices), "the plain copy offers them too");
+    // Their own link, not somebody else's.
+    assert.ok(!message.html.includes("preferences?token=undefined"));
+  }
+
+  // One link each, as with the unsubscribe.
+  const links = sent.map((message) => message.text.match(/preferences\?token=\S+/)[0]);
+  assert.equal(new Set(links).size, sent.length);
+});
+
+// A test copy the sender refuses must say so.
+//
+// It looked identical to one that went: the route answered ok and the
+// writer sat waiting for mail that was never coming. The same silence cost
+// hours once already, on a letter that would not send.
+test("a test copy that is refused says so, instead of reporting success", async () => {
+  const issue = await writtenIssue("The letter nobody may test");
+
+  const working = mailer.send;
+  mailer.send = async () => ({ blocked: true, reason: "the address hard bounced" });
+
+  const res = await app.inject({
+    method: "POST",
+    url: `/admin/newsletter/issues/${issue.id}/test`,
+    headers: { cookie: editor },
+    payload: { to: "editor@vantaorigin.test" },
+  });
+  mailer.send = working;
+
+  assert.equal(res.statusCode, 409);
+  assert.equal(res.json().blocked, true);
+  // The refusal's own words, so nobody goes looking for a fault.
+  assert.match(res.json().error, /hard bounced/);
+});

@@ -77,16 +77,51 @@ export async function subscribeQuietly(app, email, source) {
   }
 }
 
+// Leaving. The mirror of confirmByToken, and it has to write to both tables
+// for the same reason that one does.
+//
+// It used to touch the list alone. For an address with an account that left
+// the two records then disagreed -- the list said unsubscribed, the
+// preferences row still said subscribed -- and whyNotEligible() reads the
+// preferences row first and never looks at the list, so the one place that
+// decides whether to send answered "yes" about somebody who had just
+// pressed unsubscribe. The newsletter send missed them anyway, because it
+// picks its recipients from the list; anything addressing a person by email
+// reached them, the Google welcome among them.
 export async function unsubscribeByToken(token) {
   if (!token) return null;
 
+  const left = { status: "unsubscribed", unsubscribedAt: new Date(), updatedAt: new Date() };
+
   const [row] = await db
     .update(newsletterSubscribers)
-    .set({ status: "unsubscribed", unsubscribedAt: new Date(), updatedAt: new Date() })
+    .set(left)
     .where(eq(newsletterSubscribers.token, String(token)))
     .returning();
+  if (!row) return null;
 
-  return row ?? null;
+  const [person] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(sql`lower(${users.email}) = ${row.email.toLowerCase()}`)
+    .limit(1);
+
+  if (person) {
+    const withdrawn = {
+      marketingStatus: "unsubscribed",
+      unsubscribedAt: left.unsubscribedAt,
+      // Said by hand, which is the clearest consent record there is: there
+      // is nothing inherited left for anybody to look into.
+      needsConsentReview: false,
+      updatedAt: new Date(),
+    };
+    await db
+      .insert(emailPreferences)
+      .values({ userId: person.id, ...withdrawn })
+      .onConflictDoUpdate({ target: emailPreferences.userId, set: withdrawn });
+  }
+
+  return row;
 }
 
 // The token a test copy carries.
@@ -117,6 +152,12 @@ export const addressesIn = (text) => {
 
 export const unsubscribeLink = (site, token) =>
   `${String(site).replace(/\/$/, "")}/newsletter/unsubscribe?token=${encodeURIComponent(token)}`;
+
+// Where somebody chooses what they hear about. On the site rather than the
+// API, because it is a screen and not an action, and it carries the same
+// token so it opens from an inbox with nobody signed in.
+export const preferencesLink = (site, token) =>
+  `${String(site).replace(/\/$/, "")}/newsletter/preferences?token=${encodeURIComponent(token)}`;
 
 // The link in the confirmation email. Same token the unsubscribe link
 // carries: it is already a secret only that person has, and minting a second

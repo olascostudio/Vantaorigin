@@ -262,6 +262,21 @@ function Record({ issue }) {
             <p className="mt-1 font-ui text-base text-[#ffb4c4]">{issue.failedCount}</p>
           </div>
         )}
+        {issue.skippedCount > 0 && (
+          // Counted apart from both, and shown so the numbers add up. Without
+          // this, a letter to twelve that skipped three reads as "Reached 9"
+          // with nothing saying where the others went, which looks like a
+          // fault rather than the rules working.
+          <div>
+            <p className="font-ui text-xs font-bold uppercase tracking-wide text-neutral-500">
+              Not sent on purpose
+            </p>
+            <p className="mt-1 font-ui text-base text-white">{issue.skippedCount}</p>
+            <p className="mt-1 font-ui text-xs leading-relaxed text-neutral-400">
+              Left, never confirmed, paused, or an address we have been told to stop writing to.
+            </p>
+          </div>
+        )}
       </div>
 
       {failures.length > 0 && (

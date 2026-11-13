@@ -16,7 +16,7 @@ import { db } from "./db/client.js";
 import { newsletterIssues, newsletterSubscribers } from "./db/schema.js";
 import { mailer } from "./adapters/email.js";
 import { renderIssue } from "./emails/issue.js";
-import { TEST_TOKEN, unsubscribeLink } from "./newsletter.js";
+import { TEST_TOKEN, preferencesLink, unsubscribeLink } from "./newsletter.js";
 import { MARKETING } from "./email-classes.js";
 
 // Resend allows two requests a second on the ordinary plan. Going slower than
@@ -94,13 +94,18 @@ export async function countWaiting(issueId) {
 }
 
 const leaveLinkFor = (token) => unsubscribeLink(config.API_PUBLIC_URL, token);
+// The screen lives on the site; the unsubscribe is an action on the API.
+const chooseLinkFor = (token) => preferencesLink(config.SITE_URL || "https://www.vantaorigin.com", token);
 
 // One copy, to one person, with their own way out.
 async function sendOne(issue, subscriber) {
   const leave = leaveLinkFor(subscriber.token);
-  const letter = renderIssue(issue, { unsubscribeUrl: leave });
+  const letter = renderIssue(issue, {
+    unsubscribeUrl: leave,
+    preferencesUrl: chooseLinkFor(subscriber.token),
+  });
 
-  await mailer.send({
+  return mailer.send({
     to: subscriber.email,
     kind: MARKETING,
     template: "issue",
@@ -115,9 +120,14 @@ async function sendOne(issue, subscriber) {
 export async function sendTest(issue, to) {
   const letter = renderIssue(issue, {
     unsubscribeUrl: leaveLinkFor(TEST_TOKEN),
+    preferencesUrl: chooseLinkFor(TEST_TOKEN),
   });
 
-  await mailer.send({
+  // The answer is handed back rather than dropped. A test copy refused by
+  // the sender -- a suppressed address, an unconfirmed one -- used to look
+  // exactly like one that went, and the writer would sit waiting for mail
+  // that was never going to arrive.
+  return mailer.send({
     to,
     // A test copy is the same letter, so it is the same class. It goes to
     // one address somebody typed, which is why it carries no real token.
@@ -152,6 +162,7 @@ export async function deliver(app, issueId) {
 
     let sent = issue.sentCount;
     let failed = issue.failedCount;
+    let skipped = issue.skippedCount ?? 0;
     const failures = Array.isArray(issue.failures) ? [...issue.failures] : [];
 
     // Asked again each time round: somebody who joins mid-send is included,
@@ -171,8 +182,12 @@ export async function deliver(app, issueId) {
 
       for (const subscriber of waiting) {
         try {
-          await sendOne(issue, subscriber);
-          sent += 1;
+          const answer = await sendOne(issue, subscriber);
+          // Refused on purpose: unsubscribed, pending, paused or suppressed.
+          // Counting it as sent would be a lie and counting it as failed
+          // would make a clean send look broken.
+          if (answer?.blocked) skipped += 1;
+          else sent += 1;
         } catch (error) {
           failed += 1;
           if (failures.length < FAILURES_KEPT) {
@@ -200,7 +215,7 @@ export async function deliver(app, issueId) {
         // costs nothing worth having.
         await db
           .update(newsletterIssues)
-          .set({ sentCount: sent, failedCount: failed, failures, updatedAt: new Date() })
+          .set({ sentCount: sent, failedCount: failed, skippedCount: skipped, failures, updatedAt: new Date() })
           .where(eq(newsletterIssues.id, issueId));
 
         await pause(PACE_MS);
@@ -214,13 +229,14 @@ export async function deliver(app, issueId) {
         sentAt: issue.sentAt ?? new Date(),
         sentCount: sent,
         failedCount: failed,
+        skippedCount: skipped,
         failures,
         updatedAt: new Date(),
       })
       .where(eq(newsletterIssues.id, issueId));
 
-    app?.log?.info({ issueId, sent, failed }, "newsletter sent");
-    return { sent, failed };
+    app?.log?.info({ issueId, sent, failed, skipped }, "newsletter sent");
+    return { sent, failed, skipped };
   } finally {
     sending.delete(issueId);
   }

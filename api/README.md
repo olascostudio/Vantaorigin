@@ -132,3 +132,46 @@ What a lawyer needs to settle:
 The exception lives in one function, `blockedBySuppression()` in
 `src/email-classes.js`, and the set is the `UNAVOIDABLE` array above it.
 Changing which categories are excepted is changing that array.
+
+### What somebody can change, and where
+
+`/newsletter/preferences` on the site, reachable two ways: signed in, or with
+the token from any email's footer. The token matters — the person who most
+wants that screen is holding an email and no patience, and asking them to
+remember a password first is how an unsubscribe becomes a spam complaint.
+
+Three ways out, each one press, none of which argues:
+
+| Choice | What happens |
+|---|---|
+| Pause 30 days | `paused_until` set; still subscribed; resumes on its own |
+| Fewer emails | every product-notification category off; newsletter stays |
+| Unsubscribe | `marketing_status = 'unsubscribed'`, and the old newsletter row is kept in step |
+
+Nothing on that page can switch off a transactional email or a
+`service_announcement`. Password resets, verification codes, security notices
+and terms changes are not preferences, and the page says so in as many words
+so nobody goes looking for a switch that is deliberately absent.
+
+Routes live in `src/routes/preferences.js`; the page is
+`src/pages/EmailPreferences.jsx`. Whether a send is allowed is decided in
+`src/email-eligibility.js` and nowhere else, per recipient, at send time —
+not from a list assembled earlier.
+
+### The list a lawyer has to work through
+
+`0024_migrate_newsletter_consent.sql` carries the old newsletter table into
+`email_preferences`. Everyone who was subscribed arrives as `subscribed` with
+`consent_source = 'legacy_import'` and **`needs_consent_review = true`**,
+because the old table recorded that they were on the list and never how they
+got there. That flag is not a fix; it is a queue:
+
+```sql
+SELECT u.email, p.consent_at
+FROM email_preferences p JOIN users u ON u.id = p.user_id
+WHERE p.needs_consent_review;
+```
+
+Either re-confirm those addresses or stop sending to them. `consent_at` on
+those rows is when the row was made, not when anybody agreed, and it is not
+evidence of consent.

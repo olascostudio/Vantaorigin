@@ -47,12 +47,14 @@ const whatWeKnow = async (email) => {
   if (person) return { kindOf: "account", ...person };
 
   const [listed] = await db
-    .select({ status: newsletterSubscribers.status })
+    .select({ status: newsletterSubscribers.status, pausedUntil: newsletterSubscribers.pausedUntil })
     .from(newsletterSubscribers)
     .where(sql`lower(${newsletterSubscribers.email}) = ${address}`)
     .limit(1);
 
-  return listed ? { kindOf: "list", status: listed.status } : { kindOf: "stranger" };
+  return listed
+    ? { kindOf: "list", status: listed.status, pausedUntil: listed.pausedUntil }
+    : { kindOf: "stranger" };
 };
 
 // Null when it may be sent; a sentence saying why not otherwise.
@@ -81,7 +83,14 @@ export async function whyNotEligible({ email, kind, category = null }) {
     }
 
     if (known.kindOf === "list") {
-      return known.status === "subscribed" ? null : `the list says ${known.status}`;
+      if (known.status !== "subscribed") return `the list says ${known.status}`;
+      // A quiet month, asked for by somebody with no account. It was offered
+      // to them, so it has to be obeyed for them: the page said "Paused for
+      // 30 days" while every issue kept arriving.
+      if (known.pausedUntil && known.pausedUntil > new Date()) {
+        return `paused until ${known.pausedUntil.toISOString().slice(0, 10)}`;
+      }
+      return null;
     }
 
     // Nobody we have ever heard of. Not an error and not a send: an address
