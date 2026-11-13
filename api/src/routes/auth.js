@@ -2,12 +2,12 @@ import { z } from "zod";
 import { config } from "../config.js";
 import { eq } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { sessions, users } from "../db/schema.js";
+import { emailPreferences, sessions, users } from "../db/schema.js";
 import { mailer } from "../adapters/email.js";
 import { userByHandle } from "../db/handles.js";
 import { resetEmail, verificationEmail, welcomeEmail } from "../emails/templates.js";
 import { MARKETING, TRANSACTIONAL } from "../email-classes.js";
-import { subscribeQuietly, unsubscribeLink } from "../newsletter.js";
+import { confirmLink, subscribeQuietly, unsubscribeLink } from "../newsletter.js";
 // While emails only print to the terminal (local development), the code is
 // also returned so you can finish the flow without an inbox. Never in
 // production, where EMAIL_DRIVER is "resend".
@@ -102,10 +102,21 @@ export default async function authRoutes(app) {
       ...verificationEmail({ user, code, minutes: CODE_TTL_MINUTES }),
     });
 
-    // Everyone who makes an account hears from us until they say otherwise,
-    // and this happens before the letter goes out so the letter can carry the
-    // way back out.
+    // Making an account is not asking for the newsletter. They start
+    // pending, and the welcome letter asks; nothing marketing reaches them
+    // until they answer. The address still goes on the list so there is a
+    // token to put in that link, and the list is not what decides anything
+    // for somebody with an account.
     const listed = await subscribeQuietly(app, email, "signup");
+    await db
+      .insert(emailPreferences)
+      .values({
+        userId: user.id,
+        marketingStatus: "pending",
+        consentSource: "signup",
+        consentIp: request.ip ?? null,
+      })
+      .onConflictDoNothing();
     const leaveLink = listed?.subscriber?.token
       ? unsubscribeLink(config.API_PUBLIC_URL, listed.subscriber.token)
       : "";
@@ -114,14 +125,24 @@ export default async function authRoutes(app) {
     // not hold up the answer to a sign-up, so it goes without being waited on.
     trySend(app, {
       to: email,
-      // Not transactional: it is a letter about the place, and it carries a
-      // way out for that reason.
-      kind: MARKETING,
+      // Transactional. The primary purpose is onboarding the account they
+      // just made: what it is, and the three things to do first. It was
+      // marketing until double opt-in arrived, and then it could not be:
+      // a new account is pending until they say yes to the newsletter, so
+      // sending the welcome as marketing meant never sending it at all.
+      // The ask itself rides along inside it rather than as a second email.
+      kind: TRANSACTIONAL,
       template: "welcome",
       userId: user.id,
       replyTo: config.EMAIL_REPLY_TO,
       unsubscribeUrl: leaveLink,
-      ...welcomeEmail({ user, unsubscribeUrl: leaveLink }),
+      ...welcomeEmail({
+        user,
+        unsubscribeUrl: leaveLink,
+        confirmUrl: listed?.subscriber?.token
+          ? confirmLink(config.API_PUBLIC_URL, listed.subscriber.token)
+          : "",
+      }),
     });
 
     const session = await createSession(user.id);

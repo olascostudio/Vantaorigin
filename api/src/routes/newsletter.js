@@ -6,7 +6,10 @@
 // cannot see a way out of is a newsletter it sends to spam.
 import { z } from "zod";
 import { config } from "../config.js";
-import { subscribe, unsubscribeByToken, TEST_TOKEN } from "../newsletter.js";
+import { confirmLink, confirmByToken, subscribe, unsubscribeByToken, TEST_TOKEN } from "../newsletter.js";
+import { mailer } from "../adapters/email.js";
+import { TRANSACTIONAL } from "../email-classes.js";
+import { confirmSubscriptionEmail } from "../emails/templates.js";
 
 const SITE = (config.SITE_URL || "https://www.vantaorigin.com").replace(/\/$/, "");
 
@@ -58,7 +61,57 @@ export default async function newsletterRoutes(app) {
     // The same answer whether the address was new, returning or already
     // there: whether somebody is on this list is not ours to tell a stranger.
     if (!result.ok) return reply.code(400).send({ error: "That does not look like an email address" });
+
+    // Typing an address into a form is not consent: the address might not be
+    // theirs. One tap on this is, and it is the tap we can point at when
+    // somebody asks how we got permission. Nothing is sent to them until
+    // they answer it.
+    //
+    // Transactional, and not a contradiction: they asked for something and
+    // this completes it. Sent as marketing it could never arrive, because
+    // the person is pending until they reply to it.
+    if (result.state === "added" || result.state === "returned") {
+      const token = result.subscriber?.token;
+      if (token) {
+        mailer
+          .send({
+            to: email,
+            kind: TRANSACTIONAL,
+            template: "confirm-subscription",
+            replyTo: config.EMAIL_REPLY_TO,
+            ...confirmSubscriptionEmail({
+              user: null,
+              confirmUrl: confirmLink(config.API_PUBLIC_URL, token),
+            }),
+          })
+          .catch((error) => request.log.warn({ err: error }, "could not ask for confirmation"));
+      }
+    }
+
     return { ok: true };
+  });
+
+  // Tapped from the confirmation email. This is the moment consent
+  // exists: before it, somebody typed an address into a form, which is not
+  // the same thing because the address might not have been theirs.
+  app.get("/newsletter/confirm", async (request, reply) => {
+    const said = await confirmByToken(request.query.token, { ip: request.ip });
+
+    return reply
+      .type("text/html; charset=utf-8")
+      .send(
+        said
+          ? page(
+              "You are on the list",
+              "That is confirmed. The next VantaOrigin creator newsletter will reach you, and every one carries a way back out."
+            )
+          : // Not "expired": these links do not. Either it was already used
+            // and the row has gone, or it was never one of ours.
+            page(
+              "We could not find that invitation",
+              "It may already have been used. If you are still waiting to hear from us, write to hello@vantaorigin.com."
+            )
+      );
   });
 
   // Tapped from an email.

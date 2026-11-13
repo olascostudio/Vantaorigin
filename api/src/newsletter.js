@@ -9,7 +9,7 @@
 import { randomBytes } from "node:crypto";
 import { eq, sql } from "drizzle-orm";
 import { db } from "./db/client.js";
-import { newsletterSubscribers } from "./db/schema.js";
+import { emailPreferences, newsletterSubscribers, users } from "./db/schema.js";
 
 const newToken = () => randomBytes(24).toString("base64url");
 
@@ -117,3 +117,56 @@ export const addressesIn = (text) => {
 
 export const unsubscribeLink = (site, token) =>
   `${String(site).replace(/\/$/, "")}/newsletter/unsubscribe?token=${encodeURIComponent(token)}`;
+
+// The link in the confirmation email. Same token the unsubscribe link
+// carries: it is already a secret only that person has, and minting a second
+// one would mean two things to keep, two things to leak and two things to
+// get wrong.
+export const confirmLink = (site, token) =>
+  `${String(site).replace(/\/$/, "")}/newsletter/confirm?token=${encodeURIComponent(token)}`;
+
+// Saying yes. This is the moment consent exists: before it, somebody typed
+// an address into a form, which is not the same thing because the address
+// might not have been theirs.
+//
+// Records how, when and from where, because "they consented" is not an
+// answer to "show me". Idempotent, since a link in an inbox gets tapped
+// twice and prefetched by mail clients that open it before anyone reads it.
+export async function confirmByToken(token, { ip = null } = {}) {
+  if (!token) return null;
+
+  const [row] = await db
+    .update(newsletterSubscribers)
+    .set({ status: "subscribed", unsubscribedAt: null, updatedAt: new Date() })
+    .where(eq(newsletterSubscribers.token, String(token)))
+    .returning();
+  if (!row) return null;
+
+  // And if the address belongs to an account, that is where the consent
+  // record lives.
+  const [person] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(sql`lower(${users.email}) = ${row.email.toLowerCase()}`)
+    .limit(1);
+
+  if (person) {
+    const consent = {
+      marketingStatus: "subscribed",
+      consentAt: new Date(),
+      consentSource: "double_opt_in",
+      consentIp: ip,
+      unsubscribedAt: null,
+      unsubscribeReason: null,
+      // Confirmed by hand, so there is nothing left for anybody to review.
+      needsConsentReview: false,
+      updatedAt: new Date(),
+    };
+    await db
+      .insert(emailPreferences)
+      .values({ userId: person.id, ...consent })
+      .onConflictDoUpdate({ target: emailPreferences.userId, set: consent });
+  }
+
+  return { subscriber: row, userId: person?.id ?? null };
+}

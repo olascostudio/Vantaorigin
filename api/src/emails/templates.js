@@ -1,7 +1,7 @@
 // The messages themselves. Each returns { subject, html, text }. The plain
 // version matters: an email with no text part is treated as more likely to be
 // junk, and some people read their mail that way.
-import { codeBlock, escape, link, p, shell, strong } from "./layout.js";
+import { button, codeBlock, escape, link, p, shell, strong } from "./layout.js";
 
 // Where creators can put their work forward for the network.
 const SUBMIT_WORK = "https://forms.gle/etXJkqVVKKCmHSft6";
@@ -74,7 +74,7 @@ export function resetEmail({ user, code, minutes }) {
 
 // The founder's letter, in his words. It asks for a reply, so it is sent with
 // a reply-to that reaches a person.
-export function welcomeEmail({ user, unsubscribeUrl = "" }) {
+export function welcomeEmail({ user, unsubscribeUrl = "", confirmUrl = "" }) {
   const name = firstName(user);
   const body = `
     ${p(`Hey ${escape(name)},`, { top: 0 })}
@@ -105,6 +105,14 @@ export function welcomeEmail({ user, unsubscribeUrl = "" }) {
     ${p(
       "You can also explore other creators, discover their characters, and find creative services through VantaOrigin Studios."
     )}
+    ${
+      confirmUrl
+        ? p(
+            `${strong("One more thing.")} Making an account is not the same as asking for the newsletter, so we have not put you on it. ${link("Say yes here", confirmUrl)} for creator updates, featured work and the occasional opportunity.`,
+            { top: 26 }
+          )
+        : ""
+    }
     ${p("Welcome to VantaOrigin,", { top: 30 })}
     ${p(`${strong("Ola")}<br />Founder &amp; Leader, VantaOrigin`, { top: 2 })}
   `;
@@ -147,6 +155,44 @@ export function welcomeEmail({ user, unsubscribeUrl = "" }) {
       ...(unsubscribeUrl
         ? ["", "--", `You are also on the creator newsletter. To leave it: ${unsubscribeUrl}`]
         : []),
+    ].join("\n"),
+  };
+}
+
+// Asking whether they really want the newsletter.
+//
+// Double opt-in: somebody typing an address into a form is not yet consent,
+// because the address might not be theirs. One click on this is, and it is
+// the click we can point at later when asked how we got permission.
+//
+// Transactional, and not a contradiction: they asked for something and this
+// is the thing that completes it. It sells nothing. A confirmation sent as
+// marketing could never arrive, because the person is pending until they
+// answer it.
+export function confirmSubscriptionEmail({ user, confirmUrl }) {
+  const name = user?.firstName || user?.username?.replace("@", "") || "there";
+
+  const body = `
+    ${p(`Hi ${escape(name)},`, { top: 0 })}
+    ${p("One tap and the VantaOrigin creator newsletter is yours: creator updates, featured work and the occasional opportunity.")}
+    ${button("Yes, send it to me", confirmUrl)}
+    ${p(
+      "If you did not ask for this, ignore it. Nothing is sent until you tap, and we will not ask again.",
+      { top: 26, size: 14 }
+    )}
+  `;
+
+  return {
+    subject: "Confirm your VantaOrigin newsletter",
+    html: shell({ preview: "One tap to confirm the newsletter.", body }),
+    text: [
+      `Hi ${name},`,
+      "",
+      "One tap and the VantaOrigin creator newsletter is yours: creator updates, featured work and the occasional opportunity.",
+      "",
+      `Confirm here: ${confirmUrl}`,
+      "",
+      "If you did not ask for this, ignore it. Nothing is sent until you tap, and we will not ask again.",
     ].join("\n"),
   };
 }
