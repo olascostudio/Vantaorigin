@@ -76,13 +76,19 @@ export function whyNotSigned({
   // The header may carry several, because a secret being rotated means both
   // the old and the new one are signed for a while. Any one matching is a
   // genuine request.
+  //
+  // Only `v1,` entries are considered. An entry with no version prefix is
+  // ignored rather than taken as a bare signature: that is not the format
+  // Svix documents, and accepting undeclared shapes in the one check
+  // standing between a stranger and somebody else's mail is not a kindness
+  // worth extending. An entry declaring a version we do not implement is
+  // ignored too, so if the scheme ever moves on this fails shut and loudly
+  // rather than comparing a v2 signature against a v1 digest.
   const offered = String(signature)
     .split(" ")
     .filter(Boolean)
-    .map((entry) => {
-      const comma = entry.indexOf(",");
-      return comma < 0 ? entry : entry.slice(comma + 1);
-    });
+    .filter((entry) => entry.startsWith("v1,"))
+    .map((entry) => entry.slice(3));
 
   if (!offered.length) return "the signature header holds no signatures";
 
@@ -133,8 +139,18 @@ export const recipientIn = (payload) => {
 // `Undetermined`. Both agree on `Permanent`, which is the only one this
 // has to recognise, and the raw value is written down so the real set can
 // be read off the log rather than off a page.
-export const isPermanentBounce = (payload) =>
-  String(payload?.data?.bounce?.type || "").trim().toLowerCase() === "permanent";
+// The type has to actually be a string.
+//
+// It was coerced with String(), and String(["Permanent"]) is "Permanent" --
+// so a payload sending an array, which is not a bounce type by any reading
+// of the documentation, suppressed an address for good. Anything that is
+// not plainly a string is now unrecognised, and unrecognised does not
+// suppress.
+const typeOfBounce = (payload) => {
+  const raw = payload?.data?.bounce?.type;
+  return typeof raw === "string" ? raw.trim() : "";
+};
 
-export const bounceTypeIn = (payload) =>
-  String(payload?.data?.bounce?.type || "").trim() || "unstated";
+export const isPermanentBounce = (payload) => typeOfBounce(payload).toLowerCase() === "permanent";
+
+export const bounceTypeIn = (payload) => typeOfBounce(payload) || "unstated";

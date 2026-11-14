@@ -32,11 +32,17 @@ import {
 // after "opened" would walk the record backwards.
 const PROGRESS = { queued: 0, sent: 1, delivered: 2, opened: 3, clicked: 4 };
 
-// These two are the end of the road and outrank everything, whenever they
-// arrive. A complaint especially: it is the most consequential thing anybody
-// can tell us about a message, and an "opened" turning up afterwards must
-// not bury it.
-const FINAL = new Set(["bounced", "complained", "failed"]);
+// The end of the road. These outrank everything whenever they arrive. A
+// complaint especially: it is the most consequential thing anybody can tell
+// us about a message, and an "opened" turning up afterwards must not bury
+// it.
+//
+// `blocked` belongs here too. It means our own rules refused to send, so
+// walking it forward to "delivered" would be the record claiming we
+// delivered something we never sent. A blocked row carries no provider id,
+// so nothing can match it today -- which is exactly why it is worth
+// nailing down now rather than after something starts setting one.
+const FINAL = new Set(["bounced", "complained", "failed", "blocked"]);
 
 const statusFor = {
   "email.delivered": "delivered",

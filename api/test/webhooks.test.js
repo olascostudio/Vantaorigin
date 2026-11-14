@@ -382,3 +382,118 @@ test("an event type we do not handle is kept rather than refused", async () => {
   assert.equal((await db.select().from(webhookEvents)).length, 1);
   assert.equal((await logRow()).status, "sent");
 });
+
+// --- found by probing, after the first version shipped --------------------
+
+// A bounce type has to actually be a string.
+//
+// It was coerced with String(), and String(["Permanent"]) is "Permanent",
+// so a payload sending an array -- which is not a bounce type by any
+// reading of the documentation -- suppressed an address for good. The rule
+// is that anything unrecognised does not suppress, and an array is
+// unrecognised.
+test("a bounce type that is not a string does not suppress", async () => {
+  for (const type of [["Permanent"], { toString: () => "Permanent" }, true, 1, null]) {
+    await db.delete(suppressionList);
+    await db.delete(webhookEvents);
+
+    const res = await deliver(event("email.bounced", { bounce: { type } }));
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(
+      (await suppressions()).length,
+      0,
+      `${JSON.stringify(type)} must not read as a permanent bounce`
+    );
+  }
+});
+
+test("a bounce whose whole bounce object is the wrong shape does not suppress", async () => {
+  for (const bounce of ["Permanent", ["Permanent"], 1, null]) {
+    await db.delete(suppressionList);
+    await db.delete(webhookEvents);
+
+    await deliver(event("email.bounced", { bounce }));
+    assert.equal((await suppressions()).length, 0);
+  }
+});
+
+// Our own rules refused to send this one, so claiming it was delivered
+// would be the record saying we sent something we never sent. Nothing can
+// reach it today -- a blocked row carries no provider id -- which is why it
+// is worth nailing down before something starts setting one.
+test("a message we refused to send is never walked forward to delivered", async () => {
+  await db.delete(emailLog);
+  await db.insert(emailLog).values({
+    email: "reader@example.com",
+    class: MARKETING,
+    template: "issue",
+    providerMessageId: "msg-from-resend",
+    status: "blocked",
+  });
+
+  await deliver(event("email.delivered"));
+
+  assert.equal((await logRow()).status, "blocked");
+});
+
+// Only the documented shape is believed. A bare signature with no version
+// is not that shape, and this is the one check standing between a stranger
+// and somebody else's mail.
+test("a signature with no version prefix is not accepted", async () => {
+  const id = randomUUID();
+  const at = String(Math.floor(Date.now() / 1000));
+  const body = JSON.stringify(event("email.delivered"));
+  const bare = sign(id, at, body).replace(/^v1,/, "");
+
+  const res = await deliver(event("email.delivered"), { id, at: Number(at), signature: bare });
+  assert.equal(res.statusCode, 401);
+});
+
+test("a signature declaring a version we do not implement is ignored", async () => {
+  const id = randomUUID();
+  const at = String(Math.floor(Date.now() / 1000));
+  const body = JSON.stringify(event("email.delivered"));
+  // Fails shut: better than comparing a v2 signature against a v1 digest.
+  const future = sign(id, at, body).replace(/^v1,/, "v2,");
+
+  const res = await deliver(event("email.delivered"), { id, at: Number(at), signature: future });
+  assert.equal(res.statusCode, 401);
+});
+
+// Two copies of one retry landing together, and two different events about
+// one address. The unique indexes are what decide, not a check-then-write.
+test("simultaneous copies of one event do the work exactly once", async () => {
+  const id = randomUUID();
+  const payload = event("email.complained");
+
+  const both = await Promise.all([deliver(payload, { id }), deliver(payload, { id })]);
+
+  assert.deepEqual(both.map((r) => r.statusCode), [200, 200]);
+  assert.equal((await db.select().from(webhookEvents)).length, 1);
+  assert.equal((await suppressions()).length, 1);
+  // Exactly one of them knows it was the repeat.
+  assert.equal(both.filter((r) => r.json().repeat).length, 1);
+});
+
+test("two different events about one address leave one suppression", async () => {
+  await Promise.all([
+    deliver(event("email.bounced", { email_id: "a", bounce: { type: "Permanent" } })),
+    deliver(event("email.complained", { email_id: "b" })),
+  ]);
+
+  assert.equal((await db.select().from(webhookEvents)).length, 2);
+  assert.equal((await suppressions()).length, 1);
+});
+
+test("a recipient list we cannot read suppresses nobody", async () => {
+  for (const to of [undefined, [], [null], { address: "x@example.com" }]) {
+    await db.delete(suppressionList);
+    await db.delete(webhookEvents);
+
+    const res = await deliver(event("email.bounced", { to, bounce: { type: "Permanent" } }));
+
+    assert.equal(res.statusCode, 200);
+    assert.equal((await suppressions()).length, 0, `${JSON.stringify(to)} names nobody`);
+  }
+});
