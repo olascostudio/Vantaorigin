@@ -236,7 +236,13 @@ export default function BetaBanner({ fullBleed = false }) {
   return (
     <>
       <div
-        className={`relative z-20 border-b border-white/10 bg-[#4a1f28] ${
+        // Red, and measurably so. This was #4a1f28, which is hue 347 -- rose,
+        // four degrees off the brand pink at 334 -- so beside that pink it
+        // read as a muted purple rather than as red at all. #7f1d1d is hue 0.
+        // Still muted, as the banner is a notice and not an alarm: white text
+        // on it is 10.02:1, and the feedback pill (white at 15% over this)
+        // carries its own white text at 6.99:1.
+        className={`relative z-20 border-b border-white/10 bg-[#7f1d1d] ${
           fullBleed ? "left-1/2 w-screen -translate-x-1/2" : "w-full"
         }`}
       >
