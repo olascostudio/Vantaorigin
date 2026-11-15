@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AuthShell, GRADIENT, PILL } from "./authUi";
 import { useAuth } from "../../data/AuthContext.jsx";
+import { usePrivatePage } from "../../data/pageMeta";
 
 const CODE_LENGTH = 4;
 // The API allows another code every 30 seconds; the button waits with it.
@@ -18,6 +19,8 @@ export default function VerifyEmail({
   next = "/creators-hub",
   mode = "signup",
 }) {
+  // Never a search result: see usePrivatePage.
+  usePrivatePage();
   const navigate = useNavigate();
   const location = useLocation();
   const { user, verifyEmail, resendCode, checkResetCode, forgotPassword } = useAuth();

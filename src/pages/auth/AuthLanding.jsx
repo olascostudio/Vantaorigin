@@ -8,6 +8,7 @@ import card4 from "../../assets/auth/cards/card-4-blue.png";
 import card5 from "../../assets/auth/cards/card-5-gold.png";
 import card6 from "../../assets/auth/cards/card-6-magenta.png";
 import card7 from "../../assets/auth/cards/card-7-white.png";
+import { usePrivatePage } from "../../data/pageMeta";
 
 // Card placements on the 1728x306 banner, measured from the design export.
 const CARDS = [
@@ -38,6 +39,8 @@ function Banner() {
 }
 
 export default function AuthLanding() {
+  // Never a search result: see usePrivatePage.
+  usePrivatePage();
   return (
     <div className="min-h-screen bg-auth-bg pb-[86px]">
       <Banner />

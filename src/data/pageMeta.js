@@ -86,3 +86,21 @@ export function usePageMeta({ title, description, canonicalPath, noindex = false
     };
   }, [title, description, canonicalPath, noindex]);
 }
+
+// A page that should never be in a search result.
+//
+// Signing in, signing up, settings, the hub, the admin screens. None of
+// them set any meta of their own, so they inherited the site default from
+// index.html, which says "index, follow". Harmless in practice, because
+// none of them is prerendered and a crawler gets the same empty shell from
+// every one, but a page asking to be indexed when the intent is the
+// opposite is the kind of small lie that becomes true later: the day one
+// of these does get server rendered, the tag is already wrong and nobody
+// is looking at it.
+//
+// Deliberately takes no title. These pages have never set one, and giving
+// them one would change what shows in somebody's tabs and bookmarks, which
+// is not what this is for.
+export function usePrivatePage() {
+  usePageMeta({ noindex: true });
+}

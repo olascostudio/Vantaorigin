@@ -2,8 +2,11 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthShell, FIELD, GRADIENT, PILL } from "./authUi";
 import { useAuth } from "../../data/AuthContext.jsx";
+import { usePrivatePage } from "../../data/pageMeta";
 
 export default function ForgotPassword() {
+  // Never a search result: see usePrivatePage.
+  usePrivatePage();
   const navigate = useNavigate();
   const { forgotPassword } = useAuth();
   const [email, setEmail] = useState("");

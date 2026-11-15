@@ -9,6 +9,7 @@ import {
   uploadProfileImage,
 } from "../data/settings";
 import { useAuth } from "../data/AuthContext.jsx";
+import { usePrivatePage } from "../data/pageMeta";
 
 const TABS = [
   { id: "profile", label: "My Profile" },
@@ -455,6 +456,8 @@ function AccountTab({ settings, signOut, onSaved, onAllowEmbeds }) {
 }
 
 export default function Settings() {
+  // Never a search result: see usePrivatePage.
+  usePrivatePage();
   const { tab = "profile" } = useParams();
   const { user, updateProfile, signOut } = useAuth();
   const settings = toSettings(user);

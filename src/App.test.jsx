@@ -40,3 +40,4 @@ describe("App routing", () => {
     expect(container.innerHTML).not.toMatch(/figma\.com/);
   });
 });
+

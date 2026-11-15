@@ -11,6 +11,7 @@ import {
   PasswordField,
   SocialButtons,
 } from "./authUi";
+import { usePrivatePage } from "../../data/pageMeta";
 
 function ErrorMark() {
   return (
@@ -24,6 +25,8 @@ function ErrorMark() {
 }
 
 export default function SignIn() {
+  // Never a search result: see usePrivatePage.
+  usePrivatePage();
   const navigate = useNavigate();
   const location = useLocation();
   const { signIn } = useAuth();

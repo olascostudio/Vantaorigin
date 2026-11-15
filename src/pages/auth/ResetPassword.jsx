@@ -2,8 +2,11 @@ import { useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { AuthShell, FIELD, GRADIENT, PILL, PasswordField } from "./authUi";
 import { useAuth } from "../../data/AuthContext.jsx";
+import { usePrivatePage } from "../../data/pageMeta";
 
 export default function ResetPassword() {
+  // Never a search result: see usePrivatePage.
+  usePrivatePage();
   const navigate = useNavigate();
   const location = useLocation();
   const { resetPassword } = useAuth();

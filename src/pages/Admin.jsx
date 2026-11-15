@@ -23,6 +23,7 @@ import characterCover from "../assets/creator/character-cover.svg";
 import BlogPanel from "../components/BlogPanel.jsx";
 import SuppressionPanel from "../components/SuppressionPanel";
 import AnnouncementsPanel from "../components/AnnouncementsPanel";
+import { usePrivatePage } from "../data/pageMeta";
 
 // What is happening across VantaOrigin, for whoever runs it: the numbers, the
 // reports waiting to be dealt with, who has joined, and what people like.
@@ -720,6 +721,8 @@ function NewsletterPanel({ onTrouble }) {
 }
 
 export default function Admin() {
+  // Never a search result: see usePrivatePage.
+  usePrivatePage();
   const [overview, setOverview] = useState(null);
   const [tab, setTab] = useState("Reports");
   const [reportFilter, setReportFilter] = useState("open");

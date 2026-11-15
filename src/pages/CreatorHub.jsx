@@ -34,6 +34,7 @@ import streak2 from "../assets/creator/streak-2.svg";
 import streak3 from "../assets/creator/streak-3.svg";
 import streak4 from "../assets/creator/streak-4.svg";
 import streak5 from "../assets/creator/streak-5.svg";
+import { usePrivatePage } from "../data/pageMeta";
 
 const TABS = ["Character", "Highlights", "Create Clans"];
 
@@ -528,6 +529,8 @@ function HighlightPost({ post, onEdit, onDelete }) {
 }
 
 export default function CreatorHub() {
+  // Never a search result: see usePrivatePage.
+  usePrivatePage();
   const navigate = useNavigate();
   // The creator's categories and the characters filed under them.
   const [library, setLibrary] = useState({ categories: [], characters: [] });

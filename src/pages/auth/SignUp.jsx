@@ -12,8 +12,11 @@ import {
   SocialButtons,
   TermsNote,
 } from "./authUi";
+import { usePrivatePage } from "../../data/pageMeta";
 
 export default function SignUp() {
+  // Never a search result: see usePrivatePage.
+  usePrivatePage();
   const navigate = useNavigate();
   const { signUp } = useAuth();
   const [agreed, setAgreed] = useState(true);
