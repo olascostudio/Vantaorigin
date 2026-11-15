@@ -113,7 +113,7 @@ export default async function broadcastRoutes(app) {
     const [row] = await db.select().from(broadcasts).where(eq(broadcasts.id, request.params.id));
     if (!row) return reply.code(404).send({ error: "No such announcement" });
 
-    const letter = renderIssue(row, { newsletter: false });
+    const letter = renderIssue(row, { newsletter: false, reasonCategory: row.reasonCategory });
     return {
       subject: letter.subject,
       html: letter.html,
@@ -139,7 +139,7 @@ export default async function broadcastRoutes(app) {
     if (!row) return reply.code(404).send({ error: "No such announcement" });
 
     const to = String(request.body?.to || request.user.email).trim();
-    const letter = renderIssue(row, { newsletter: false });
+    const letter = renderIssue(row, { newsletter: false, reasonCategory: row.reasonCategory });
 
     try {
       const answer = await mailer.send({

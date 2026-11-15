@@ -158,7 +158,10 @@ export async function deliver(app, broadcastId) {
 
     // No unsubscribe link and not a newsletter: the footer must not tell
     // somebody they are getting this because they joined a list.
-    const letter = renderIssue(broadcast, { newsletter: false });
+    const letter = renderIssue(broadcast, {
+      newsletter: false,
+      reasonCategory: broadcast.reasonCategory,
+    });
 
     for (;;) {
       const waiting = await stillOwed(broadcastId, BATCH);

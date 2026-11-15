@@ -236,3 +236,68 @@ export function subscribedEmail({ user, creatorName, creatorUrl, unsubscribeUrl 
     ].join("\n"),
   };
 }
+
+// Telling somebody the terms have changed.
+//
+// Not a newsletter and not a favour: it is the document governing the
+// account they hold, and they are entitled to know what moved and by when.
+// So it leads with the date it takes effect rather than burying it, says
+// what changed in the words of whoever wrote the change, and sends them to
+// read the thing itself rather than trusting a summary.
+//
+// There is no unsubscribe link and the notice at the top explains why, so
+// nobody has to go looking for one that is not there.
+export function termsChangeEmail({ user, version, effectiveDate, summary, url = "/terms" }) {
+  const name = firstName(user);
+  const when = effectiveDate
+    ? new Date(effectiveDate).toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : "";
+  const full = `https://www.vantaorigin.com${url.startsWith("/") ? url : `/${url}`}`;
+
+  const body = `
+    ${p(`Hi ${escape(name)},`, { top: 0 })}
+    ${p(
+      when
+        ? `We are changing the VantaOrigin terms. The new version takes effect on ${strong(escape(when))}.`
+        : "We are changing the VantaOrigin terms."
+    )}
+    ${summary ? p(`${strong("What is changing:")} ${escape(summary)}`) : ""}
+    ${p(
+      "Please read the new terms in full. Carrying on using VantaOrigin after the date above means you accept them."
+    )}
+    ${button("Read the new terms", full)}
+    ${p(
+      `If you would rather not accept them, you can close your account from your settings before that date, and we will delete it.`,
+      { top: 26, size: 14 }
+    )}
+    ${version ? p(`This is version ${escape(version)}.`, { top: 14, size: 13 }) : ""}
+  `;
+
+  return {
+    subject: when ? `The VantaOrigin terms are changing on ${when}` : "The VantaOrigin terms are changing",
+    html: shell({
+      preview: when ? `New terms from ${when}.` : "The VantaOrigin terms are changing.",
+      body,
+      newsletter: false,
+    }),
+    text: [
+      `Hi ${name},`,
+      "",
+      when
+        ? `We are changing the VantaOrigin terms. The new version takes effect on ${when}.`
+        : "We are changing the VantaOrigin terms.",
+      ...(summary ? ["", `What is changing: ${summary}`] : []),
+      "",
+      "Please read the new terms in full. Carrying on using VantaOrigin after the date above means you accept them.",
+      "",
+      `Read them here: ${full}`,
+      "",
+      "If you would rather not accept them, you can close your account from your settings before that date, and we will delete it.",
+      ...(version ? ["", `This is version ${version}.`] : []),
+    ].join("\n"),
+  };
+}

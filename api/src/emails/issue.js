@@ -9,6 +9,7 @@
 // subject or a paragraph can contain < and & without breaking the email, and
 // nothing typed into the editor can introduce HTML of its own.
 import { BODY, INK, PINK, RULE, escape, shell } from "./layout.js";
+import { noticeBand, whyThisArrived } from "./announcement.js";
 import { safeHtml } from "../html.js";
 
 // Only addresses a mail client will follow safely. Anything else (javascript:,
@@ -197,17 +198,23 @@ export const startingBlocks = () => [
 // hold an account, and the footer has to say that instead.
 export function renderIssue(
   issue,
-  { unsubscribeUrl = "", preferencesUrl = "", newsletter = true } = {}
+  { unsubscribeUrl = "", preferencesUrl = "", newsletter = true, reasonCategory = null } = {}
 ) {
   const blocks = Array.isArray(issue?.blocks) ? issue.blocks : [];
   const shown = blocks.filter((block) => blockHtml(block, false));
 
-  const body = shown.map((block, index) => blockHtml(block, index === 0)).join("\n");
+  const written = shown.map((block, index) => blockHtml(block, index === 0)).join("\n");
+  // An announcement says why it arrived before it says anything else.
+  const body = reasonCategory ? noticeBand(reasonCategory) + written : written;
 
-  const text = shown
+  const said = shown
     .map(blockText)
     .filter((part) => part.trim())
     .join("\n\n");
+
+  // The plain copy says it too: somebody reading in plain text has the
+  // same question and no band to see.
+  const text = reasonCategory ? `${whyThisArrived(reasonCategory)}\n\n${said}` : said;
 
   return {
     subject: String(issue?.subject || "").trim() || "A letter from VantaOrigin",
