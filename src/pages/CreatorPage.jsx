@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { api } from "../data/api";
 import { Art, CreatorSkeleton } from "../components/Loading.jsx";
 import ReportCreator from "../components/ReportCreator.jsx";
 import JoinPrompt, { useJoinPrompt } from "../components/JoinPrompt.jsx";
+import SubscribeButton from "../components/SubscribeButton.jsx";
 import { useAuth } from "../data/AuthContext.jsx";
 import { usePageMeta } from "../data/pageMeta";
 import logoMark from "../assets/landing/hero/logo-mark.svg";
@@ -69,6 +70,11 @@ export default function CreatorPage() {
   const [problem, setProblem] = useState("");
   const [tab, setTab] = useState("Characters");
   const [openPost, setOpenPost] = useState(null);
+  const location = useLocation();
+  // Arriving back from signing up, with the subscription already done.
+  const [said, setSaid] = useState(
+    location.state?.subscribed ? `You’re subscribed to ${location.state.subscribed}.` : ""
+  );
 
   // This is the page a creator's link lands on, so it is where someone who
   // likes what they see is asked to make a page of their own.
@@ -175,6 +181,19 @@ export default function CreatorPage() {
           {creator.bio && (
             <p className="mx-auto mt-2 max-w-[520px] font-ui text-sm leading-relaxed text-neutral-300 sm:text-base">
               {creator.bio}
+            </p>
+          )}
+
+          <div className="mt-5">
+            <SubscribeButton username={handle} creatorName={creator.name} onDone={setSaid} />
+          </div>
+
+          {said && (
+            <p
+              role="status"
+              className="mt-3 font-ui text-sm font-bold text-emerald-400"
+            >
+              {said}
             </p>
           )}
         </header>

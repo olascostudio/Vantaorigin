@@ -30,6 +30,7 @@ import VerifyEmail from "./pages/auth/VerifyEmail";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import EmailPreferences from "./pages/EmailPreferences";
+import CreatorDashboard from "./pages/CreatorDashboard";
 
 // Links shared before the rename carry /realm/ in them. They are somebody
 // else's post, out of our hands, so they land on the same page rather than a
@@ -60,6 +61,9 @@ export default function App() {
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/creators-hub" element={<RequireAuth><CreatorHub /></RequireAuth>} />
+        {/* Private, and not in the sitemap or the prerendering matcher,
+            so there is no server rendered copy of it anywhere. */}
+        <Route path="/creators-hub/subscribers" element={<RequireAuth><CreatorDashboard /></RequireAuth>} />
         <Route path="/creators-hub/character/new" element={<RequireAuth><CreateCharacter /></RequireAuth>} />
         <Route path="/creators-hub/character" element={<RequireAuth><CharacterView owner /></RequireAuth>} />
         <Route path="/creators-hub/character/profile" element={<RequireAuth><CharacterProfile /></RequireAuth>} />

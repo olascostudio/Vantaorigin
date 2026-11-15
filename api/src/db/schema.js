@@ -391,6 +391,131 @@ export const suppressionList = pgTable("suppression_list", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+// Something said to everybody at once.
+//
+// The newsletter is the one kind of mass email people may refuse. A change
+// to the terms is not: it governs the account they hold. So this carries a
+// reason category, which is not a label but the thing that decides who it
+// reaches, and a record of who sent it.
+export const broadcasts = pgTable(
+  "broadcasts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    class: text("class").default("service_announcement").notNull(),
+    reasonCategory: text("reason_category"),
+    subject: text("subject").default("").notNull(),
+    blocks: jsonb("blocks").$type().default([]).notNull(),
+    termsVersion: text("terms_version"),
+    status: text("status").default("draft").notNull(),
+
+    // The audit. Who pressed send, when, and how many people were named at
+    // the moment they were shown the number and agreed to it.
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    createdByEmail: text("created_by_email").default("").notNull(),
+    sentByEmail: text("sent_by_email"),
+    audienceCount: integer("audience_count"),
+
+    sentCount: integer("sent_count").default(0).notNull(),
+    failedCount: integer("failed_count").default(0).notNull(),
+    skippedCount: integer("skipped_count").default(0).notNull(),
+    failures: jsonb("failures").$type().default([]).notNull(),
+
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    statusIdx: index("broadcasts_status_idx").on(table.status, table.createdAt),
+  })
+);
+
+// Who a broadcast has already reached.
+//
+// The send loop owns this rather than reading rows another module writes:
+// its termination must not depend on a side effect that is allowed to fail.
+// One row per person per broadcast, written after each attempt whatever the
+// outcome, with the unique index making a second attempt impossible.
+export const broadcastRecipients = pgTable(
+  "broadcast_recipients",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    broadcastId: uuid("broadcast_id")
+      .notNull()
+      .references(() => broadcasts.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    email: text("email").notNull(),
+    outcome: text("outcome").notNull(),
+    reason: text("reason"),
+    at: timestamp("at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    pairIdx: uniqueIndex("broadcast_recipients_pair_key").on(table.broadcastId, table.userId),
+  })
+);
+
+// Subscribing to a creator.
+//
+// Separate from newsletterSubscribers on purpose. That is the platform's own
+// list, and everything around it exists so we can answer for what we send.
+// This is a different promise: the subscriber agrees that their address goes
+// to one named creator, who writes to them with their own tools.
+//
+// The address is not copied here. It lives on the user row, so there is one
+// answer to "what address did they give us" rather than two that can drift.
+export const creatorSubscriptions = pgTable(
+  "creator_subscriptions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    creatorId: uuid("creator_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    subscriberId: uuid("subscriber_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    status: text("status").default("subscribed").notNull(),
+    // The evidence, recorded per creator: agreeing to one is not agreeing
+    // to another.
+    consentAt: timestamp("consent_at", { withTimezone: true }).defaultNow().notNull(),
+    consentIp: text("consent_ip"),
+    unsubscribedAt: timestamp("unsubscribed_at", { withTimezone: true }),
+    token: text("token").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    pairIdx: uniqueIndex("creator_subscriptions_pair_key").on(table.creatorId, table.subscriberId),
+    tokenIdx: uniqueIndex("creator_subscriptions_token_key").on(table.token),
+    creatorIdx: index("creator_subscriptions_creator_idx").on(
+      table.creatorId,
+      table.status,
+      table.createdAt
+    ),
+    subscriberIdx: index("creator_subscriptions_subscriber_idx").on(
+      table.subscriberId,
+      table.status
+    ),
+  })
+);
+
+// Somebody asking to be told when a locked feature opens. Not a
+// subscription and not consent to anything.
+export const featureInterest = pgTable(
+  "feature_interest",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    feature: text("feature").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    pairIdx: uniqueIndex("feature_interest_pair_key").on(table.userId, table.feature),
+  })
+);
+
 // Who decided to write to a suppressed address again, and why.
 //
 // Lifting removes the suppression row, which would otherwise destroy the

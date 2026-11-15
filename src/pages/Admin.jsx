@@ -22,6 +22,7 @@ import {
 import characterCover from "../assets/creator/character-cover.svg";
 import BlogPanel from "../components/BlogPanel.jsx";
 import SuppressionPanel from "../components/SuppressionPanel";
+import AnnouncementsPanel from "../components/AnnouncementsPanel";
 
 // What is happening across VantaOrigin, for whoever runs it: the numbers, the
 // reports waiting to be dealt with, who has joined, and what people like.
@@ -34,7 +35,7 @@ const REASONS = {
   other: "Other",
 };
 
-const TABS = ["Reports", "Creators", "Characters", "Blog", "Newsletter", "Letters", "Blocked"];
+const TABS = ["Reports", "Creators", "Characters", "Blog", "Newsletter", "Letters", "Announcements", "Blocked"];
 
 const day = (value) =>
   value ? new Date(value).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "Not yet";
@@ -965,6 +966,7 @@ export default function Admin() {
         {tab === "Blog" && <BlogPanel onTrouble={setProblem} />}
 
         {tab === "Newsletter" && <NewsletterPanel onTrouble={setProblem} />}
+        {tab === "Announcements" && <AnnouncementsPanel onTrouble={setProblem} />}
         {tab === "Blocked" && <SuppressionPanel onTrouble={setProblem} />}
 
         {tab === "Letters" && <NewsletterLetters onTrouble={setProblem} />}

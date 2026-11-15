@@ -7,6 +7,7 @@ import { z } from "zod";
 import { and, count, desc, eq, gte, sql } from "drizzle-orm";
 import { config } from "../config.js";
 import { db } from "../db/client.js";
+import { csvFile } from "../csv.js";
 import {
   characterLikes,
   characters,
@@ -400,17 +401,26 @@ export default async function adminRoutes(app) {
       .where(onlySubscribed ? eq(newsletterSubscribers.status, "subscribed") : undefined)
       .orderBy(desc(newsletterSubscribers.createdAt));
 
-    const lines = ["email,status,source,joined"];
-    for (const row of rows) {
-      // Addresses cannot hold commas or quotes, so nothing here needs escaping.
-      lines.push([row.email, row.status, row.source, row.createdAt.toISOString()].join(","));
-    }
+    // Built through the shared writer rather than joined by hand.
+    //
+    // This used to say that addresses cannot hold commas or quotes so
+    // nothing needed escaping. The commas and quotes part is near enough
+    // true; the conclusion was not. A cell beginning with =, +, - or @ is
+    // read as a formula by every spreadsheet, `=` is a permitted character
+    // in a local part, and so `=HYPERLINK("http://evil.test")@x.com` is a
+    // legal address that executes when this file is opened.
+    const file = csvFile(
+      ["email", "status", "source", "joined"],
+      rows.map((row) => [row.email, row.status, row.source, row.createdAt.toISOString()])
+    );
 
     const stamp = new Date().toISOString().slice(0, 10);
     return reply
       .type("text/csv; charset=utf-8")
       .header("Content-Disposition", `attachment; filename="vantaorigin-newsletter-${stamp}.csv"`)
-      .send(lines.join("\n"));
+      // A file of other people's addresses does not belong in a shared cache.
+      .header("cache-control", "no-store, private")
+      .send(file);
   });
 
   // Settling one: looked at and acted on, or nothing in it.

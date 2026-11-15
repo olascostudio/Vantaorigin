@@ -323,7 +323,9 @@ test("the list downloads as a file of the people still on it", async () => {
   assert.match(res.headers["content-type"], /text\/csv/);
   assert.match(res.headers["content-disposition"], /attachment; filename="vantaorigin-newsletter-\d{4}-\d{2}-\d{2}\.csv"/);
 
-  const lines = res.body.trim().split("\n");
+  // CRLF now, which is what RFC 4180 says and what Excel expects when it
+  // opens a file rather than importing one.
+  const lines = res.body.trim().split(/\r?\n/);
   assert.equal(lines[0], "email,status,source,joined");
   assert.equal(lines.length, 5); // heading plus four subscribed
   assert.ok(lines.every((line, index) => index === 0 || line.includes(",subscribed,")));
@@ -513,4 +515,33 @@ test("importing is closed to everybody but an admin", async () => {
   });
 
   assert.equal(answer.statusCode, 404, "an admin route tells an outsider nothing");
+});
+
+// The export used to be built by joining fields with commas, on the
+// reasoning that addresses cannot hold commas or quotes. Near enough true,
+// and the wrong conclusion: `=` is a permitted character in a local part, so
+// `=HYPERLINK("http://evil.test")@x.com` is a legal address and a live
+// formula in every spreadsheet that opens the file.
+test("a formula in an address leaves the export as text", async () => {
+  // `=` never reaches the list: both the signup validator and the import
+  // extractor refuse it, which is the layer before this one doing its job.
+  // `+` and `-` do get in, so they are what this can actually prove.
+  for (const address of ["+15550000@vantaorigin.test", "-minus@vantaorigin.test"]) {
+    await app.inject({ method: "POST", url: "/newsletter/subscribe", payload: { email: address } });
+  }
+  const res = await app.inject({
+    method: "GET",
+    url: "/admin/newsletter.csv",
+    headers: { cookie: boss },
+  });
+
+  assert.equal(res.statusCode, 200);
+  for (const line of res.body.trim().split(/\r?\n/).slice(1)) {
+    assert.ok(
+      !["=", "+", "-", "@"].includes(line[0]),
+      `a cell still begins with ${line[0]}: ${line}`
+    );
+  }
+  assert.match(res.body, /'\+15550000@vantaorigin\.test/);
+  assert.match(res.body, /'-minus@vantaorigin\.test/);
 });

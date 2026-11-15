@@ -38,6 +38,10 @@ export function TermsNote() {
       By joining you agree to the VantaOrigin{" "}
       <Link to="/terms" className="text-[#04a8d5] hover:underline">
         Terms of Service
+      </Link>{" "}
+      and{" "}
+      <Link to="/privacy" className="text-[#04a8d5] hover:underline">
+        Privacy Policy
       </Link>
     </p>
   );

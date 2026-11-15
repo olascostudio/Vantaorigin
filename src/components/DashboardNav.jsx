@@ -89,7 +89,7 @@ export default function DashboardNav({ active = "Discover" }) {
                   className={active === "Admin" ? "font-medium text-primary" : "text-white hover:opacity-80"}
                   aria-current={active === "Admin" ? "page" : undefined}
                 >
-                  Activity
+                  Admin
                 </NavLink>
               </li>
             )}
@@ -183,7 +183,7 @@ export default function DashboardNav({ active = "Discover" }) {
                   onClick={() => setOpen(false)}
                   className="block rounded-lg px-3 py-4 text-white hover:bg-white/5"
                 >
-                  Activity
+                  Admin
                 </Link>
               </li>
             )}

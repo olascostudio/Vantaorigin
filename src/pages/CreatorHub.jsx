@@ -588,13 +588,22 @@ export default function CreatorHub() {
       <div className="mt-10 border-t border-white/10" />
 
       <div className="mx-auto max-w-[1620px] px-6 lg:px-12">
-        <div className="flex justify-center py-6">
+        <div className="flex flex-wrap items-center justify-center gap-3 py-6">
           <button
             type="button"
             className="rounded-full bg-[#2f86e8] px-7 py-2.5 font-ui text-lg font-bold text-white hover:opacity-90"
           >
             My Dashboard
           </button>
+          {/* Added beside the button above rather than wired into it: that
+              one has never had an onClick, so what it was meant to open is
+              not mine to decide. */}
+          <Link
+            to="/creators-hub/subscribers"
+            className="rounded-full border border-white/25 px-7 py-2.5 font-ui text-lg font-bold text-white transition hover:bg-white/10"
+          >
+            Subscribers
+          </Link>
         </div>
 
         <div

@@ -190,7 +190,15 @@ export const startingBlocks = () => [
   { type: "rich", html: "<h2>What's new at VantaOrigin</h2><p></p>" },
 ];
 
-export function renderIssue(issue, { unsubscribeUrl = "", preferencesUrl = "" } = {}) {
+// `newsletter` decides what the footer claims about why this arrived, and
+// it is not cosmetic. It was always true here, so a service announcement
+// rendered through this told somebody who never joined the newsletter that
+// they were getting it because they had. An announcement goes to people who
+// hold an account, and the footer has to say that instead.
+export function renderIssue(
+  issue,
+  { unsubscribeUrl = "", preferencesUrl = "", newsletter = true } = {}
+) {
   const blocks = Array.isArray(issue?.blocks) ? issue.blocks : [];
   const shown = blocks.filter((block) => blockHtml(block, false));
 
@@ -208,7 +216,7 @@ export function renderIssue(issue, { unsubscribeUrl = "", preferencesUrl = "" } 
       body: body || "",
       unsubscribeUrl,
       preferencesUrl,
-      newsletter: true,
+      newsletter,
     }),
     // The plain copy gets the same choices as the pretty one. Some people
     // read their mail this way, and offering them only "leave" is how a

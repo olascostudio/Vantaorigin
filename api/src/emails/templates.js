@@ -196,3 +196,43 @@ export function confirmSubscriptionEmail({ user, confirmUrl }) {
     ].join("\n"),
   };
 }
+
+// Confirming a subscription to a creator.
+//
+// Transactional: they pressed a button and this completes it. It carries
+// the way out, and it says plainly what was shared and with whom, because
+// that is the part somebody may not have read on the page.
+export function subscribedEmail({ user, creatorName, creatorUrl, unsubscribeUrl = "" }) {
+  const name = firstName(user);
+  const who = escape(creatorName);
+
+  const body = `
+    ${p(`Hi ${escape(name)},`, { top: 0 })}
+    ${p(`You are subscribed to ${strong(who)} on VantaOrigin.`)}
+    ${p(
+      `Your email address and the date you subscribed have been shared with ${who}, so they can send you updates about their work. Nobody else gets it.`
+    )}
+    ${button(`See ${who}'s page`, creatorUrl)}
+    ${p(
+      "You can unsubscribe at any time using the link at the bottom of this email, or from their page.",
+      { top: 26, size: 14 }
+    )}
+  `;
+
+  return {
+    subject: `You are subscribed to ${creatorName}`,
+    html: shell({ preview: `You are subscribed to ${creatorName}.`, body, unsubscribeUrl }),
+    text: [
+      `Hi ${name},`,
+      "",
+      `You are subscribed to ${creatorName} on VantaOrigin.`,
+      "",
+      `Your email address and the date you subscribed have been shared with ${creatorName}, so they can send you updates about their work. Nobody else gets it.`,
+      "",
+      `Their page: ${creatorUrl}`,
+      "",
+      "You can unsubscribe at any time using the link below, or from their page.",
+      ...(unsubscribeUrl ? ["", "--", `Unsubscribe: ${unsubscribeUrl}`] : []),
+    ].join("\n"),
+  };
+}
