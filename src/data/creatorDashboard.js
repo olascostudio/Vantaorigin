@@ -20,3 +20,11 @@ export const registerInterest = (feature) => api.post("/me/creator/interest", { 
 // The download is a file, not JSON, so it goes to the browser rather than
 // through the JSON helper. The session cookie travels with it.
 export const subscribersFileUrl = () => `${API_BASE}/me/creator/subscribers.csv`;
+
+// The rules a creator agrees to before being shown anybody's address.
+export const loadCreatorTerms = () => api.get("/me/creator/terms");
+
+// The version is named by whoever is agreeing, so nobody ends up recorded
+// as having accepted a document that changed while the page was open.
+export const acceptCreatorTerms = (version) =>
+  api.post("/me/creator/terms/accept", { version });

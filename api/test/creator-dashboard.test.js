@@ -18,7 +18,8 @@ process.env.API_PUBLIC_URL = "https://api.vantaorigin.com";
 const { buildApp } = await import("../src/app.js");
 const { migrate } = await import("../src/db/migrate.js");
 const { db, endConnection } = await import("../src/db/client.js");
-const { creatorSubscriptions, featureInterest, users } = await import("../src/db/schema.js");
+const { creatorSubscriptions, featureInterest, termsVersions, userTermsAcceptance, users } =
+  await import("../src/db/schema.js");
 const { mailer } = await import("../src/adapters/email.js");
 
 let app;
@@ -77,6 +78,22 @@ before(async () => {
   await make("artist", "artist@vantaorigin.test");
   await make("rival", "rival@vantaorigin.test");
   await db.update(users).set({ emailVerifiedAt: new Date() });
+
+  // Both creators agree to the rules about subscriber information, because
+  // these tests are about who can reach whose data and what the export
+  // holds. The gate itself has its own file, and leaving it in the way here
+  // would make every test below fail for a reason none of them is about.
+  const [terms] = await db
+    .select({ version: termsVersions.version })
+    .from(termsVersions)
+    .where(eq(termsVersions.kind, "creator_terms"))
+    .limit(1);
+  for (const who of ["artist", "rival"]) {
+    await db
+      .insert(userTermsAcceptance)
+      .values({ userId: ids[who], version: terms.version })
+      .onConflictDoNothing();
+  }
 });
 
 after(async () => {

@@ -18,6 +18,8 @@ vi.mock("../data/creatorDashboard", () => ({
   loadActivity: vi.fn(),
   loadInterest: vi.fn(),
   registerInterest: vi.fn(),
+  loadCreatorTerms: vi.fn(),
+  acceptCreatorTerms: vi.fn(),
   subscribersFileUrl: () => "http://api.test/me/creator/subscribers.csv",
 }));
 
@@ -27,6 +29,7 @@ const {
   loadActivity,
   loadInterest,
   registerInterest,
+  acceptCreatorTerms,
 } = await import("../data/creatorDashboard");
 const { default: CreatorDashboard } = await import("./CreatorDashboard.jsx");
 
@@ -246,5 +249,90 @@ describe("the copy", () => {
     await screen.findByText("New this week");
 
     expect(document.body.textContent).not.toMatch(/[—–]/);
+  });
+});
+
+// The rules a creator agrees to before being shown anybody's address.
+//
+// The gate is enforced on the server, and tested there with the data. What
+// matters here is that the screen reacts to the refusal rather than asking
+// separately: the refusal is the authority, so a screen that decided for
+// itself could drift out of step with it.
+describe("the creator terms gate", () => {
+  const refused = () => {
+    const error = new Error("Agree to the rules for subscriber information first.");
+    error.data = {
+      needsCreatorTerms: true,
+      version: "creator-2026-11-15",
+      summary: "Never sell a subscriber list.",
+      url: "/privacy",
+    };
+    return error;
+  };
+
+  it("asks instead of showing the list, when the server refuses", async () => {
+    loadSubscribers.mockRejectedValue(refused());
+    show();
+    await openTab("Subscribers");
+
+    expect(await screen.findByText(/Before you see anybody/i)).toBeInTheDocument();
+    expect(screen.getByText(/Never sell, rent, trade, or pass a subscriber list/i)).toBeInTheDocument();
+    // No addresses anywhere, which is the point of the refusal.
+    expect(screen.queryByText("a@readers.test")).not.toBeInTheDocument();
+  });
+
+  it("will not let somebody agree without ticking the box", async () => {
+    loadSubscribers.mockRejectedValue(refused());
+    show();
+    await openTab("Subscribers");
+
+    const agree = await screen.findByRole("button", { name: /agree and see my subscribers/i });
+    expect(agree).toBeDisabled();
+
+    fireEvent.click(agree);
+    expect(acceptCreatorTerms).not.toHaveBeenCalled();
+  });
+
+  it("names the version it is recording, not just the current one", async () => {
+    loadSubscribers.mockRejectedValue(refused());
+    show();
+    await openTab("Subscribers");
+
+    fireEvent.click(await screen.findByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: /agree and see my subscribers/i }));
+
+    // Sent back with the press, so nobody is recorded as agreeing to a
+    // document that changed while the page was open.
+    await waitFor(() =>
+      expect(acceptCreatorTerms).toHaveBeenCalledWith("creator-2026-11-15")
+    );
+  });
+
+  it("shows the list once they have agreed", async () => {
+    loadSubscribers.mockRejectedValueOnce(refused());
+    show();
+    await openTab("Subscribers");
+    await screen.findByText(/Before you see anybody/i);
+
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: /agree and see my subscribers/i }));
+
+    expect(await screen.findByText("a@readers.test")).toBeInTheDocument();
+  });
+
+  it("guards the activity list too, since it names people as well", async () => {
+    loadActivity.mockRejectedValue(refused());
+    show();
+    await openTab("Activity");
+
+    expect(await screen.findByText(/Before you see anybody/i)).toBeInTheDocument();
+  });
+
+  it("says the record is kept, with the version", async () => {
+    loadSubscribers.mockRejectedValue(refused());
+    show();
+    await openTab("Subscribers");
+
+    expect(await screen.findByText(/creator-2026-11-15/)).toBeInTheDocument();
   });
 });

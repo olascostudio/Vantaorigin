@@ -567,6 +567,10 @@ export const webhookEvents = pgTable(
 // records what the terms say; this records who agreed to which wording.
 export const termsVersions = pgTable("terms_versions", {
   version: text("version").primaryKey(),
+  // "terms" for the ones everybody accepts, "creator_terms" for the rules a
+  // creator agrees to before being shown anybody else's address. One table,
+  // because accepting either is the same act and is recorded the same way.
+  kind: text("kind").default("terms").notNull(),
   effectiveDate: timestamp("effective_date", { withTimezone: true }).notNull(),
   summary: text("summary").default("").notNull(),
   url: text("url").default("/terms").notNull(),

@@ -17,6 +17,8 @@ import {
   loadSubscribers,
   registerInterest,
   subscribersFileUrl,
+  acceptCreatorTerms,
+  loadCreatorTerms,
 } from "../data/creatorDashboard";
 
 const TABS = ["Overview", "Subscribers", "Activity", "Editor"];
@@ -111,16 +113,116 @@ function Empty({ handle }) {
   );
 }
 
-function Subscribers({ handle }) {
+// What a creator agrees to before they are shown anybody's address.
+//
+// Shown in place of the list rather than as a popup over it. A dialog is
+// something to dismiss; this is the thing standing between somebody and
+// other people's email addresses, and it should read like one. The rules
+// are written out here in full rather than linked, because an agreement
+// nobody read is the problem this exists to fix.
+function TermsGate({ terms, onAccepted, onTrouble }) {
+  const [busy, setBusy] = useState(false);
+  const [ticked, setTicked] = useState(false);
+
+  const agree = async () => {
+    setBusy(true);
+    try {
+      await acceptCreatorTerms(terms.version);
+      onAccepted();
+    } catch (error) {
+      onTrouble?.(error.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className={CARD}>
+      <h2 className="font-ui text-xl font-bold text-white">
+        Before you see anybody&rsquo;s email address
+      </h2>
+      <p className="mt-2 font-ui text-sm leading-relaxed text-neutral-300">
+        People subscribed to you so you could write to them about your work. That makes you
+        responsible for how you use their address. These are the rules, and they are part of the
+        agreement:
+      </p>
+
+      <ul className="mt-4 flex flex-col gap-2">
+        {[
+          "Write to subscribers about your own creative work, and nothing else",
+          "Include a way to unsubscribe in every message you send them",
+          "Act on an unsubscribe request promptly, whoever it reaches first",
+          "Never sell, rent, trade, or pass a subscriber list to anybody else",
+          "Keep any list you download safe, and delete it when you no longer need it",
+          "Follow the laws that apply to you and to the people you are writing to",
+        ].map((line) => (
+          <li key={line} className="flex gap-3 font-ui text-sm leading-relaxed text-neutral-200">
+            <span aria-hidden="true" className="text-primary">
+              &#10003;
+            </span>
+            {line}
+          </li>
+        ))}
+      </ul>
+
+      <p className="mt-4 font-ui text-sm leading-relaxed text-neutral-400">
+        If you break these we may remove your access to subscriber information, or remove the
+        account. The{" "}
+        <Link to={terms.url || "/privacy"} className="underline hover:text-neutral-200">
+          privacy policy
+        </Link>{" "}
+        says the same thing in full.
+      </p>
+
+      <label className="mt-6 flex cursor-pointer items-start gap-3">
+        <input
+          type="checkbox"
+          checked={ticked}
+          onChange={(event) => setTicked(event.target.checked)}
+          className="mt-1 size-4 shrink-0 accent-[#fc187b]"
+        />
+        <span className="font-ui text-sm leading-relaxed text-white">
+          I have read these and I agree to them.
+        </span>
+      </label>
+
+      <button
+        type="button"
+        disabled={!ticked || busy}
+        onClick={agree}
+        className="mt-5 rounded-full bg-primary px-6 py-3 font-ui text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-40"
+      >
+        Agree and see my subscribers
+      </button>
+
+      <p className="mt-3 font-ui text-xs text-neutral-500">
+        Recorded with the date and this version, {terms.version}, so there is a record of what you
+        agreed to and when.
+      </p>
+    </div>
+  );
+}
+
+function Subscribers({ handle, onTrouble }) {
   const [data, setData] = useState(null);
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
   const [problem, setProblem] = useState("");
+  // Null until we know. Set when the server says these rules have not been
+  // agreed to, which it does by refusing the list rather than by being
+  // asked separately: the refusal is the authority, so the screen cannot
+  // drift out of step with it.
+  const [gate, setGate] = useState(null);
 
   const refresh = useCallback(async (search, which) => {
     try {
       setData(await loadSubscribers({ q: search, page: which }));
+      setGate(null);
     } catch (error) {
+      if (error?.data?.needsCreatorTerms) {
+        setGate(error.data);
+        return;
+      }
       setProblem(error.message);
     }
   }, []);
@@ -137,6 +239,16 @@ function Subscribers({ handle }) {
       <p role="alert" className="font-ui text-sm font-bold text-red-400">
         {problem}
       </p>
+    );
+  }
+
+  if (gate) {
+    return (
+      <TermsGate
+        terms={gate}
+        onAccepted={() => refresh(q, page)}
+        onTrouble={onTrouble}
+      />
     );
   }
 
@@ -254,15 +366,25 @@ function Subscribers({ handle }) {
   );
 }
 
-function Activity() {
+function Activity({ onTrouble }) {
   const [rows, setRows] = useState(null);
+  const [gate, setGate] = useState(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     loadActivity()
-      .then((answer) => setRows(answer.activity))
-      .catch(() => setRows([]));
+      .then((answer) => {
+        setRows(answer.activity);
+        setGate(null);
+      })
+      .catch((error) => {
+        if (error?.data?.needsCreatorTerms) setGate(error.data);
+        else setRows([]);
+      });
   }, []);
 
+  useEffect(load, [load]);
+
+  if (gate) return <TermsGate terms={gate} onAccepted={load} onTrouble={onTrouble} />;
   if (!rows) return <p className="font-ui text-sm text-neutral-400">Loading…</p>;
   if (!rows.length) {
     return <p className="font-ui text-sm text-neutral-400">Nothing has happened yet.</p>;
@@ -345,6 +467,9 @@ export default function CreatorDashboard() {
   const { user } = useAuth();
   const [tab, setTab] = useState("Overview");
   const [overview, setOverview] = useState(null);
+  // Raised by the panels below, which have nowhere of their own to put a
+  // failure that is not about the data they were asked for.
+  const [problem, setProblem] = useState("");
 
   useEffect(() => {
     loadOverview()
@@ -390,6 +515,12 @@ export default function CreatorDashboard() {
           ))}
         </div>
 
+        {problem && (
+          <p role="alert" className="mt-6 font-ui text-sm font-bold text-red-400">
+            {problem}
+          </p>
+        )}
+
         <section className="mt-6">
           {tab === "Overview" &&
             (overview ? (
@@ -411,8 +542,8 @@ export default function CreatorDashboard() {
               <p className="font-ui text-sm text-neutral-400">Loading…</p>
             ))}
 
-          {tab === "Subscribers" && <Subscribers handle={user?.username} />}
-          {tab === "Activity" && <Activity />}
+          {tab === "Subscribers" && <Subscribers handle={user?.username} onTrouble={setProblem} />}
+          {tab === "Activity" && <Activity onTrouble={setProblem} />}
           {tab === "Editor" && <Editor />}
         </section>
 

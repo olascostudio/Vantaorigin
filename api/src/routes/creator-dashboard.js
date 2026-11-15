@@ -13,7 +13,13 @@ import { z } from "zod";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { config } from "../config.js";
 import { db } from "../db/client.js";
-import { creatorSubscriptions, featureInterest, users } from "../db/schema.js";
+import {
+  creatorSubscriptions,
+  featureInterest,
+  termsVersions,
+  userTermsAcceptance,
+  users,
+} from "../db/schema.js";
 import { authenticate } from "../auth/auth.js";
 import { csvFile } from "../csv.js";
 
@@ -30,10 +36,105 @@ const EXPORT_LIMIT =
 
 const mine = (userId) => eq(creatorSubscriptions.creatorId, userId);
 
+// The creator terms currently in force, or nothing if none have been set.
+const currentCreatorTerms = async () => {
+  const [row] = await db
+    .select()
+    .from(termsVersions)
+    .where(eq(termsVersions.kind, "creator_terms"))
+    .orderBy(desc(termsVersions.effectiveDate))
+    .limit(1);
+  return row ?? null;
+};
+
+const hasAccepted = async (userId, version) => {
+  const [row] = await db
+    .select({ at: userTermsAcceptance.acceptedAt })
+    .from(userTermsAcceptance)
+    .where(and(eq(userTermsAcceptance.userId, userId), eq(userTermsAcceptance.version, version)))
+    .limit(1);
+  return row?.at ?? null;
+};
+
+// Nothing that names a subscriber is served until the creator has agreed
+// to what they may do with the names.
+//
+// On the routes rather than on the screen, because a rule enforced only in
+// the browser is a rule anybody can skip with curl, and the thing being
+// protected here is other people’s email addresses. Counts are left
+// open: a number tells a creator what they have without telling them who
+// anybody is, and seeing it is what makes the agreement worth reading.
+const requireCreatorTerms = async (request, reply) => {
+  const terms = await currentCreatorTerms();
+  // No version set means nothing to agree to. Refusing everybody in that
+  // case would break the dashboard to enforce a rule that does not exist.
+  if (!terms) return null;
+
+  if (await hasAccepted(request.user.id, terms.version)) return null;
+
+  return reply.code(403).send({
+    error: "Agree to the rules for subscriber information first.",
+    needsCreatorTerms: true,
+    version: terms.version,
+    summary: terms.summary,
+    url: terms.url,
+  });
+};
+
 const active = (userId) =>
   and(mine(userId), eq(creatorSubscriptions.status, "subscribed"));
 
 export default async function creatorDashboardRoutes(app) {
+  // What a creator has to agree to, and whether they have.
+  //
+  // Not behind the gate itself, for the obvious reason.
+  app.get("/me/creator/terms", { preHandler: authenticate() }, async (request) => {
+    const terms = await currentCreatorTerms();
+    if (!terms) return { required: false };
+
+    const at = await hasAccepted(request.user.id, terms.version);
+    return {
+      required: true,
+      accepted: Boolean(at),
+      acceptedAt: at,
+      version: terms.version,
+      summary: terms.summary,
+      url: terms.url,
+    };
+  });
+
+  app.post("/me/creator/terms/accept", { preHandler: authenticate() }, async (request, reply) => {
+    const terms = await currentCreatorTerms();
+    if (!terms) return reply.code(404).send({ error: "There is nothing to agree to" });
+
+    const asked = String(request.body?.version || "");
+    // The version has to be named by whoever is agreeing. Accepting
+    // whatever happens to be current means a record of somebody agreeing
+    // to a document that may have changed while the page was open.
+    if (asked !== terms.version) {
+      return reply.code(409).send({
+        error: "These rules have changed since this page opened. Read them again.",
+        version: terms.version,
+      });
+    }
+
+    await db
+      .insert(userTermsAcceptance)
+      .values({
+        userId: request.user.id,
+        version: terms.version,
+        acceptedIp: request.ip ?? null,
+      })
+      .onConflictDoNothing();
+
+    request.log.info(
+      { userId: request.user.id, version: terms.version },
+      "creator terms accepted"
+    );
+
+    return { ok: true, version: terms.version };
+  });
+
   // The numbers at the top.
   app.get("/me/creator/overview", { preHandler: authenticate() }, async (request) => {
     const count = async (where) => {
@@ -75,7 +176,10 @@ export default async function creatorDashboardRoutes(app) {
   });
 
   // The list itself.
-  app.get("/me/creator/subscribers", { preHandler: authenticate() }, async (request) => {
+  app.get(
+    "/me/creator/subscribers",
+    { preHandler: [authenticate(), requireCreatorTerms] },
+    async (request) => {
     const q = String(request.query.q || "").trim().toLowerCase();
     const page = Math.max(Number(request.query.page) || 1, 1);
     const limit = Math.min(Number(request.query.limit) || PAGE, 100);
@@ -122,7 +226,7 @@ export default async function creatorDashboardRoutes(app) {
   // of here in a file that outlives our copy of their decision.
   app.get(
     "/me/creator/subscribers.csv",
-    { preHandler: authenticate(), ...EXPORT_LIMIT },
+    { preHandler: [authenticate(), requireCreatorTerms], ...EXPORT_LIMIT },
     async (request, reply) => {
       const rows = await db
         .select({ email: users.email, since: creatorSubscriptions.consentAt })
@@ -151,7 +255,10 @@ export default async function creatorDashboardRoutes(app) {
 
   // What has happened lately, both directions. A creator watching their list
   // shrink deserves to see that as plainly as they see it grow.
-  app.get("/me/creator/activity", { preHandler: authenticate() }, async (request) => {
+  app.get(
+    "/me/creator/activity",
+    { preHandler: [authenticate(), requireCreatorTerms] },
+    async (request) => {
     const rows = await db
       .select({
         id: creatorSubscriptions.id,
