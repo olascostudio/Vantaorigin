@@ -43,18 +43,38 @@ describe("Creator pages", () => {
     expect(within(cards[0]).queryByText("@Vtgshadowscribe")).not.toBeInTheDocument();
     expect(within(cards[1]).getByText("@Vtgshadowscribe")).toBeInTheDocument();
 
-    // Both are published now, so both open on their own page. Hope Breaker
-    // said "Page coming soon" for as long as nobody had put him anywhere;
-    // Heartline Comics has, so the card stops promising and opens it.
-    expect(within(cards[1]).getByRole("link", { name: "View page" })).toHaveAttribute(
+    // The button opens the person who made it, not the character: from a
+    // creator's page every character they have published is one click away,
+    // and the character itself is still reachable from its name.
+    expect(within(cards[0]).getByRole("link", { name: "View creator" })).toHaveAttribute(
       "href",
-      "/character/urokojin"
+      "/creator/Heartline"
     );
-    expect(within(cards[0]).getByRole("link", { name: "View page" })).toHaveAttribute(
+    expect(within(cards[1]).getByRole("link", { name: "View creator" })).toHaveAttribute(
+      "href",
+      "/creator/Vtgshadowscribe"
+    );
+    expect(within(cards[0]).getByRole("link", { name: "Hope Breaker" })).toHaveAttribute(
       "href",
       "/character/hope-breaker"
     );
+    expect(within(cards[1]).getByRole("link", { name: "Urokojin" })).toHaveAttribute(
+      "href",
+      "/character/urokojin"
+    );
     expect(screen.queryByText("Page coming soon")).not.toBeInTheDocument();
+
+    // Two cards, two buttons, and nothing in the row that can wrap on one
+    // card and not the other: a long handle used to push one button a line
+    // below the other.
+    expect(screen.getAllByRole("link", { name: "View creator" })).toHaveLength(2);
+
+    // And a way out of the pair, because a hand-written section can only
+    // ever hold the few characters somebody wrote into it.
+    expect(screen.getByRole("link", { name: "Browse creators" })).toHaveAttribute(
+      "href",
+      "/creators"
+    );
 
     // membership numbers were invented, so they should be gone
     expect(screen.queryByText(/members/i)).not.toBeInTheDocument();
@@ -200,7 +220,7 @@ describe("Features", () => {
       }
     );
     expect(screen.getByRole("heading", { name: "Discover Creators" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Explore Creators" })).toHaveAttribute("href", "/discover");
+    expect(screen.getByRole("link", { name: "Explore Creators" })).toHaveAttribute("href", "/creators");
   });
 });
 

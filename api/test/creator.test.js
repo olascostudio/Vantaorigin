@@ -145,3 +145,41 @@ test("two people cannot hold the same name in different capitals", async () => {
   assert.equal(res.statusCode, 409);
   assert.match(res.json().error, /taken/i);
 });
+
+// ---- the browse page ----
+// These run last on purpose: by now the file has signed up accounts that
+// never published anything, which is exactly what the listing has to leave
+// out.
+test("the listing has everybody who has published, and their work", async () => {
+  const res = await app.inject({ method: "GET", url: "/public/creators" });
+  assert.equal(res.statusCode, 200);
+
+  const rows = res.json();
+  const ember = rows.find((row) => row.username === "@emberforge");
+  assert.ok(ember, "the creator who published is listed");
+  assert.equal(ember.name, "Ola Studio");
+  assert.equal(ember.bio, "Character creator from Lagos.");
+  // One published, one private: the count is of what is actually public.
+  assert.equal(ember.published, 1);
+  assert.deepEqual(
+    ember.characters.map((character) => character.alias),
+    ["Ember Knight"]
+  );
+});
+
+test("an account with nothing published is not listed", async () => {
+  const rows = await app.inject({ method: "GET", url: "/public/creators" }).then((r) => r.json());
+  assert.ok(!rows.some((row) => row.username === "@VtgShadowScribe"));
+});
+
+test("a private character never reaches the listing", async () => {
+  const rows = await app.inject({ method: "GET", url: "/public/creators" }).then((r) => r.json());
+  const covers = rows.flatMap((row) => row.characters.map((character) => character.alias));
+  assert.ok(!covers.includes("Work In Progress"));
+});
+
+test("the listing says nothing about addresses or passwords", async () => {
+  const body = await app.inject({ method: "GET", url: "/public/creators" }).then((r) => r.body);
+  assert.ok(!body.includes("vantaorigin.test"), "no email addresses");
+  assert.ok(!/passwordHash|password_hash/.test(body), "no password hashes");
+});

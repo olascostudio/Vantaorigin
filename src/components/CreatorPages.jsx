@@ -10,9 +10,13 @@ import urokojinSmall from "../assets/landing/pages/urokojin-small.webp";
 // wrong is not a typo: it takes somebody else's work and puts another name
 // on it.
 //
-// `to` is the page a card opens. A character whose creator has no page here
-// yet has none to open, and says so rather than sending people somewhere
-// that does not belong to it.
+// `to` is the creator's own page, which is what the button opens: somebody
+// looking at a character wants the person who made it, and from their page
+// every character they have published is one click away. `characterTo` keeps
+// the character itself reachable, from its name.
+//
+// A creator with no page here yet has none to open, and the card says so
+// rather than sending people somewhere that does not belong to it.
 const PAGES = [
   {
     id: "hope-breaker",
@@ -24,9 +28,10 @@ const PAGES = [
     body: "Conjures weapons out of Nether energy, sees the souls of the living and the dead, and opens portals into the wraith zone.",
     art: hopeBreakerArt,
     artSmall: hopeBreakerSmall,
-    // Heartline Comics has published him, so the card opens his page rather
-    // than promising one. The artwork is theirs, from that page.
-    to: "/character/hope-breaker",
+    // Heartline Comics has a page here, so the card opens it rather than
+    // promising one. The artwork is theirs, from that page.
+    to: "/creator/Heartline",
+    characterTo: "/character/hope-breaker",
     creator: "@Heartline",
   },
   {
@@ -37,12 +42,13 @@ const PAGES = [
     body: "What was left behind when the First Chaos struck the first laws of reality. He was not made to judge; judgment became part of him.",
     art: urokojinArt,
     artSmall: urokojinSmall,
-    to: "/character/urokojin",
+    to: "/creator/Vtgshadowscribe",
+    characterTo: "/character/urokojin",
     creator: "@Vtgshadowscribe",
   },
 ];
 
-function PageCard({ name, universe, tagline, body, art, artSmall, to, creator }) {
+function PageCard({ name, universe, tagline, body, art, artSmall, to, characterTo, creator }) {
   return (
     <article className="relative flex min-h-[520px] w-[85vw] max-w-[578.947px] shrink-0 snap-center flex-col justify-end overflow-hidden rounded-[42.105px] border-[1.053px] border-primary bg-black px-6 pb-[43px] pt-[180px] sm:h-[631.579px] sm:pl-[44px] sm:pr-[45px] lg:w-full">
       <img
@@ -64,20 +70,29 @@ function PageCard({ name, universe, tagline, body, art, artSmall, to, creator })
         {universe}
       </p>
       <h3 className="relative mt-3 max-w-[484.211px] font-ui text-[32px] font-black leading-[1.05] tracking-[-0.2105px] text-white sm:text-[42.105px]">
-        {name}
+        {characterTo ? (
+          <Link to={characterTo} className="underline-offset-[6px] hover:underline">
+            {name}
+          </Link>
+        ) : (
+          name
+        )}
       </h3>
       <p className="relative mt-4 max-w-[477.895px] font-ui text-lg font-medium leading-[1.5] text-white sm:text-[21.053px] sm:leading-[31.579px]">
         <span className="font-bold">{tagline}. </span>
         {body}
       </p>
 
-      <div className="relative mt-7 flex flex-wrap items-center justify-between gap-4">
+      <div className="relative mt-7 flex flex-col items-start gap-4">
+        <p className="whitespace-nowrap font-ui text-[21px] text-white sm:text-[24.211px]">
+          <span className="font-medium">by</span> <span className="font-black">{creator}</span>
+        </p>
         {to ? (
           <Link
             to={to}
             className="rounded-[52.632px] bg-secondary px-[36.842px] py-[18.947px] font-ui text-[21.053px] font-bold text-white transition-opacity hover:opacity-90"
           >
-            View page
+            View creator
           </Link>
         ) : (
           // No page of their own yet, so nothing to promise.
@@ -85,9 +100,6 @@ function PageCard({ name, universe, tagline, body, art, artSmall, to, creator })
             Page coming soon
           </p>
         )}
-        <p className="whitespace-nowrap font-ui text-[21px] text-white sm:text-[24.211px]">
-          <span className="font-medium">by</span> <span className="font-black">{creator}</span>
-        </p>
       </div>
     </article>
   );
@@ -112,10 +124,10 @@ export default function CreatorPages() {
           </div>
 
           <Link
-            to="/discover"
+            to="/creators"
             className="rounded-[20px] border-[5px] border-[#d2d2d2] bg-white px-12 py-8 font-ui text-[28px] font-bold text-black transition-colors hover:bg-neutral-100"
           >
-            See more pages
+            Browse creators
           </Link>
         </div>
       </div>

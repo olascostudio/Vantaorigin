@@ -162,7 +162,7 @@ function FeaturedCreators() {
           Explore pages built by creators and discover the characters behind them.
         </p>
         <Link
-          to="/discover"
+          to="/creators"
           className="flex w-[254px] items-center justify-center overflow-hidden whitespace-nowrap rounded-[44px] border-[3px] border-[#b90754] bg-primary py-[15px] font-pill text-xl font-bold text-white transition-opacity hover:opacity-90"
         >
           Explore Creators

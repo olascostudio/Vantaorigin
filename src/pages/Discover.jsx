@@ -38,7 +38,7 @@ const hintsFrom = (characters) =>
 function CharacterCard({ title, author, colour, art, overlay, excerpt, to = "/character" }) {
   return (
     <article
-      className="flex w-[360px] shrink-0 flex-col gap-[18px] overflow-hidden rounded-[25px] border-[1.667px] bg-black/40 p-4 sm:w-[500px] sm:p-[25px]"
+      className="group relative flex w-[360px] shrink-0 flex-col gap-[18px] overflow-hidden rounded-[25px] border-[1.667px] bg-black/40 p-4 transition-colors hover:bg-black/60 sm:w-[500px] sm:p-[25px]"
       style={{ borderColor: colour }}
       data-testid="character-card"
     >
@@ -54,7 +54,19 @@ function CharacterCard({ title, author, colour, art, overlay, excerpt, to = "/ch
           <h3 className="w-[300px] max-w-full font-ui text-[22px] font-black tracking-[-0.125px] text-white sm:text-[25px]">
             {title}
           </h3>
-          <p className="whitespace-nowrap font-ui text-lg font-medium text-accent">By: {author}</p>
+          {/* Above the card's own link rather than inside it. An anchor
+              cannot contain another anchor, so the card is covered by a
+              stretched pseudo element and this sits over the top of it. */}
+          {author ? (
+            <Link
+              to={`/creator/${String(author).replace(/^@+/, "")}`}
+              className="relative z-10 whitespace-nowrap font-ui text-lg font-medium text-accent underline-offset-4 hover:underline"
+            >
+              By: {author}
+            </Link>
+          ) : (
+            <p className="whitespace-nowrap font-ui text-lg font-medium text-accent">By: {author}</p>
+          )}
         </div>
         <p className="line-clamp-3 min-h-[76px] font-ui text-base text-neutral-300">
           <span className="font-bold">{excerpt?.lead}</span>
@@ -62,7 +74,13 @@ function CharacterCard({ title, author, colour, art, overlay, excerpt, to = "/ch
         </p>
       </div>
 
-      <Link to={to} className="flex items-center gap-[5px] self-end font-ui text-base font-medium text-white underline">
+      {/* after:inset-0 is what makes the whole card the hit area. The
+          words stay, because a card that is clickable without saying so
+          leaves people hunting for the part that works. */}
+      <Link
+        to={to}
+        className="flex items-center gap-[5px] self-end font-ui text-base font-medium text-white underline after:absolute after:inset-0 after:content-['']"
+      >
         Read More
         <img src={arrowUpRight} alt="" className="size-5" />
       </Link>
@@ -80,6 +98,15 @@ function CharacterMarquee({ characters }) {
   const paused = useRef(false);
   // Where an arrow press is taking each row; null while they just drift.
   const target = useRef([null, null]);
+  // Where each row actually is, as a fraction.
+  //
+  // scrollLeft is rounded to whole pixels by the browser, so writing
+  // 0.8px of movement into it and reading it back next frame loses the 0.8
+  // every time. At these speeds that is most of the movement: frames
+  // alternate between shifting a pixel and shifting nothing, which is the
+  // stutter. Keeping the real position here and writing the rounded value
+  // out means the fraction carries over.
+  const at = useRef([0, 0]);
 
   // Half each, so twice as many characters are in view as a single row showed.
   const half = Math.ceil(characters.length / 2);
@@ -94,6 +121,19 @@ function CharacterMarquee({ characters }) {
     // The lower row runs a shade slower, so the two never march in step.
     const speeds = [0.05, 0.038];
 
+    // Measured when the cards change and on resize, not per frame. Reading
+    // scrollWidth forces the browser to lay the row out, and doing that for
+    // every rail sixty times a second is most of the work this loop does.
+    let halves = els.map((el) => el.scrollWidth / 2);
+    const remeasure = () => {
+      halves = els.map((el) => el.scrollWidth / 2);
+    };
+    window.addEventListener("resize", remeasure);
+
+    els.forEach((el, index) => {
+      at.current[index] = el.scrollLeft;
+    });
+
     let frame;
     let last = performance.now();
     const tick = (now) => {
@@ -101,7 +141,7 @@ function CharacterMarquee({ characters }) {
       last = now;
 
       els.forEach((el, index) => {
-        const half = el.scrollWidth / 2;
+        const half = halves[index];
         const goingTo = target.current[index];
         if (goingTo !== null) {
           // ease towards the card an arrow asked for
@@ -112,16 +152,22 @@ function CharacterMarquee({ characters }) {
           } else {
             el.scrollLeft += remaining * 0.18;
           }
+          // An arrow moved it, so the drift carries on from where it landed.
+          at.current[index] = el.scrollLeft;
         } else if (!reduceMotion && !paused.current && half > 0) {
-          el.scrollLeft += elapsed * speeds[index];
-          if (el.scrollLeft >= half) el.scrollLeft -= half; // loop seamlessly
+          at.current[index] += elapsed * speeds[index];
+          if (at.current[index] >= half) at.current[index] -= half; // loop seamlessly
+          el.scrollLeft = at.current[index];
         }
       });
 
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", remeasure);
+    };
   }, [characters]);
 
   // Arrows move both rows one card at a time.
@@ -247,6 +293,13 @@ export default function Discover() {
           <p className="mx-auto mt-8 max-w-[1080px] text-center font-ui text-lg text-neutral-300 sm:text-xl">
             Characters published by creators on VantaOrigin: their art, their stories, and the
             people who made them. Every one has a page of its own.
+          </p>
+          <p className="mx-auto mt-4 text-center font-ui text-lg text-neutral-300">
+            Looking for the people rather than the characters?{" "}
+            <Link to="/creators" className="font-medium text-accent underline underline-offset-4">
+              Browse creators
+            </Link>
+            .
           </p>
 
           <form

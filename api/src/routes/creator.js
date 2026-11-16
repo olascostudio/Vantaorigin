@@ -6,6 +6,72 @@ import { characterAssets, characters, highlights, users } from "../db/schema.js"
 import { userByHandle } from "../db/handles.js";
 
 export default async function creatorRoutes(app) {
+  // Everybody with something published, for the browse page.
+  //
+  // Built from published characters rather than from the user table, so a
+  // creator appears here the moment they publish and drops off if they
+  // unpublish everything. Nobody who has not chosen to show anything is
+  // listed, which is the point: this is a shelf of work, not a directory of
+  // accounts.
+  app.get("/public/creators", async (request) => {
+    const limit = Math.min(Number(request.query.limit) || 60, 120);
+
+    const rows = await db
+      .select({
+        characterId: characters.id,
+        slug: characters.slug,
+        alias: characters.name,
+        coverUrl: characters.coverUrl,
+        createdAt: characters.createdAt,
+        userId: users.id,
+        username: users.username,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        bio: users.bio,
+        avatarUrl: users.avatarUrl,
+      })
+      .from(characters)
+      .innerJoin(users, eq(users.id, characters.userId))
+      .where(eq(characters.isPublic, true))
+      .orderBy(desc(characters.createdAt));
+
+    // Grouped here rather than in SQL: the published set is small, and this
+    // keeps it to one query instead of one per creator.
+    const byCreator = new Map();
+    for (const row of rows) {
+      let creator = byCreator.get(row.userId);
+      if (!creator) {
+        creator = {
+          username: row.username,
+          name: [row.firstName, row.lastName].filter(Boolean).join(" ") || row.username,
+          bio: row.bio,
+          avatarUrl: row.avatarUrl,
+          published: 0,
+          // A few of their covers, so the card shows the work rather than
+          // only describing it.
+          characters: [],
+          newest: row.createdAt,
+        };
+        byCreator.set(row.userId, creator);
+      }
+      creator.published += 1;
+      if (creator.characters.length < 3) {
+        creator.characters.push({
+          id: row.characterId,
+          slug: row.slug,
+          alias: row.alias,
+          coverUrl: row.coverUrl,
+        });
+      }
+    }
+
+    // Most recently active first, so the page moves as people publish.
+    return [...byCreator.values()]
+      .sort((a, b) => new Date(b.newest) - new Date(a.newest))
+      .slice(0, limit)
+      .map(({ newest, ...creator }) => creator);
+  });
+
   app.get("/public/creators/:username", async (request, reply) => {
     // Written without the @, pasted with it, and typed in any capitals.
     const creator = await userByHandle(request.params.username);

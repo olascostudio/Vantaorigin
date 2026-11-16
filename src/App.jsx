@@ -20,6 +20,7 @@ import Privacy from "./pages/Privacy";
 import Contact from "./pages/Contact";
 import Help from "./pages/Help";
 import CreatorPage from "./pages/CreatorPage";
+import Creators from "./pages/Creators";
 import Marketplace from "./pages/Marketplace";
 import MarketplaceHowItWorks from "./pages/MarketplaceHowItWorks";
 import ProjectRequest from "./pages/ProjectRequest";
@@ -106,6 +107,7 @@ export default function App() {
         {/* The page a creator shares. It used to be called a Realm, and links
             with that word in them are already out in the world, so they keep
             working. */}
+        <Route path="/creators" element={<Creators />} />
         <Route path="/creator/:username" element={<CreatorPage />} />
         <Route path="/realm/:username" element={<OldRealmLink />} />
         <Route path="/settings" element={<RequireAuth><Settings /></RequireAuth>} />

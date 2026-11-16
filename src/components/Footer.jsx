@@ -24,6 +24,7 @@ const LINK_COLUMNS = [
     width: "sm:w-[133.2px]",
     links: [
       { label: "Explore characters", to: "/discover" },
+      { label: "Browse creators", to: "/creators" },
       { label: "Creator Studio", to: "/marketplace" },
       { label: "Blog", to: "/blog" },
     ],
