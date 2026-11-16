@@ -178,7 +178,7 @@ function CardBadge({ box, transform }) {
   );
 }
 
-function ShowcaseCard({ id, x, box, transform, bg, art, artSmall, badge }) {
+function ShowcaseCard({ id, x, box, transform, bg, art, artSmall, badge, drift = 0 }) {
   const [top, width, height] = box;
   return (
     <div
@@ -187,20 +187,34 @@ function ShowcaseCard({ id, x, box, transform, bg, art, artSmall, badge }) {
       data-card={id}
       style={{ left: `calc(50% + ${x}px - ${width / 2}px)`, top, width, height }}
     >
-      <div className="flex-none" style={{ transform }}>
-        <div
-          className="relative h-[451px] w-[372px] overflow-hidden rounded-t-[40px] shadow-card"
-          style={{ backgroundColor: bg }}
-        >
-          {/* The artwork fills the card and tilts with it, as a card would */}
-          <img
-            src={art}
-            srcSet={`${artSmall} 380w, ${art} 744w`}
-            sizes={CARD_SIZES}
-            alt=""
-            className="absolute inset-0 size-full object-cover"
-          />
-          <CardBadge {...badge} />
+      {/* The float lives on its own wrapper. The tilt below is an inline
+          transform, and a keyframe animating transform on the same element
+          would replace it rather than compose with it, so the cards would
+          snap upright the moment the animation began.
+
+          motion-safe, so anyone who has asked their system for less
+          movement gets a still hero rather than a drifting one. Each card
+          is offset in time, because fifteen cards rising and falling
+          together reads as the whole page breathing. */}
+      <div
+        className="motion-safe:animate-drift"
+        style={{ animationDelay: `${drift}ms`, animationDuration: `${9000 + (drift % 5) * 400}ms` }}
+      >
+        <div className="flex-none" style={{ transform }}>
+          <div
+            className="relative h-[451px] w-[372px] overflow-hidden rounded-t-[40px] shadow-card"
+            style={{ backgroundColor: bg }}
+          >
+            {/* The artwork fills the card and tilts with it, as a card would */}
+            <img
+              src={art}
+              srcSet={`${artSmall} 380w, ${art} 744w`}
+              sizes={CARD_SIZES}
+              alt=""
+              className="absolute inset-0 size-full object-cover"
+            />
+            <CardBadge {...badge} />
+          </div>
         </div>
       </div>
     </div>

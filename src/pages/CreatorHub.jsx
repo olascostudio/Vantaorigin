@@ -35,6 +35,7 @@ import streak3 from "../assets/creator/streak-3.svg";
 import streak4 from "../assets/creator/streak-4.svg";
 import streak5 from "../assets/creator/streak-5.svg";
 import { usePrivatePage } from "../data/pageMeta";
+import GettingStarted from "../components/GettingStarted";
 
 const TABS = ["Character", "Highlights", "Create Clans"];
 
@@ -532,6 +533,9 @@ export default function CreatorHub() {
   // Never a search result: see usePrivatePage.
   usePrivatePage();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  // Said after copying the page link from the checklist below.
+  const [copied, setCopied] = useState("");
   // The creator's categories and the characters filed under them.
   const [library, setLibrary] = useState({ categories: [], characters: [] });
   const [libraryLoading, setLibraryLoading] = useState(true);
@@ -587,6 +591,13 @@ export default function CreatorHub() {
     <div className="min-h-screen bg-[#1b2233]">
       <DashboardNav active="Creators’ Hub" />
       <ProfileHeader />
+
+      <GettingStarted
+        settings={toSettings(user)}
+        characters={library.characters}
+        copied={copied}
+        onShare={async () => setCopied(await copyPageLink(toSettings(user).username))}
+      />
 
       <div className="mt-10 border-t border-white/10" />
 
