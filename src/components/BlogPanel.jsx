@@ -101,7 +101,7 @@ export default function BlogPanel({ onTrouble }) {
               key={post.id}
               className="flex flex-wrap items-center gap-4 rounded-xl border border-[#e6e8ec] bg-[#f6f7f9] p-3 sm:flex-nowrap"
             >
-              <div className="h-14 w-20 shrink-0 overflow-hidden rounded-md bg-[#1e2637]">
+              <div className="h-14 w-20 shrink-0 overflow-hidden rounded-md bg-white">
                 {post.heroUrl ? (
                   <Art src={post.heroUrl} alt="" className="size-full object-cover" loading="lazy" />
                 ) : (
@@ -114,7 +114,7 @@ export default function BlogPanel({ onTrouble }) {
                 <p className="mt-0.5 flex flex-wrap items-center gap-x-2 font-ui text-xs text-[#677181]">
                   <span
                     className={
-                      post.status ==="published" ?"font-bold text-[#7ddc7d]" :"font-bold text-[#9b1c44]"
+                      post.status ==="published" ?"font-bold text-[#15803d]" :"font-bold text-[#9b1c44]"
                     }
                   >
                     {post.status ==="published" ?"Published" :"Draft"}
@@ -182,7 +182,7 @@ export default function BlogPanel({ onTrouble }) {
                   <button
                     type="button"
                     onClick={() => setConfirming(post.id)}
-                    className="rounded-full px-3 py-1.5 font-ui text-sm text-[#677181] hover:text-[#f2415f]"
+                    className="rounded-full px-3 py-1.5 font-ui text-sm text-[#677181] hover:text-[#b91c1c]"
                   >
                     Delete
                   </button>

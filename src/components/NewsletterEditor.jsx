@@ -693,7 +693,7 @@ function Editor({ id, onClose, onTrouble }) {
           </div>
 
           {!closed && written && (
-            <section className="rounded-xl border border-[#e6e8ec] bg-[#0f1420] p-1.5">
+            <section className="rounded-xl border border-[#e6e8ec] bg-white p-1.5">
               <Writing
                 value={blocks[0]?.html ||""}
                 onChange={setWriting}
@@ -888,7 +888,7 @@ export default function NewsletterLetters({ onTrouble }) {
                   <button
                     type="button"
                     onClick={() => setOpenId(issue.id)}
-                    className="block max-w-full truncate text-left font-ui text-base font-bold text-[#1b2233] hover:text-[#6b8ff5]"
+                    className="block max-w-full truncate text-left font-ui text-base font-bold text-[#1b2233] hover:text-[#1d4ed8]"
                   >
                     {issue.subject ||"Untitled letter"}
                   </button>
@@ -943,13 +943,13 @@ export default function NewsletterLetters({ onTrouble }) {
             {gone.map((issue) => (
               <li
                 key={issue.id}
-                className="flex flex-wrap items-center gap-4 rounded-xl border border-[#e6e8ec] bg-[#1e2637] p-4"
+                className="flex flex-wrap items-center gap-4 rounded-xl border border-[#e6e8ec] bg-white p-4"
               >
                 <div className="min-w-0 flex-1">
                   <button
                     type="button"
                     onClick={() => setOpenId(issue.id)}
-                    className="block max-w-full truncate text-left font-ui text-base font-bold text-[#1b2233] hover:text-[#6b8ff5]"
+                    className="block max-w-full truncate text-left font-ui text-base font-bold text-[#1b2233] hover:text-[#1d4ed8]"
                   >
                     {issue.subject ||"Untitled letter"}
                   </button>

@@ -144,9 +144,19 @@ function Journey({ days = 30 }) {
 // The note was a blue that meant nothing. Numbers that are merely context
 // are muted; the figure itself carries the weight, which is the only
 // hierarchy this needs.
+// No dividers between the figures.
+//
+// There were vertical rules with `first:border-l-0 first:pl-0` to drop the
+// one on the left. `first:` means the first child of the grid, not the
+// first of each row, so on the second row the leading figure kept both the
+// rule and its 20px of padding and sat indented from the one above it.
+//
+// The fix is not a cleverer selector. It is that six numbers in a grid do
+// not need eleven lines drawn between them: the gap already separates
+// them, and with the rules gone there is nothing left to misalign.
 function Figure({ label, value, note }) {
   return (
-    <div className="border-l border-[#e6e8ec] px-5 py-1 first:border-l-0 first:pl-0">
+    <div>
       <p className="font-ui text-sm text-[#677181]">{label}</p>
       {/* Tabular figures, so a column of numbers lines up rather than
           wobbling as the digits change. */}
@@ -457,7 +467,7 @@ function BringThemBack({ onClose, onDone, onTrouble }) {
                 <span
                   className={
                     row.state ==="added" || row.state ==="returned"
-                      ?"shrink-0 text-[#5fdc8a]"
+                      ?"shrink-0 text-[#15803d]"
                       : row.state ==="already"
                         ?"shrink-0 text-[#677181]"
                         :"shrink-0 text-[#9b1c44]"
@@ -633,7 +643,7 @@ function NewsletterPanel({ onTrouble }) {
               </thead>
               <tbody>
                 {answer.rows.map((row) => (
-                  <tr key={row.id} className="border-t border-[#e6e8ec] bg-[#1e2637]">
+                  <tr key={row.id} className="border-t border-[#e6e8ec] bg-white">
                     <td className="px-5 py-3 font-ui text-sm text-[#1b2233]">{row.email}</td>
                     <td className="px-5 py-3 font-ui text-sm text-[#677181]">
                       {row.source ==="signup"
@@ -645,7 +655,7 @@ function NewsletterPanel({ onTrouble }) {
                             :"the footer"}
                     </td>
                     <td className="px-5 py-3 font-ui text-sm">
-                      <span className={row.hasAccount ?"text-[#5fdc8a]" :"text-[#677181]"}>
+                      <span className={row.hasAccount ?"text-[#15803d]" :"text-[#677181]"}>
                         {row.hasAccount ?"Yes" :"No"}
                       </span>
                     </td>
@@ -842,7 +852,7 @@ export default function Admin() {
 
       {tab ==="Overview" && (
         <section>
-          <div className="grid grid-cols-2 gap-y-6 rounded-xl border border-[#e6e8ec] bg-white px-6 py-5 md:grid-cols-3">
+          <div className="grid grid-cols-2 gap-x-10 gap-y-7 rounded-xl border border-[#e6e8ec] bg-white p-6 md:grid-cols-3">
             {overview ? (
               <>
                 <Figure
@@ -942,11 +952,11 @@ export default function Admin() {
                   </thead>
                   <tbody>
                     {creators.map((creator) => (
-                      <tr key={creator.id} className="border-t border-[#e6e8ec] bg-[#1e2637]">
+                      <tr key={creator.id} className="border-t border-[#e6e8ec] bg-white">
                         <td className="px-5 py-3">
                           <Link
                             to={`/creator/${creator.username.replace(/^@/,"")}`}
-                            className="font-ui text-base font-bold text-[#1b2233] hover:text-[#6b8ff5]"
+                            className="font-ui text-base font-bold text-[#1b2233] hover:text-[#1d4ed8]"
                           >
                             {creator.username}
                           </Link>
@@ -959,7 +969,7 @@ export default function Admin() {
                         <td className="px-5 py-3 font-ui text-sm text-[#39435a]">{creator.email}</td>
                         <td className="px-5 py-3 font-ui text-base text-[#1b2233]">{creator.characters}</td>
                         <td className="px-5 py-3 font-ui text-sm">
-                          <span className={creator.emailVerified ?"text-[#5fdc8a]" :"text-[#677181]"}>
+                          <span className={creator.emailVerified ?"text-[#15803d]" :"text-[#677181]"}>
                             {creator.emailVerified ?"Yes" :"No"}
                           </span>
                         </td>
@@ -1010,7 +1020,7 @@ export default function Admin() {
                     <div className="min-w-0 flex-1">
                       <Link
                         to={`/character/${character.slug || character.id}`}
-                        className="block truncate font-ui text-base font-bold text-[#1b2233] hover:text-[#6b8ff5]"
+                        className="block truncate font-ui text-base font-bold text-[#1b2233] hover:text-[#1d4ed8]"
                       >
                         {character.name}
                       </Link>
@@ -1019,7 +1029,7 @@ export default function Admin() {
                         {day(character.createdAt)}
                       </p>
                     </div>
-                    <span className="shrink-0 font-ui text-base font-bold text-[#f5af32]">
+                    <span className="shrink-0 font-ui text-base font-bold text-[#92400e]">
                       {character.likes}
                       <span className="ml-1 font-normal text-[#677181]">likes</span>
                     </span>
