@@ -11,69 +11,68 @@
 // permanent and invisible. Two things follow from that: the sender's own
 // words are shown so a decision can be made without guessing, and lifting
 // one asks for a reason, because it is answerable later.
-import { useCallback, useEffect, useState } from "react";
-import { liftSuppression, loadSuppressions } from "../data/admin";
+import { useCallback, useEffect, useState } from"react";
+import { liftSuppression, loadSuppressions, loadWebhookEvents } from"../data/admin";
 
 const WHY = {
-  hard_bounce: "The address bounced permanently",
-  complaint: "Reported as spam",
-  manual: "Added by hand",
+  hard_bounce:"The address bounced permanently",
+  complaint:"Reported as spam",
+  manual:"Added by hand",
 };
 
 const day = (value) =>
   value
-    ? new Date(value).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })
-    : "";
+    ? new Date(value).toLocaleDateString(undefined, { day:"numeric", month:"short", year:"numeric" })
+    :"";
 
 function Row({ row, onLift, busy }) {
   const [asking, setAsking] = useState(false);
   const [note, setNote] = useState("");
 
   return (
-    <li className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+    <li className="rounded-xl border border-[#e6e8ec] bg-[#f6f7f9] p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-ui text-base font-bold text-white break-all">{row.email}</p>
-          <p className="mt-1 font-ui text-sm text-neutral-400">
+          <p className="font-ui text-base font-bold text-[#1b2233] break-all">{row.email}</p>
+          <p className="mt-1 font-ui text-sm text-[#677181]">
             {WHY[row.reason] || row.reason}
-            {row.createdAt ? ` · ${day(row.createdAt)}` : ""}
+            {row.createdAt ? ` · ${day(row.createdAt)}` :""}
           </p>
         </div>
         {!asking && (
           <button
             type="button"
             onClick={() => setAsking(true)}
-            className="shrink-0 rounded-full border border-white/20 px-4 py-2 font-ui text-sm font-bold text-white transition hover:bg-white/10"
+            className="shrink-0 rounded-full border border-[#e6e8ec] px-4 py-2 font-ui text-sm font-bold text-[#1b2233] transition hover:bg-[#f1f2f5]"
           >
             Write to them again
           </button>
         )}
       </div>
 
-      {/* What the sender actually said. An admin deciding whether a
-          "permanent" bounce was really permanent needs the diagnostic line,
+      {/* What the sender actually said. An admin deciding whether a"permanent" bounce was really permanent needs the diagnostic line,
           not our summary of it. */}
       {row.diagnostic && (
-        <p className="mt-3 rounded-lg bg-black/30 p-3 font-mono text-xs leading-relaxed text-neutral-300 break-all">
+        <p className="mt-3 rounded-md bg-black/30 p-3 font-mono text-xs leading-relaxed text-[#39435a] break-all">
           {row.diagnostic}
         </p>
       )}
       {row.bounceType && (
-        <p className="mt-2 font-ui text-xs text-neutral-500">
+        <p className="mt-2 font-ui text-xs text-[#677181]">
           Sender called it: {row.bounceType}
-          {row.bounceSubType ? ` / ${row.bounceSubType}` : ""}
+          {row.bounceSubType ? ` / ${row.bounceSubType}` :""}
         </p>
       )}
 
       {asking && (
         <div className="mt-4 rounded-xl border border-amber-400/30 bg-amber-400/10 p-4">
-          <p className="font-ui text-sm leading-relaxed text-neutral-200">
+          <p className="font-ui text-sm leading-relaxed text-[#39435a]">
             This starts writing to {row.email} again. If the address really is gone, the next
             bounce puts it straight back.
           </p>
           <label
             htmlFor={`why-${row.id}`}
-            className="mt-3 block font-ui text-sm font-bold text-white"
+            className="mt-3 block font-ui text-sm font-bold text-[#1b2233]"
           >
             Why are you lifting it?
           </label>
@@ -82,9 +81,9 @@ function Row({ row, onLift, busy }) {
             value={note}
             onChange={(event) => setNote(event.target.value)}
             placeholder="They wrote in — their mail server was misconfigured"
-            className="mt-2 w-full rounded-lg border border-white/15 bg-black/30 px-4 py-2.5 font-ui text-sm text-white outline-none placeholder:text-neutral-500 focus:border-white/40"
+            className="mt-2 w-full rounded-md border border-[#e6e8ec] bg-black/30 px-4 py-2.5 font-ui text-sm text-[#1b2233] outline-none placeholder:text-[#677181] focus:border-[#e6e8ec]"
           />
-          <p className="mt-2 font-ui text-xs text-neutral-400">
+          <p className="mt-2 font-ui text-xs text-[#677181]">
             Kept with your name against it. This is a decision about someone&rsquo;s access to
             their own account.
           </p>
@@ -103,7 +102,7 @@ function Row({ row, onLift, busy }) {
                 setAsking(false);
                 setNote("");
               }}
-              className="rounded-full border border-white/20 px-5 py-2.5 font-ui text-sm font-bold text-white transition hover:bg-white/10"
+              className="rounded-full border border-[#e6e8ec] px-5 py-2.5 font-ui text-sm font-bold text-[#1b2233] transition hover:bg-[#f1f2f5]"
             >
               Cancel
             </button>
@@ -114,6 +113,91 @@ function Row({ row, onLift, busy }) {
   );
 }
 
+// Whether the sender is telling us anything at all.
+//
+// Above the blocked list on purpose. Setting the webhook up is the one
+// moment somebody needs this, and at that moment the list below is empty,
+// so a screen that led with"nothing is blocked, that is the good state"
+// would look like everything was fine whether or not a single event had
+// ever arrived.
+//
+//"Nothing has ever arrived" is the whole point of the panel. Everything
+// else is detail.
+const SAYS = {"email.delivered":"Arrived","email.bounced":"Bounced","email.complained":"Reported as spam","email.opened":"Opened","email.clicked":"Clicked",
+};
+
+function WebhookFeed() {
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    loadWebhookEvents()
+      .then(setData)
+      .catch(() => setData({ everReceived: false, total: 0, events: [], thisWeek: [] }));
+  }, []);
+
+  if (!data) return null;
+
+  return (
+    <div className="mb-8 rounded-xl border border-[#e6e8ec] bg-[#f6f7f9] p-5 sm:p-6">
+      <h3 className="font-ui text-lg font-bold text-[#1b2233]">What the sender tells us</h3>
+
+      {!data.everReceived ? (
+        <>
+          <p className="mt-2 font-ui text-sm leading-relaxed text-amber-200">
+            Nothing has ever arrived. Until something does, bounces and spam complaints are not
+            reaching the blocked list, and we are still writing to addresses that no longer exist.
+          </p>
+          <p className="mt-3 font-ui text-sm leading-relaxed text-[#677181]">
+            Add a webhook in Resend pointing at{" "}
+            <span className="break-all font-mono text-xs text-[#39435a]">
+              https://api.vantaorigin.com/webhooks/resend
+            </span>{" "}
+            for the delivered, bounced, complained, opened and clicked events, then put its
+            signing secret into RESEND_WEBHOOK_SECRET on the API. Until that secret is set, every
+            webhook is refused, which is deliberate.
+          </p>
+        </>
+      ) : (
+        <>
+          <p className="mt-2 font-ui text-sm text-[#677181]">
+            {data.total} in total. Last one {day(data.lastAt)}.
+          </p>
+          {data.thisWeek.length > 0 && (
+            <p className="mt-1 font-ui text-sm text-[#677181]">
+              This week: {data.thisWeek.map((c) => `${SAYS[c.type] || c.type} ${c.value}`).join(", ")}.
+            </p>
+          )}
+          <ul className="mt-4 flex flex-col gap-2">
+            {data.events.slice(0, 10).map((event) => (
+              <li
+                key={event.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#e6e8ec] bg-[#f6f7f9] px-4 py-2.5"
+              >
+                <span className="font-ui text-sm text-[#1b2233] break-all">
+                  {event.email ||"no address given"}
+                </span>
+                <span className="flex items-center gap-3">
+                  <span
+                    className={`font-ui text-xs font-bold ${
+                      event.type ==="email.bounced" || event.type ==="email.complained"
+                        ?"text-[#9b1c44]"
+                        :"text-[#677181]"
+                    }`}
+                  >
+                    {SAYS[event.type] || event.type}
+                    {event.bounceType ? ` (${event.bounceType})` :""}
+                  </span>
+                  <span className="font-ui text-xs text-[#677181]">{day(event.at)}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function SuppressionPanel({ onTrouble }) {
   const [data, setData] = useState(null);
   const [q, setQ] = useState("");
@@ -121,7 +205,7 @@ export default function SuppressionPanel({ onTrouble }) {
   const [done, setDone] = useState("");
 
   const refresh = useCallback(
-    async (search = "") => {
+    async (search ="") => {
       try {
         setData(await loadSuppressions(search));
       } catch (error) {
@@ -150,12 +234,14 @@ export default function SuppressionPanel({ onTrouble }) {
   };
 
   if (!data) {
-    return <p className="mt-5 font-ui text-base text-neutral-400">Loading…</p>;
+    return <p className="mt-5 font-ui text-base text-[#677181]">Loading…</p>;
   }
 
   return (
     <section className="mt-5">
-      <p className="font-ui text-base leading-relaxed text-neutral-300">
+      <WebhookFeed />
+
+      <p className="font-ui text-base leading-relaxed text-[#39435a]">
         Addresses nothing is sent to — not even a password reset. Bounces and spam complaints land
         here on their own.
       </p>
@@ -172,11 +258,11 @@ export default function SuppressionPanel({ onTrouble }) {
           onChange={(event) => setQ(event.target.value)}
           placeholder="Search an address"
           aria-label="Search an address"
-          className="min-w-0 flex-1 rounded-full border border-white/15 bg-black/30 px-5 py-2.5 font-ui text-sm text-white outline-none placeholder:text-neutral-500 focus:border-white/40"
+          className="min-w-0 flex-1 rounded-full border border-[#e6e8ec] bg-black/30 px-5 py-2.5 font-ui text-sm text-[#1b2233] outline-none placeholder:text-[#677181] focus:border-[#e6e8ec]"
         />
         <button
           type="submit"
-          className="rounded-full bg-white/10 px-5 py-2.5 font-ui text-sm font-bold text-white transition hover:bg-white/20"
+          className="rounded-full bg-[#f1f2f5] px-5 py-2.5 font-ui text-sm font-bold text-[#1b2233] transition hover:bg-[#e6e8ec]"
         >
           Search
         </button>
@@ -188,13 +274,13 @@ export default function SuppressionPanel({ onTrouble }) {
         </p>
       )}
 
-      <p className="mt-5 font-ui text-sm text-neutral-400">
-        {data.total} blocked{q ? ` · ${data.suppressions.length} matching` : ""}
+      <p className="mt-5 font-ui text-sm text-[#677181]">
+        {data.total} blocked{q ? ` · ${data.suppressions.length} matching` :""}
       </p>
 
       {data.suppressions.length === 0 ? (
-        <p className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-6 font-ui text-base text-neutral-300">
-          {q ? "Nothing matching that." : "Nothing is blocked. That is the good state."}
+        <p className="mt-4 rounded-xl border border-[#e6e8ec] bg-[#f6f7f9] p-6 font-ui text-base text-[#39435a]">
+          {q ?"Nothing matching that." :"Nothing is blocked. That is the good state."}
         </p>
       ) : (
         <ul className="mt-4 flex flex-col gap-3">
@@ -209,15 +295,15 @@ export default function SuppressionPanel({ onTrouble }) {
           that recorded the block. */}
       {data.lifts?.length > 0 && (
         <div className="mt-10">
-          <h3 className="font-ui text-lg font-bold text-white">Lifted before</h3>
+          <h3 className="font-ui text-lg font-bold text-[#1b2233]">Lifted before</h3>
           <ul className="mt-3 flex flex-col gap-2">
             {data.lifts.map((lift) => (
               <li
                 key={lift.id}
-                className="rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 font-ui text-sm"
+                className="rounded-xl border border-[#e6e8ec] bg-[#f6f7f9] px-4 py-3 font-ui text-sm"
               >
-                <span className="font-bold text-white break-all">{lift.email}</span>
-                <span className="text-neutral-400">
+                <span className="font-bold text-[#1b2233] break-all">{lift.email}</span>
+                <span className="text-[#677181]">
                   {" "}
                   — was {WHY[lift.wasReason] || lift.wasReason}. {lift.liftedBy} on{" "}
                   {day(lift.liftedAt)}: {lift.note}

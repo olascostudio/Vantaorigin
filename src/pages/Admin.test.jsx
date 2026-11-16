@@ -99,8 +99,10 @@ beforeEach(() => {
 describe("The dashboard", () => {
   it("opens on the numbers", async () => {
     await open();
-    expect(screen.getByRole("heading", { name: "Site activity" })).toBeInTheDocument();
-    // Said twice on purpose: once as a number, once as a tab.
+    // The page is named by the section somebody is in, not by one fixed
+    // title, so the heading tracks the sidebar rather than sitting above it.
+    expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument();
+    // Said twice on purpose: once as a number, once as a section.
     expect(screen.getAllByText("Newsletter").length).toBeGreaterThan(1);
     expect(screen.getByText("2 this week")).toBeInTheDocument();
   });
@@ -132,8 +134,8 @@ describe("The dashboard", () => {
       await act(async () => {
         fireEvent.click(tab);
       });
-      // Still here, with its own heading, rather than an empty screen.
-      expect(screen.getByRole("heading", { name: "Site activity" })).toBeInTheDocument();
+      // Still here, named after the section, rather than an empty screen.
+      expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(tab.textContent.trim());
     }
   });
 

@@ -10,9 +10,10 @@ import { render, screen, fireEvent, waitFor, within } from "@testing-library/rea
 vi.mock("../data/admin", () => ({
   loadSuppressions: vi.fn(),
   liftSuppression: vi.fn(),
+  loadWebhookEvents: vi.fn(),
 }));
 
-const { loadSuppressions, liftSuppression } = await import("../data/admin");
+const { loadSuppressions, liftSuppression, loadWebhookEvents } = await import("../data/admin");
 const { default: SuppressionPanel } = await import("./SuppressionPanel.jsx");
 
 const BLOCKED = {
@@ -35,6 +36,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   loadSuppressions.mockResolvedValue(BLOCKED);
   liftSuppression.mockResolvedValue({ ok: true });
+  loadWebhookEvents.mockResolvedValue({ everReceived: false, total: 0, events: [], thisWeek: [] });
 });
 
 const open = async () => {
@@ -141,5 +143,65 @@ describe("the blocked list", () => {
     render(<SuppressionPanel onTrouble={onTrouble} />);
 
     await waitFor(() => expect(onTrouble).toHaveBeenCalledWith("Can't reach VantaOrigin."));
+  });
+});
+
+// Whether the sender is telling us anything at all.
+//
+// This exists for one moment: setting the webhook up. At that moment the
+// blocked list below is empty, so a panel that led with "nothing is
+// blocked, that is the good state" would look reassuring whether or not a
+// single event had ever arrived.
+describe("what the sender tells us", () => {
+  it("says plainly when nothing has ever arrived, and what that costs", async () => {
+    loadWebhookEvents.mockResolvedValue({ everReceived: false, total: 0, events: [], thisWeek: [] });
+    render(<SuppressionPanel onTrouble={() => {}} />);
+
+    expect(await screen.findByText(/Nothing has ever arrived/i)).toBeInTheDocument();
+    // Not just "no data": the consequence, which is the part somebody
+    // needs to understand.
+    expect(screen.getByText(/still writing to addresses that no longer exist/i)).toBeInTheDocument();
+    // And how to fix it, without sending anybody to find the docs.
+    expect(screen.getByText(/api\.vantaorigin\.com\/webhooks\/resend/)).toBeInTheDocument();
+    expect(screen.getByText(/RESEND_WEBHOOK_SECRET/)).toBeInTheDocument();
+  });
+
+  it("shows what has come in once it is working", async () => {
+    loadWebhookEvents.mockResolvedValue({
+      everReceived: true,
+      total: 42,
+      lastAt: "2026-11-16T09:00:00Z",
+      thisWeek: [
+        { type: "email.delivered", value: 40 },
+        { type: "email.bounced", value: 2 },
+      ],
+      events: [
+        {
+          id: "e1",
+          type: "email.bounced",
+          email: "gone@example.com",
+          at: "2026-11-16T09:00:00Z",
+          bounceType: "Permanent",
+        },
+        { id: "e2", type: "email.delivered", email: "fine@example.com", at: "2026-11-16T08:00:00Z", bounceType: null },
+      ],
+    });
+    render(<SuppressionPanel onTrouble={() => {}} />);
+
+    expect(await screen.findByText(/42 in total/)).toBeInTheDocument();
+    expect(screen.getByText(/Arrived 40, Bounced 2/)).toBeInTheDocument();
+    // The bounce type, because that is what decided whether the address
+    // was suppressed.
+    expect(screen.getByText(/Bounced \(Permanent\)/)).toBeInTheDocument();
+    expect(screen.getByText("gone@example.com")).toBeInTheDocument();
+    expect(screen.queryByText(/Nothing has ever arrived/i)).not.toBeInTheDocument();
+  });
+
+  it("a failure to load it does not take the blocked list down with it", async () => {
+    loadWebhookEvents.mockRejectedValue(new Error("nope"));
+    render(<SuppressionPanel onTrouble={() => {}} />);
+
+    // The list is the thing somebody came for; the feed is context.
+    expect(await screen.findByText("locked-out@example.com")).toBeInTheDocument();
   });
 });

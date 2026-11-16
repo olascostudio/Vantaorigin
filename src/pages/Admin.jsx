@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import DashboardNav from "../components/DashboardNav";
-import { Skeleton } from "../components/Loading.jsx";
-import NewsletterLetters from "../components/NewsletterEditor.jsx";
+import { useCallback, useEffect, useRef, useState } from"react";
+import { Link } from"react-router-dom";
+import DashboardNav from"../components/DashboardNav";
+import { Skeleton } from"../components/Loading.jsx";
+import NewsletterLetters from"../components/NewsletterEditor.jsx";
 import {
   forgetSubscriber,
   importSubscribers,
@@ -18,28 +18,29 @@ import {
   startShrinking,
   settleReport,
   subscribersFileUrl,
-} from "../data/admin";
-import characterCover from "../assets/creator/character-cover.svg";
-import BlogPanel from "../components/BlogPanel.jsx";
-import SuppressionPanel from "../components/SuppressionPanel";
-import AnnouncementsPanel from "../components/AnnouncementsPanel";
-import { usePrivatePage } from "../data/pageMeta";
+} from"../data/admin";
+import characterCover from"../assets/creator/character-cover.svg";
+import BlogPanel from"../components/BlogPanel.jsx";
+import SuppressionPanel from"../components/SuppressionPanel";
+import AdminShell from"../components/AdminShell";
+import AnnouncementsPanel from"../components/AnnouncementsPanel";
+import { usePrivatePage } from"../data/pageMeta";
 
 // What is happening across VantaOrigin, for whoever runs it: the numbers, the
 // reports waiting to be dealt with, who has joined, and what people like.
 
 const REASONS = {
-  copyright: "Copyright or stolen work",
-  inappropriate: "Inappropriate content",
-  harassment: "Harassment or abuse",
-  spam: "Spam",
-  other: "Other",
+  copyright:"Copyright or stolen work",
+  inappropriate:"Inappropriate content",
+  harassment:"Harassment or abuse",
+  spam:"Spam",
+  other:"Other",
 };
 
-const TABS = ["Reports", "Creators", "Characters", "Blog", "Newsletter", "Letters", "Announcements", "Blocked"];
+const TABS = ["Reports","Creators","Characters","Blog","Newsletter","Letters","Announcements","Blocked"];
 
 const day = (value) =>
-  value ? new Date(value).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "Not yet";
+  value ? new Date(value).toLocaleDateString(undefined, { day:"numeric", month:"short", year:"numeric" }) :"Not yet";
 
 // Where people stop.
 //
@@ -60,14 +61,14 @@ function Journey({ days = 30 }) {
     };
   }, [days]);
 
-  if (!answer) return <Skeleton className="mt-4 h-[168px] rounded-2xl" />;
+  if (!answer) return <Skeleton className="mt-4 h-[168px] rounded-xl" />;
 
   const { joined, verified, made, published } = answer.recent;
   const steps = [
-    { label: "Made an account", value: joined },
-    { label: "Confirmed their email", value: verified },
-    { label: "Made a character", value: made },
-    { label: "Published one", value: published },
+    { label:"Made an account", value: joined },
+    { label:"Confirmed their email", value: verified },
+    { label:"Made a character", value: made },
+    { label:"Published one", value: published },
   ];
 
   // The largest fall between two steps, which is where to look first.
@@ -80,12 +81,12 @@ function Journey({ days = 30 }) {
   }
 
   return (
-    <section className="mt-4 rounded-2xl border border-white/10 bg-[#222b3c] p-5">
+    <section className="mt-4 rounded-xl border border-[#e6e8ec] bg-white p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="font-ui text-base font-bold text-white">
+        <h2 className="font-ui text-base font-bold text-[#1b2233]">
           How far people get, these last {answer.days} days
         </h2>
-        <p className="font-ui text-sm text-neutral-500">
+        <p className="font-ui text-sm text-[#677181]">
           {answer.allTime.published} of {answer.allTime.joined} have ever published
         </p>
       </div>
@@ -96,7 +97,7 @@ function Journey({ days = 30 }) {
           const lost = index === 0 ? 0 : steps[index - 1].value - step.value;
           return (
             <li key={step.label} className="flex items-center gap-3">
-              <span className="w-[150px] shrink-0 font-ui text-sm text-neutral-300 sm:w-[170px]">
+              <span className="w-[150px] shrink-0 font-ui text-sm text-[#39435a] sm:w-[170px]">
                 {step.label}
               </span>
               <span className="relative h-7 min-w-[2px] flex-1 overflow-hidden rounded-md bg-black/25">
@@ -105,12 +106,12 @@ function Journey({ days = 30 }) {
                   style={{ width: `${Math.max(share, step.value ? 2 : 0)}%` }}
                 />
               </span>
-              <span className="w-[86px] shrink-0 text-right font-ui text-sm text-white">
+              <span className="w-[86px] shrink-0 text-right font-ui text-sm text-[#1b2233]">
                 {step.value}
-                <span className="ml-1.5 text-neutral-500">{share}%</span>
+                <span className="ml-1.5 text-[#677181]">{share}%</span>
               </span>
-              <span className="hidden w-[76px] shrink-0 text-right font-ui text-sm text-neutral-500 sm:block">
-                {lost > 0 ? `−${lost}` : ""}
+              <span className="hidden w-[76px] shrink-0 text-right font-ui text-sm text-[#677181] sm:block">
+                {lost > 0 ? `−${lost}` :""}
               </span>
             </li>
           );
@@ -118,14 +119,14 @@ function Journey({ days = 30 }) {
       </ol>
 
       {worst && (
-        <p className="mt-4 font-ui text-sm text-neutral-400">
-          Most are lost between <span className="text-white">{worst.from.toLowerCase()}</span> and{" "}
-          <span className="text-white">{worst.to.toLowerCase()}</span>: {worst.lost}{" "}
-          {worst.lost === 1 ? "person" : "people"}.
+        <p className="mt-4 font-ui text-sm text-[#677181]">
+          Most are lost between <span className="text-[#1b2233]">{worst.from.toLowerCase()}</span> and{" "}
+          <span className="text-[#1b2233]">{worst.to.toLowerCase()}</span>: {worst.lost}{" "}
+          {worst.lost === 1 ?"person" :"people"}.
         </p>
       )}
       {!worst && joined > 0 && (
-        <p className="mt-4 font-ui text-sm text-neutral-400">
+        <p className="mt-4 font-ui text-sm text-[#677181]">
           Everybody who joined got all the way through.
         </p>
       )}
@@ -133,38 +134,50 @@ function Journey({ days = 30 }) {
   );
 }
 
+// A number, with no card around it.
+//
+// Six bordered boxes in a row is six borders, six corner radii and six
+// fills to say one thing each. Catalyst's dashboard does the same job with
+// bare numbers on white separated by hairlines, and it reads as quieter
+// without losing anything. Geist puts it as a rule: draw each border once.
+//
+// The note was a blue that meant nothing. Numbers that are merely context
+// are muted; the figure itself carries the weight, which is the only
+// hierarchy this needs.
 function Figure({ label, value, note }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-[#222b3c] p-5">
-      <p className="font-ui text-sm text-neutral-400">{label}</p>
-      <p className="mt-1 font-ui text-3xl font-black text-white">{value}</p>
-      {note && <p className="mt-1 font-ui text-sm text-[#6b8ff5]">{note}</p>}
+    <div className="border-l border-[#e6e8ec] px-5 py-1 first:border-l-0 first:pl-0">
+      <p className="font-ui text-sm text-[#677181]">{label}</p>
+      {/* Tabular figures, so a column of numbers lines up rather than
+          wobbling as the digits change. */}
+      <p className="mt-1 font-ui text-3xl font-bold tabular-nums text-[#1b2233]">{value}</p>
+      {note && <p className="mt-1 font-ui text-sm text-[#677181]">{note}</p>}
     </div>
   );
 }
 
 function ReportCard({ report, onSettle, busy }) {
   return (
-    <article className="rounded-2xl border border-white/10 bg-[#222b3c] p-5">
+    <article className="rounded-xl border border-[#e6e8ec] bg-white p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-ui text-base font-bold text-white">
+          <p className="font-ui text-base font-bold text-[#1b2233]">
             {REASONS[report.reason] || report.reason}
           </p>
-          <p className="mt-1 font-ui text-sm text-neutral-400">
-            About <span className="text-white">{report.subject?.username || "a deleted account"}</span>
-            {" · "}
-            from {report.reporter?.username || "a deleted account"}
-            {" · "}
+          <p className="mt-1 font-ui text-sm text-[#677181]">
+            About <span className="text-[#1b2233]">{report.subject?.username ||"a deleted account"}</span>
+            {" ·"}
+            from {report.reporter?.username ||"a deleted account"}
+            {" ·"}
             {day(report.createdAt)}
           </p>
         </div>
 
         <span
           className={`shrink-0 rounded-full px-3 py-1 font-ui text-xs font-bold ${
-            report.status === "open"
-              ? "bg-[#3a2030] text-[#ffb4c4]"
-              : "bg-white/10 text-neutral-300"
+            report.status ==="open"
+              ?"bg-[#fdf2f7] text-[#9b1c44]"
+              :"bg-[#f1f2f5] text-[#39435a]"
           }`}
         >
           {report.status}
@@ -172,7 +185,7 @@ function ReportCard({ report, onSettle, busy }) {
       </div>
 
       {report.message && (
-        <p className="mt-3 whitespace-pre-line rounded-xl bg-black/25 px-4 py-3 font-ui text-sm leading-relaxed text-neutral-200">
+        <p className="mt-3 whitespace-pre-line rounded-xl bg-black/25 px-4 py-3 font-ui text-sm leading-relaxed text-[#39435a]">
           {report.message}
         </p>
       )}
@@ -181,26 +194,26 @@ function ReportCard({ report, onSettle, busy }) {
         {report.characterId && (
           <Link
             to={`/character/${report.characterSlug || report.characterId}`}
-            className="rounded-full border border-white/30 px-4 py-2 font-ui text-sm text-white hover:bg-white/10"
+            className="rounded-full border border-[#e6e8ec] px-4 py-2 font-ui text-sm text-[#1b2233] hover:bg-[#f1f2f5]"
           >
             See the character
           </Link>
         )}
         {report.subject?.username && (
           <Link
-            to={`/creator/${report.subject.username.replace(/^@/, "")}`}
-            className="rounded-full border border-white/30 px-4 py-2 font-ui text-sm text-white hover:bg-white/10"
+            to={`/creator/${report.subject.username.replace(/^@/,"")}`}
+            className="rounded-full border border-[#e6e8ec] px-4 py-2 font-ui text-sm text-[#1b2233] hover:bg-[#f1f2f5]"
           >
             See their page
           </Link>
         )}
 
-        {report.status === "open" && (
+        {report.status ==="open" && (
           <>
             <button
               type="button"
               disabled={busy}
-              onClick={() => onSettle(report.id, "reviewed")}
+              onClick={() => onSettle(report.id,"reviewed")}
               className="rounded-full bg-[#3ecf6a] px-4 py-2 font-ui text-sm font-bold text-white hover:opacity-90 disabled:opacity-50"
             >
               Acted on it
@@ -208,8 +221,8 @@ function ReportCard({ report, onSettle, busy }) {
             <button
               type="button"
               disabled={busy}
-              onClick={() => onSettle(report.id, "dismissed")}
-              className="rounded-full border border-white/30 px-4 py-2 font-ui text-sm text-neutral-300 hover:bg-white/10 disabled:opacity-50"
+              onClick={() => onSettle(report.id,"dismissed")}
+              className="rounded-full border border-[#e6e8ec] px-4 py-2 font-ui text-sm text-[#39435a] hover:bg-[#f1f2f5] disabled:opacity-50"
             >
               Nothing in it
             </button>
@@ -259,26 +272,26 @@ function ShrinkPictures({ onTrouble }) {
 
   return (
     <div className="flex flex-col gap-2 rounded-xl bg-black/25 p-4">
-      <p className="font-ui text-sm font-bold text-white">Shrink the stored pictures</p>
+      <p className="font-ui text-sm font-bold text-[#1b2233]">Shrink the stored pictures</p>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="font-ui text-sm text-neutral-400">
+        <p className="font-ui text-sm text-[#677181]">
           {state?.running
             ? `Working through them… ${state.shrunk} shrunk, ${megabytes(state.saved)} saved so far.`
             : state?.finishedAt
               ? `${state.shrunk} shrunk, ${state.skipped} already fine, ${megabytes(state.saved)} saved.`
-              : "Pictures uploaded before now were stored at full size. Their addresses do not change."}
+              :"Pictures uploaded before now were stored at full size. Their addresses do not change."}
         </p>
         <button
           type="button"
           onClick={begin}
           disabled={state?.running}
-          className="shrink-0 rounded-full border border-white/25 px-5 py-2.5 font-ui text-sm text-white hover:bg-white/10 disabled:opacity-40"
+          className="shrink-0 rounded-full border border-[#e6e8ec] px-5 py-2.5 font-ui text-sm text-[#1b2233] hover:bg-[#f1f2f5] disabled:opacity-40"
         >
-          {state?.running ? "Running…" : "Shrink them"}
+          {state?.running ?"Running…" :"Shrink them"}
         </button>
       </div>
       {state?.failed > 0 && (
-        <p className="font-ui text-sm text-[#ffb4c4]">
+        <p className="font-ui text-sm text-[#9b1c44]">
           {state.failed} could not be read, and were left as they were.
         </p>
       )}
@@ -306,7 +319,7 @@ function WelcomeAgain({ onTrouble }) {
 
   return (
     <div className="flex flex-col gap-2 rounded-xl bg-black/25 p-4">
-      <p className="font-ui text-sm font-bold text-white">Send the welcome letter again</p>
+      <p className="font-ui text-sm font-bold text-[#1b2233]">Send the welcome letter again</p>
       <div className="flex flex-wrap items-center gap-2">
         <input
           type="email"
@@ -316,23 +329,23 @@ function WelcomeAgain({ onTrouble }) {
             setState("");
           }}
           placeholder="An address that already has an account"
-          className="h-11 min-w-[220px] flex-1 rounded-full border border-white/15 bg-black/25 px-5 font-ui text-sm text-white outline-none placeholder:text-neutral-500 focus:border-[#6b8ff5]"
+          className="h-11 min-w-[220px] flex-1 rounded-full border border-[#e6e8ec] bg-black/25 px-5 font-ui text-sm text-[#1b2233] outline-none placeholder:text-[#677181] focus:border-[#6b8ff5]"
         />
         <button
           type="button"
           onClick={send}
-          disabled={!to.includes("@") || state === "Sending…"}
-          className="shrink-0 rounded-full border border-white/25 px-5 py-2.5 font-ui text-sm text-white hover:bg-white/10 disabled:opacity-40"
+          disabled={!to.includes("@") || state ==="Sending…"}
+          className="shrink-0 rounded-full border border-[#e6e8ec] px-5 py-2.5 font-ui text-sm text-[#1b2233] hover:bg-[#f1f2f5] disabled:opacity-40"
         >
           Send it
         </button>
       </div>
-      {state && <p className="font-ui text-sm text-neutral-400">{state}</p>}
+      {state && <p className="font-ui text-sm text-[#677181]">{state}</p>}
     </div>
   );
 }
 
-// Who hears from VantaOrigin. The useful question is usually "is this person
+// Who hears from VantaOrigin. The useful question is usually"is this person
 // on it?", so the search box comes before the list.
 // Putting addresses on the list: a file chosen, or a list pasted in.
 //
@@ -375,11 +388,11 @@ function BringThemBack({ onClose, onDone, onTrouble }) {
   };
 
   return (
-    <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+    <div className="rounded-xl border border-[#e6e8ec] bg-black/20 p-4">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="font-ui text-sm font-bold text-white">Import addresses</p>
-          <p className="mt-1 font-ui text-xs leading-relaxed text-neutral-400">
+          <p className="font-ui text-sm font-bold text-[#1b2233]">Import addresses</p>
+          <p className="mt-1 font-ui text-xs leading-relaxed text-[#677181]">
             A CSV, a column from a spreadsheet, or addresses separated by commas.
             Nobody is emailed: they go on the list and get the next letter.
           </p>
@@ -387,7 +400,7 @@ function BringThemBack({ onClose, onDone, onTrouble }) {
         <button
           type="button"
           onClick={onClose}
-          className="shrink-0 rounded-full px-3 py-1 font-ui text-xs text-neutral-400 hover:text-white"
+          className="shrink-0 rounded-full px-3 py-1 font-ui text-xs text-[#677181] hover:text-[#1b2233]"
         >
           Close
         </button>
@@ -399,11 +412,11 @@ function BringThemBack({ onClose, onDone, onTrouble }) {
         rows={4}
         placeholder={"someone@example.com, another@example.com"}
         aria-label="Addresses to add"
-        className="mt-3 w-full resize-y rounded-lg border border-white/15 bg-black/30 px-4 py-3 font-ui text-sm leading-relaxed text-white outline-none placeholder:text-neutral-600 focus:border-[#6b8ff5]"
+        className="mt-3 w-full resize-y rounded-md border border-[#e6e8ec] bg-black/30 px-4 py-3 font-ui text-sm leading-relaxed text-[#1b2233] outline-none placeholder:text-[#677181] focus:border-[#6b8ff5]"
       />
 
       <div className="mt-3 flex flex-wrap items-center gap-3">
-        <label className="cursor-pointer rounded-full border border-white/20 px-4 py-2 font-ui text-xs text-neutral-300 transition-colors hover:bg-white/10">
+        <label className="cursor-pointer rounded-full border border-[#e6e8ec] px-4 py-2 font-ui text-xs text-[#39435a] transition-colors hover:bg-[#f1f2f5]">
           Choose a file
           <input
             type="file"
@@ -419,15 +432,15 @@ function BringThemBack({ onClose, onDone, onTrouble }) {
           disabled={busy || !text.trim()}
           className="rounded-full bg-[#6b8ff5] px-5 py-2 font-ui text-xs font-bold text-[#101725] transition-opacity hover:opacity-90 disabled:opacity-40"
         >
-          {busy ? "Adding…" : "Add them"}
+          {busy ?"Adding…" :"Add them"}
         </button>
       </div>
 
       {/* Said per address as well as in total: an import that reports only a
           number leaves you wondering which ones it meant. */}
       {answer && (
-        <div className="mt-4 rounded-lg border border-white/10 bg-black/20 p-3">
-          <p className="font-ui text-sm text-white">
+        <div className="mt-4 rounded-md border border-[#e6e8ec] bg-black/20 p-3">
+          <p className="font-ui text-sm text-[#1b2233]">
             {[
               answer.added && `${answer.added} added`,
               answer.returned && `${answer.returned} brought back`,
@@ -435,19 +448,19 @@ function BringThemBack({ onClose, onDone, onTrouble }) {
               answer.failed && `${answer.failed} could not be read`,
             ]
               .filter(Boolean)
-              .join(", ") || "Nothing to do."}
+              .join(",") ||"Nothing to do."}
           </p>
-          <ul className="mt-2 max-h-40 overflow-y-auto font-ui text-xs leading-relaxed text-neutral-400">
+          <ul className="mt-2 max-h-40 overflow-y-auto font-ui text-xs leading-relaxed text-[#677181]">
             {answer.results.map((row) => (
               <li key={row.email} className="flex justify-between gap-4 py-0.5">
                 <span className="truncate">{row.email}</span>
                 <span
                   className={
-                    row.state === "added" || row.state === "returned"
-                      ? "shrink-0 text-[#5fdc8a]"
-                      : row.state === "already"
-                        ? "shrink-0 text-neutral-500"
-                        : "shrink-0 text-[#ffb4c4]"
+                    row.state ==="added" || row.state ==="returned"
+                      ?"shrink-0 text-[#5fdc8a]"
+                      : row.state ==="already"
+                        ?"shrink-0 text-[#677181]"
+                        :"shrink-0 text-[#9b1c44]"
                   }
                 >
                   {row.state}
@@ -522,16 +535,16 @@ function NewsletterPanel({ onTrouble }) {
           count and the search, which is not where either belongs: they are
           occasional jobs, not part of reading the list. They are below the
           table now. */}
-      <div className="flex flex-col gap-5 rounded-2xl border border-white/10 bg-[#222b3c] p-5">
+      <div className="flex flex-col gap-5 rounded-xl border border-[#e6e8ec] bg-white p-5">
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
           <div className="min-w-0">
-            <p className="font-ui text-xl font-bold leading-tight text-white">
-              {counts ? `${counts.subscribed} on the list` : "Counting…"}
+            <p className="font-ui text-xl font-bold leading-tight text-[#1b2233]">
+              {counts ? `${counts.subscribed} on the list` :"Counting…"}
             </p>
-            <p className="mt-1.5 font-ui text-sm leading-relaxed text-neutral-400">
+            <p className="mt-1.5 font-ui text-sm leading-relaxed text-[#677181]">
               {counts
-                ? `${counts.unsubscribed} ${counts.unsubscribed === 1 ? "has" : "have"} left. Every new account joins, and can leave from any email we send.`
-                : " "}
+                ? `${counts.unsubscribed} ${counts.unsubscribed === 1 ?"has" :"have"} left. Every new account joins, and can leave from any email we send.`
+                :""}
             </p>
           </div>
 
@@ -543,13 +556,13 @@ function NewsletterPanel({ onTrouble }) {
               type="button"
               onClick={() => setImporting((was) => !was)}
               aria-expanded={importing}
-              className="h-10 rounded-full border border-white/25 px-5 font-ui text-sm text-white transition-colors hover:bg-white/10"
+              className="h-10 rounded-full border border-[#e6e8ec] px-5 font-ui text-sm text-[#1b2233] transition-colors hover:bg-[#f1f2f5]"
             >
               Import addresses
             </button>
             <a
               href={subscribersFileUrl("subscribed")}
-              className="flex h-10 items-center rounded-full border border-white/25 px-5 font-ui text-sm text-white transition-colors hover:bg-white/10"
+              className="flex h-10 items-center rounded-full border border-[#e6e8ec] px-5 font-ui text-sm text-[#1b2233] transition-colors hover:bg-[#f1f2f5]"
             >
               Download CSV
             </a>
@@ -572,19 +585,19 @@ function NewsletterPanel({ onTrouble }) {
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search an address…"
-              className="h-11 w-full rounded-full border border-white/15 bg-black/25 px-5 font-ui text-sm text-white outline-none placeholder:text-neutral-500 focus:border-[#6b8ff5]"
+              className="h-11 w-full rounded-full border border-[#e6e8ec] bg-black/25 px-5 font-ui text-sm text-[#1b2233] outline-none placeholder:text-[#677181] focus:border-[#6b8ff5]"
             />
           </label>
 
           <div className="flex flex-wrap gap-2">
-            {["all", "subscribed", "unsubscribed"].map((name) => (
+            {["all","subscribed","unsubscribed"].map((name) => (
               <button
                 key={name}
                 type="button"
                 onClick={() => setStatus(name)}
                 aria-pressed={status === name}
                 className={`rounded-full px-4 py-1.5 font-ui text-sm transition-colors ${
-                  status === name ? "bg-[#2b3547] text-white" : "text-neutral-400 hover:text-white"
+                  status === name ?"bg-white text-[#1b2233]" :"text-[#677181] hover:text-[#1b2233]"
                 }`}
               >
                 {name}
@@ -594,20 +607,20 @@ function NewsletterPanel({ onTrouble }) {
         </div>
       </div>
 
-      {!answer && <Skeleton className="mt-4 h-[220px] rounded-2xl" />}
+      {!answer && <Skeleton className="mt-4 h-[220px] rounded-xl" />}
 
       {answer?.rows.length === 0 && (
-        <p className="mt-4 rounded-2xl border border-dashed border-white/15 px-6 py-12 text-center font-ui text-base text-neutral-400">
-          {query ? `Nobody matching “${query}”.` : "Nobody on the list yet."}
+        <p className="mt-4 rounded-xl border border-dashed border-[#e6e8ec] px-6 py-12 text-center font-ui text-base text-[#677181]">
+          {query ? `Nobody matching “${query}”.` :"Nobody on the list yet."}
         </p>
       )}
 
       {answer && answer.rows.length > 0 && (
-        <div className="mt-4 overflow-hidden rounded-2xl border border-white/10">
+        <div className="mt-4 overflow-hidden rounded-xl border border-[#e6e8ec]">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] border-collapse text-left">
               <thead>
-                <tr className="bg-[#222b3c] font-ui text-sm text-neutral-400">
+                <tr className="bg-white font-ui text-sm text-[#677181]">
                   <th className="px-5 py-3 font-normal">Address</th>
                   <th className="px-5 py-3 font-normal">Joined by</th>
                   <th className="px-5 py-3 font-normal">Account</th>
@@ -620,44 +633,44 @@ function NewsletterPanel({ onTrouble }) {
               </thead>
               <tbody>
                 {answer.rows.map((row) => (
-                  <tr key={row.id} className="border-t border-white/5 bg-[#1e2637]">
-                    <td className="px-5 py-3 font-ui text-sm text-white">{row.email}</td>
-                    <td className="px-5 py-3 font-ui text-sm text-neutral-400">
-                      {row.source === "signup"
-                        ? "signing up"
-                        : row.source === "google"
-                          ? "Google sign-up"
-                          : row.source === "import"
-                            ? "an import"
-                            : "the footer"}
+                  <tr key={row.id} className="border-t border-[#e6e8ec] bg-[#1e2637]">
+                    <td className="px-5 py-3 font-ui text-sm text-[#1b2233]">{row.email}</td>
+                    <td className="px-5 py-3 font-ui text-sm text-[#677181]">
+                      {row.source ==="signup"
+                        ?"signing up"
+                        : row.source ==="google"
+                          ?"Google sign-up"
+                          : row.source ==="import"
+                            ?"an import"
+                            :"the footer"}
                     </td>
                     <td className="px-5 py-3 font-ui text-sm">
-                      <span className={row.hasAccount ? "text-[#5fdc8a]" : "text-neutral-500"}>
-                        {row.hasAccount ? "Yes" : "No"}
+                      <span className={row.hasAccount ?"text-[#5fdc8a]" :"text-[#677181]"}>
+                        {row.hasAccount ?"Yes" :"No"}
                       </span>
                     </td>
                     <td className="px-5 py-3 font-ui text-sm">
                       <span
                         className={`rounded-full px-3 py-1 text-xs font-bold ${
-                          row.status === "subscribed"
-                            ? "bg-white/10 text-neutral-200"
-                            : "bg-[#3a2030] text-[#ffb4c4]"
+                          row.status ==="subscribed"
+                            ?"bg-[#f1f2f5] text-[#39435a]"
+                            :"bg-[#fdf2f7] text-[#9b1c44]"
                         }`}
                       >
                         {row.status}
                       </span>
                     </td>
-                    <td className="px-5 py-3 font-ui text-sm text-neutral-400">
+                    <td className="px-5 py-3 font-ui text-sm text-[#677181]">
                       {day(row.unsubscribedAt || row.createdAt)}
                     </td>
                     <td className="px-5 py-3">
                       <div className="flex flex-wrap justify-end gap-2">
-                        {row.status === "subscribed" ? (
+                        {row.status ==="subscribed" ? (
                           <button
                             type="button"
                             disabled={busyId === row.id}
-                            onClick={() => act(row.id, () => setSubscriberStatus(row.id, "unsubscribed"))}
-                            className="rounded-full border border-white/25 px-4 py-1.5 font-ui text-sm text-neutral-300 hover:bg-white/10 disabled:opacity-50"
+                            onClick={() => act(row.id, () => setSubscriberStatus(row.id,"unsubscribed"))}
+                            className="rounded-full border border-[#e6e8ec] px-4 py-1.5 font-ui text-sm text-[#39435a] hover:bg-[#f1f2f5] disabled:opacity-50"
                           >
                             Take off
                           </button>
@@ -665,8 +678,8 @@ function NewsletterPanel({ onTrouble }) {
                           <button
                             type="button"
                             disabled={busyId === row.id}
-                            onClick={() => act(row.id, () => setSubscriberStatus(row.id, "subscribed"))}
-                            className="rounded-full border border-white/25 px-4 py-1.5 font-ui text-sm text-neutral-300 hover:bg-white/10 disabled:opacity-50"
+                            onClick={() => act(row.id, () => setSubscriberStatus(row.id,"subscribed"))}
+                            className="rounded-full border border-[#e6e8ec] px-4 py-1.5 font-ui text-sm text-[#39435a] hover:bg-[#f1f2f5] disabled:opacity-50"
                           >
                             Put back
                           </button>
@@ -686,7 +699,7 @@ function NewsletterPanel({ onTrouble }) {
                           <button
                             type="button"
                             onClick={() => setConfirming(row.id)}
-                            className="rounded-full px-3 py-1.5 font-ui text-sm text-neutral-500 hover:text-[#ffb4c4]"
+                            className="rounded-full px-3 py-1.5 font-ui text-sm text-[#677181] hover:text-[#9b1c44]"
                           >
                             Erase
                           </button>
@@ -700,7 +713,7 @@ function NewsletterPanel({ onTrouble }) {
           </div>
 
           {answer.matching > answer.rows.length && (
-            <p className="border-t border-white/5 bg-[#222b3c] px-5 py-3 font-ui text-sm text-neutral-400">
+            <p className="border-t border-[#e6e8ec] bg-white px-5 py-3 font-ui text-sm text-[#677181]">
               Showing the newest {answer.rows.length} of {answer.matching}. Search to narrow it down.
             </p>
           )}
@@ -709,8 +722,8 @@ function NewsletterPanel({ onTrouble }) {
 
       {/* Neither of these is about the list. They were between the count and
           the search, in front of the one job this screen exists for. */}
-      <div className="mt-6 flex flex-col gap-4 rounded-2xl border border-white/10 bg-[#222b3c] p-5">
-        <p className="font-ui text-xs font-bold uppercase tracking-[0.12em] text-neutral-500">
+      <div className="mt-6 flex flex-col gap-4 rounded-xl border border-[#e6e8ec] bg-white p-5">
+        <p className="font-ui text-xs font-bold uppercase tracking-[0.12em] text-[#677181]">
           Other jobs
         </p>
         <WelcomeAgain onTrouble={onTrouble} />
@@ -724,7 +737,7 @@ export default function Admin() {
   // Never a search result: see usePrivatePage.
   usePrivatePage();
   const [overview, setOverview] = useState(null);
-  const [tab, setTab] = useState("Reports");
+  const [tab, setTab] = useState("Overview");
   const [reportFilter, setReportFilter] = useState("open");
   const [reports, setReports] = useState(null);
   const [creators, setCreators] = useState(null);
@@ -756,9 +769,9 @@ export default function Admin() {
 
     const load = async () => {
       try {
-        if (tab === "Reports") setReports(await loadReports(reportFilter));
-        if (tab === "Creators" && !creators) setCreators(await loadCreators());
-        if (tab === "Characters" && !characters) setCharacters(await loadTopCharacters());
+        if (tab ==="Reports") setReports(await loadReports(reportFilter));
+        if (tab ==="Creators" && !creators) setCreators(await loadCreators());
+        if (tab ==="Characters" && !characters) setCharacters(await loadTopCharacters());
       } catch (error) {
         if (!cancelled) setProblem(error.message);
       }
@@ -796,88 +809,84 @@ export default function Admin() {
   };
 
 
+  // What each section is for, said once at the top rather than repeated
+  // inside every panel.
+  const ABOUT = {
+    Overview:"Everything happening across VantaOrigin, as it stands right now.",
+    Reports:"What people have flagged, and what was done about it.",
+    Creators:"Who has joined, and how far they have got.",
+    Characters:"What has been made, and what people like.",
+    Blog:"Posts, drafts, and what is published.",
+    Letters:"Write and send the creator newsletter.",
+    Announcements:"For things people cannot opt out of. Everything else belongs in the newsletter.",
+    Newsletter:"Who is on the list, and how they got there.",
+    Blocked:"Addresses nothing is sent to, and whether the sender is telling us anything.",
+  };
+
   return (
-    <div className="min-h-screen bg-[#1b2233] pb-20">
-      <DashboardNav />
-
-      <div className="mx-auto w-full max-w-[1100px] px-4 py-8 sm:px-6">
-        <h1 className="font-ui text-3xl font-black text-white sm:text-4xl">Site activity</h1>
-        <p className="mt-2 font-ui text-base text-neutral-400">
-          Everything happening across VantaOrigin, as it stands right now.
+    <AdminShell
+      tab={tab}
+      onPick={setTab}
+      counts={{ Reports: overview?.openReports ?? 0 }}
+      title={tab}
+      intro={ABOUT[tab]}
+    >
+      {problem && (
+        <p
+          role="alert"
+          className="mb-6 rounded-xl border border-[#f3c6d4] bg-[#fdf2f7] px-5 py-4 font-ui text-base text-[#9b1c44]"
+        >
+          {problem}
         </p>
+      )}
 
-        {problem && (
-          <p role="alert" className="mt-5 rounded-xl bg-[#3a2030] px-5 py-4 font-ui text-base text-[#ffb4c4]">
-            {problem}
-          </p>
-        )}
+      {tab ==="Overview" && (
+        <section>
+          <div className="grid grid-cols-2 gap-y-6 rounded-xl border border-[#e6e8ec] bg-white px-6 py-5 md:grid-cols-3">
+            {overview ? (
+              <>
+                <Figure
+                  label="Creators"
+                  value={overview.creators.total}
+                  note={`${overview.creators.thisWeek} this week`}
+                />
+                <Figure
+                  label="Verified emails"
+                  value={overview.creators.verified}
+                  note={`of ${overview.creators.total}`}
+                />
+                <Figure
+                  label="Characters"
+                  value={overview.characters.total}
+                  note={`${overview.characters.public} published`}
+                />
+                <Figure label="Likes" value={overview.likes} note={`${overview.posts} posts`} />
+                <Figure
+                  label="Reports waiting"
+                  value={overview.openReports}
+                  note={overview.openReports ?"needs a look" :"all clear"}
+                />
+                <Figure
+                  label="Newsletter"
+                  value={overview.newsletter?.subscribed ?? 0}
+                  note={`${overview.newsletter?.thisWeek ?? 0} this week`}
+                />
+              </>
+            ) : (
+              Array.from({ length: 6 }).map((_, index) => (
+                <Skeleton key={index} className="h-[104px] rounded-xl" />
+              ))
+            )}
+          </div>
 
-        {/* The numbers */}
-        <div className="mt-7 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-6">
-          {overview ? (
-            <>
-              <Figure
-                label="Creators"
-                value={overview.creators.total}
-                note={`${overview.creators.thisWeek} this week`}
-              />
-              <Figure
-                label="Verified emails"
-                value={overview.creators.verified}
-                note={`of ${overview.creators.total}`}
-              />
-              <Figure
-                label="Characters"
-                value={overview.characters.total}
-                note={`${overview.characters.public} published`}
-              />
-              <Figure label="Likes" value={overview.likes} note={`${overview.posts} posts`} />
-              <Figure
-                label="Reports waiting"
-                value={overview.openReports}
-                note={overview.openReports ? "needs a look" : "all clear"}
-              />
-              <Figure
-                label="Newsletter"
-                value={overview.newsletter?.subscribed ?? 0}
-                note={`${overview.newsletter?.thisWeek ?? 0} this week`}
-              />
-            </>
-          ) : (
-            Array.from({ length: 6 }).map((_, index) => (
-              <Skeleton key={index} className="h-[104px] rounded-2xl" />
-            ))
-          )}
-        </div>
+          <Journey />
+        </section>
+      )}
 
-        <Journey />
-
-        {/* Which list */}
-        <div className="mt-9 flex flex-wrap items-center gap-2">
-          {TABS.map((name) => (
-            <button
-              key={name}
-              type="button"
-              onClick={() => setTab(name)}
-              aria-pressed={tab === name}
-              className={`rounded-full px-5 py-2.5 font-ui text-sm font-bold transition-colors sm:text-base ${
-                tab === name ? "bg-white text-black" : "bg-white/5 text-neutral-300 hover:text-white"
-              }`}
-            >
-              {name}
-              {name === "Reports" && overview?.openReports > 0 && (
-                <span className="ml-2 rounded-full bg-[#c2185b] px-2 py-0.5 font-ui text-xs text-white">
-                  {overview.openReports}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-
-        {tab === "Reports" && (
+        {tab ==="Reports" && (
           <section className="mt-5">
             <div className="flex flex-wrap gap-2">
-              {["open", "reviewed", "dismissed", "all"].map((status) => (
+              {["open","reviewed","dismissed","all"].map((status) => (
                 <button
                   key={status}
                   type="button"
@@ -888,8 +897,8 @@ export default function Admin() {
                   aria-pressed={reportFilter === status}
                   className={`rounded-full px-4 py-1.5 font-ui text-sm transition-colors ${
                     reportFilter === status
-                      ? "bg-[#2b3547] text-white"
-                      : "text-neutral-400 hover:text-white"
+                      ?"bg-white text-[#1b2233]"
+                      :"text-[#677181] hover:text-[#1b2233]"
                   }`}
                 >
                   {status}
@@ -898,10 +907,10 @@ export default function Admin() {
             </div>
 
             <div className="mt-4 flex flex-col gap-3">
-              {!reports && <Skeleton className="h-[140px] rounded-2xl" />}
+              {!reports && <Skeleton className="h-[140px] rounded-xl" />}
               {reports?.length === 0 && (
-                <p className="rounded-2xl border border-dashed border-white/15 px-6 py-12 text-center font-ui text-base text-neutral-400">
-                  {reportFilter === "open" ? "No reports waiting." : `No ${reportFilter} reports.`}
+                <p className="rounded-xl border border-dashed border-[#e6e8ec] px-6 py-12 text-center font-ui text-base text-[#677181]">
+                  {reportFilter ==="open" ?"No reports waiting." : `No ${reportFilter} reports.`}
                 </p>
               )}
               {reports?.map((report) => (
@@ -916,14 +925,14 @@ export default function Admin() {
           </section>
         )}
 
-        {tab === "Creators" && (
-          <section className="mt-5 overflow-hidden rounded-2xl border border-white/10">
+        {tab ==="Creators" && (
+          <section className="mt-5 overflow-hidden rounded-xl border border-[#e6e8ec]">
             {!creators && <Skeleton className="h-[220px]" />}
             {creators && (
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[620px] border-collapse text-left">
                   <thead>
-                    <tr className="bg-[#222b3c] font-ui text-sm text-neutral-400">
+                    <tr className="bg-white font-ui text-sm text-[#677181]">
                       <th className="px-5 py-3 font-normal">Creator</th>
                       <th className="px-5 py-3 font-normal">Email</th>
                       <th className="px-5 py-3 font-normal">Characters</th>
@@ -933,28 +942,28 @@ export default function Admin() {
                   </thead>
                   <tbody>
                     {creators.map((creator) => (
-                      <tr key={creator.id} className="border-t border-white/5 bg-[#1e2637]">
+                      <tr key={creator.id} className="border-t border-[#e6e8ec] bg-[#1e2637]">
                         <td className="px-5 py-3">
                           <Link
-                            to={`/creator/${creator.username.replace(/^@/, "")}`}
-                            className="font-ui text-base font-bold text-white hover:text-[#6b8ff5]"
+                            to={`/creator/${creator.username.replace(/^@/,"")}`}
+                            className="font-ui text-base font-bold text-[#1b2233] hover:text-[#6b8ff5]"
                           >
                             {creator.username}
                           </Link>
                           {(creator.firstName || creator.lastName) && (
-                            <span className="ml-2 font-ui text-sm text-neutral-400">
+                            <span className="ml-2 font-ui text-sm text-[#677181]">
                               {creator.firstName} {creator.lastName}
                             </span>
                           )}
                         </td>
-                        <td className="px-5 py-3 font-ui text-sm text-neutral-300">{creator.email}</td>
-                        <td className="px-5 py-3 font-ui text-base text-white">{creator.characters}</td>
+                        <td className="px-5 py-3 font-ui text-sm text-[#39435a]">{creator.email}</td>
+                        <td className="px-5 py-3 font-ui text-base text-[#1b2233]">{creator.characters}</td>
                         <td className="px-5 py-3 font-ui text-sm">
-                          <span className={creator.emailVerified ? "text-[#5fdc8a]" : "text-neutral-500"}>
-                            {creator.emailVerified ? "Yes" : "No"}
+                          <span className={creator.emailVerified ?"text-[#5fdc8a]" :"text-[#677181]"}>
+                            {creator.emailVerified ?"Yes" :"No"}
                           </span>
                         </td>
-                        <td className="px-5 py-3 font-ui text-sm text-neutral-400">
+                        <td className="px-5 py-3 font-ui text-sm text-[#677181]">
                           {day(creator.createdAt)}
                         </td>
                       </tr>
@@ -966,19 +975,19 @@ export default function Admin() {
           </section>
         )}
 
-        {tab === "Blog" && <BlogPanel onTrouble={setProblem} />}
+        {tab ==="Blog" && <BlogPanel onTrouble={setProblem} />}
 
-        {tab === "Newsletter" && <NewsletterPanel onTrouble={setProblem} />}
-        {tab === "Announcements" && <AnnouncementsPanel onTrouble={setProblem} />}
-        {tab === "Blocked" && <SuppressionPanel onTrouble={setProblem} />}
+        {tab ==="Newsletter" && <NewsletterPanel onTrouble={setProblem} />}
+        {tab ==="Announcements" && <AnnouncementsPanel onTrouble={setProblem} />}
+        {tab ==="Blocked" && <SuppressionPanel onTrouble={setProblem} />}
 
-        {tab === "Letters" && <NewsletterLetters onTrouble={setProblem} />}
+        {tab ==="Letters" && <NewsletterLetters onTrouble={setProblem} />}
 
-        {tab === "Characters" && (
+        {tab ==="Characters" && (
           <section className="mt-5">
-            {!characters && <Skeleton className="h-[220px] rounded-2xl" />}
+            {!characters && <Skeleton className="h-[220px] rounded-xl" />}
             {characters?.length === 0 && (
-              <p className="rounded-2xl border border-dashed border-white/15 px-6 py-12 text-center font-ui text-base text-neutral-400">
+              <p className="rounded-xl border border-dashed border-[#e6e8ec] px-6 py-12 text-center font-ui text-base text-[#677181]">
                 No characters yet.
               </p>
             )}
@@ -987,9 +996,9 @@ export default function Admin() {
                 {characters.map((character, index) => (
                   <li
                     key={character.id}
-                    className="flex items-center gap-4 rounded-2xl border border-white/10 bg-[#222b3c] p-3"
+                    className="flex items-center gap-4 rounded-xl border border-[#e6e8ec] bg-white p-3"
                   >
-                    <span className="w-6 shrink-0 text-center font-ui text-base font-bold text-neutral-500">
+                    <span className="w-6 shrink-0 text-center font-ui text-base font-bold text-[#677181]">
                       {index + 1}
                     </span>
                     <img
@@ -1001,18 +1010,18 @@ export default function Admin() {
                     <div className="min-w-0 flex-1">
                       <Link
                         to={`/character/${character.slug || character.id}`}
-                        className="block truncate font-ui text-base font-bold text-white hover:text-[#6b8ff5]"
+                        className="block truncate font-ui text-base font-bold text-[#1b2233] hover:text-[#6b8ff5]"
                       >
                         {character.name}
                       </Link>
-                      <p className="truncate font-ui text-sm text-neutral-400">
-                        {character.creator} · {character.isPublic ? "published" : "private"} ·{" "}
+                      <p className="truncate font-ui text-sm text-[#677181]">
+                        {character.creator} · {character.isPublic ?"published" :"private"} ·{" "}
                         {day(character.createdAt)}
                       </p>
                     </div>
                     <span className="shrink-0 font-ui text-base font-bold text-[#f5af32]">
                       {character.likes}
-                      <span className="ml-1 font-normal text-neutral-400">likes</span>
+                      <span className="ml-1 font-normal text-[#677181]">likes</span>
                     </span>
                   </li>
                 ))}
@@ -1020,7 +1029,6 @@ export default function Admin() {
             )}
           </section>
         )}
-      </div>
-    </div>
+    </AdminShell>
   );
 }

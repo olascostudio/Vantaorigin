@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { Art, TextLine } from "./Loading.jsx";
-import { deletePost, getAdminPosts, publishPost, readableDate } from "../data/blog.js";
+import { useEffect, useState } from"react";
+import { Link } from"react-router-dom";
+import { Art, TextLine } from"./Loading.jsx";
+import { deletePost, getAdminPosts, publishPost, readableDate } from"../data/blog.js";
 
 // The list of everything written, draft and published together, newest
 // touched first. Writing happens on its own screen; this is for finding a
@@ -27,7 +27,7 @@ export default function BlogPanel({ onTrouble }) {
   const flip = async (post) => {
     setBusy(post.id);
     try {
-      await publishPost(post.id, post.status !== "published");
+      await publishPost(post.id, post.status !=="published");
       await load(filter);
     } catch (error) {
       onTrouble?.(error.message);
@@ -54,9 +54,9 @@ export default function BlogPanel({ onTrouble }) {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex gap-2">
           {[
-            ["", "Everything"],
-            ["published", "Published"],
-            ["draft", "Drafts"],
+            ["","Everything"],
+            ["published","Published"],
+            ["draft","Drafts"],
           ].map(([value, label]) => (
             <button
               key={label}
@@ -64,7 +64,7 @@ export default function BlogPanel({ onTrouble }) {
               onClick={() => setFilter(value)}
               aria-pressed={filter === value}
               className={`rounded-full px-4 py-2 font-ui text-sm ${
-                filter === value ? "bg-white text-black" : "bg-white/5 text-neutral-300 hover:text-white"
+                filter === value ?"bg-white text-black" :"bg-[#f6f7f9] text-[#39435a] hover:text-[#1b2233]"
               }`}
             >
               {label}
@@ -74,7 +74,7 @@ export default function BlogPanel({ onTrouble }) {
 
         <Link
           to="/admin/blog/new"
-          className="rounded-full bg-gradient-to-r from-[#7b3fe4] to-[#e0208c] px-6 py-2.5 font-ui text-sm font-bold text-white hover:opacity-90"
+          className="rounded-full bg-gradient-to-r from-[#7b3fe4] to-[#e0208c] px-6 py-2.5 font-ui text-sm font-bold text-[#1b2233] hover:opacity-90"
         >
           Write a post
         </Link>
@@ -87,21 +87,21 @@ export default function BlogPanel({ onTrouble }) {
           ))}
         </div>
       ) : posts.length === 0 ? (
-        <p className="mt-10 text-center font-ui text-base text-neutral-400">
-          {filter === "draft"
-            ? "No drafts waiting."
-            : filter === "published"
-              ? "Nothing published yet."
-              : "Nothing written yet. The first post starts with the button above."}
+        <p className="mt-10 text-center font-ui text-base text-[#677181]">
+          {filter ==="draft"
+            ?"No drafts waiting."
+            : filter ==="published"
+              ?"Nothing published yet."
+              :"Nothing written yet. The first post starts with the button above."}
         </p>
       ) : (
         <ul className="mt-6 flex flex-col gap-3">
           {posts.map((post) => (
             <li
               key={post.id}
-              className="flex flex-wrap items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:flex-nowrap"
+              className="flex flex-wrap items-center gap-4 rounded-xl border border-[#e6e8ec] bg-[#f6f7f9] p-3 sm:flex-nowrap"
             >
-              <div className="h-14 w-20 shrink-0 overflow-hidden rounded-lg bg-[#1e2637]">
+              <div className="h-14 w-20 shrink-0 overflow-hidden rounded-md bg-[#1e2637]">
                 {post.heroUrl ? (
                   <Art src={post.heroUrl} alt="" className="size-full object-cover" loading="lazy" />
                 ) : (
@@ -110,14 +110,14 @@ export default function BlogPanel({ onTrouble }) {
               </div>
 
               <div className="min-w-0 flex-1">
-                <p className="truncate font-ui text-base font-bold text-white">{post.title}</p>
-                <p className="mt-0.5 flex flex-wrap items-center gap-x-2 font-ui text-xs text-neutral-400">
+                <p className="truncate font-ui text-base font-bold text-[#1b2233]">{post.title}</p>
+                <p className="mt-0.5 flex flex-wrap items-center gap-x-2 font-ui text-xs text-[#677181]">
                   <span
                     className={
-                      post.status === "published" ? "font-bold text-[#7ddc7d]" : "font-bold text-[#ffb4c4]"
+                      post.status ==="published" ?"font-bold text-[#7ddc7d]" :"font-bold text-[#9b1c44]"
                     }
                   >
-                    {post.status === "published" ? "Published" : "Draft"}
+                    {post.status ==="published" ?"Published" :"Draft"}
                   </span>
                   {post.publishedAt && (
                     <>
@@ -137,17 +137,17 @@ export default function BlogPanel({ onTrouble }) {
               </div>
 
               <div className="flex shrink-0 flex-wrap items-center gap-2">
-                {post.status === "published" && (
+                {post.status ==="published" && (
                   <Link
                     to={`/blog/${post.slug}`}
-                    className="rounded-full border border-white/25 px-4 py-1.5 font-ui text-sm text-neutral-300 hover:bg-white/10 hover:text-white"
+                    className="rounded-full border border-[#e6e8ec] px-4 py-1.5 font-ui text-sm text-[#39435a] hover:bg-[#f1f2f5] hover:text-[#1b2233]"
                   >
                     View
                   </Link>
                 )}
                 <Link
                   to={`/admin/blog/${post.id}`}
-                  className="rounded-full border border-white/25 px-4 py-1.5 font-ui text-sm text-white hover:bg-white/10"
+                  className="rounded-full border border-[#e6e8ec] px-4 py-1.5 font-ui text-sm text-[#1b2233] hover:bg-[#f1f2f5]"
                 >
                   Edit
                 </Link>
@@ -155,9 +155,9 @@ export default function BlogPanel({ onTrouble }) {
                   type="button"
                   onClick={() => flip(post)}
                   disabled={busy === post.id}
-                  className="rounded-full bg-white/10 px-4 py-1.5 font-ui text-sm text-white hover:bg-white/20 disabled:opacity-50"
+                  className="rounded-full bg-[#f1f2f5] px-4 py-1.5 font-ui text-sm text-[#1b2233] hover:bg-[#e6e8ec] disabled:opacity-50"
                 >
-                  {post.status === "published" ? "Unpublish" : "Publish"}
+                  {post.status ==="published" ?"Unpublish" :"Publish"}
                 </button>
 
                 {confirming === post.id ? (
@@ -166,14 +166,14 @@ export default function BlogPanel({ onTrouble }) {
                       type="button"
                       onClick={() => remove(post)}
                       disabled={busy === post.id}
-                      className="rounded-full bg-[#f2415f] px-4 py-1.5 font-ui text-sm font-bold text-white hover:opacity-90 disabled:opacity-50"
+                      className="rounded-full bg-[#f2415f] px-4 py-1.5 font-ui text-sm font-bold text-[#1b2233] hover:opacity-90 disabled:opacity-50"
                     >
                       Delete for good
                     </button>
                     <button
                       type="button"
                       onClick={() => setConfirming("")}
-                      className="font-ui text-sm text-neutral-400 hover:text-white"
+                      className="font-ui text-sm text-[#677181] hover:text-[#1b2233]"
                     >
                       Keep
                     </button>
@@ -182,7 +182,7 @@ export default function BlogPanel({ onTrouble }) {
                   <button
                     type="button"
                     onClick={() => setConfirming(post.id)}
-                    className="rounded-full px-3 py-1.5 font-ui text-sm text-neutral-400 hover:text-[#f2415f]"
+                    className="rounded-full px-3 py-1.5 font-ui text-sm text-[#677181] hover:text-[#f2415f]"
                   >
                     Delete
                   </button>

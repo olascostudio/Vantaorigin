@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Skeleton } from "./Loading.jsx";
+import { useCallback, useEffect, useMemo, useRef, useState } from"react";
+import { Skeleton } from"./Loading.jsx";
 
-import Writing from "./Writing.jsx";
+import Writing from"./Writing.jsx";
 import {
   countWaiting,
   discardIssue,
@@ -16,8 +16,8 @@ import {
   sendIssue,
   sendTestCopy,
   startIssue,
-} from "../data/admin";
-import { api } from "../data/api";
+} from"../data/admin";
+import { api } from"../data/api";
 
 // Writing the newsletter.
 //
@@ -27,12 +27,12 @@ import { api } from "../data/api";
 // be built. What is on screen is what will arrive.
 
 const KINDS = [
-  { type: "heading", label: "Heading" },
-  { type: "text", label: "Words" },
-  { type: "image", label: "Picture" },
-  { type: "button", label: "Button" },
-  { type: "divider", label: "Divider" },
-  { type: "html", label: "Code" },
+  { type:"heading", label:"Heading" },
+  { type:"text", label:"Words" },
+  { type:"image", label:"Picture" },
+  { type:"button", label:"Button" },
+  { type:"divider", label:"Divider" },
+  { type:"html", label:"Code" },
 ];
 
 // Blocks are stored as what they say, with no id of their own. The editor
@@ -43,20 +43,19 @@ const withKey = (block) => ({ ...block, _key: `b${(nextKey += 1)}` });
 const withoutKeys = (blocks) => blocks.map(({ _key, ...block }) => block);
 
 const emptyBlock = (type) => {
-  if (type === "image") return { type, url: "", alt: "", href: "" };
-  if (type === "button") return { type, text: "", href: "" };
-  if (type === "divider") return { type };
-  if (type === "html") return { type, code: "" };
-  return { type, text: "" };
+  if (type ==="image") return { type, url:"", alt:"", href:"" };
+  if (type ==="button") return { type, text:"", href:"" };
+  if (type ==="divider") return { type };
+  if (type ==="html") return { type, code:"" };
+  return { type, text:"" };
 };
 
 const day = (value) =>
   value
-    ? new Date(value).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })
-    : "Not yet";
+    ? new Date(value).toLocaleDateString(undefined, { day:"numeric", month:"short", year:"numeric" })
+    :"Not yet";
 
-const field =
-  "w-full rounded-xl border border-white/15 bg-black/25 px-4 py-2.5 font-ui text-sm text-white outline-none placeholder:text-neutral-500 focus:border-[#6b8ff5]";
+const field ="w-full rounded-xl border border-[#e6e8ec] bg-black/25 px-4 py-2.5 font-ui text-sm text-white outline-none placeholder:text-[#677181] focus:border-[#6b8ff5]";
 
 function BlockCard({ block, index, count, onChange, onMove, onRemove, onTrouble }) {
   const [uploading, setUploading] = useState(false);
@@ -77,9 +76,9 @@ function BlockCard({ block, index, count, onChange, onMove, onRemove, onTrouble 
   };
 
   return (
-    <li className="rounded-2xl border border-white/10 bg-[#222b3c] p-4">
+    <li className="rounded-xl border border-[#e6e8ec] bg-white p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <span className="font-ui text-xs font-bold uppercase tracking-wide text-neutral-500">
+        <span className="font-ui text-xs font-bold uppercase tracking-wide text-[#677181]">
           {KINDS.find((kind) => kind.type === block.type)?.label || block.type}
         </span>
 
@@ -89,7 +88,7 @@ function BlockCard({ block, index, count, onChange, onMove, onRemove, onTrouble 
             onClick={() => onMove(index, -1)}
             disabled={index === 0}
             aria-label="Move up"
-            className="size-8 rounded-lg font-ui text-sm text-neutral-400 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent"
+            className="size-8 rounded-md font-ui text-sm text-[#677181] hover:bg-[#f1f2f5] hover:text-[#1b2233] disabled:opacity-30 disabled:hover:bg-transparent"
           >
             ↑
           </button>
@@ -98,7 +97,7 @@ function BlockCard({ block, index, count, onChange, onMove, onRemove, onTrouble 
             onClick={() => onMove(index, 1)}
             disabled={index === count - 1}
             aria-label="Move down"
-            className="size-8 rounded-lg font-ui text-sm text-neutral-400 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent"
+            className="size-8 rounded-md font-ui text-sm text-[#677181] hover:bg-[#f1f2f5] hover:text-[#1b2233] disabled:opacity-30 disabled:hover:bg-transparent"
           >
             ↓
           </button>
@@ -106,39 +105,39 @@ function BlockCard({ block, index, count, onChange, onMove, onRemove, onTrouble 
             type="button"
             onClick={() => onRemove(index)}
             aria-label="Remove this block"
-            className="size-8 rounded-lg font-ui text-sm text-neutral-500 hover:bg-white/10 hover:text-[#ffb4c4]"
+            className="size-8 rounded-md font-ui text-sm text-[#677181] hover:bg-[#f1f2f5] hover:text-[#9b1c44]"
           >
             ✕
           </button>
         </div>
       </div>
 
-      {block.type === "heading" && (
+      {block.type ==="heading" && (
         <input
-          value={block.text || ""}
+          value={block.text ||""}
           onChange={(event) => set({ text: event.target.value })}
           placeholder="What this part is about"
           className={`${field} text-base font-bold`}
         />
       )}
 
-      {block.type === "text" && (
+      {block.type ==="text" && (
         <>
           <textarea
-            value={block.text || ""}
+            value={block.text ||""}
             onChange={(event) => set({ text: event.target.value })}
             rows={6}
             placeholder="Write to them the way you would write to one person."
             className={`${field} resize-y leading-relaxed`}
           />
-          <p className="mt-2 font-ui text-xs text-neutral-500">
+          <p className="mt-2 font-ui text-xs text-[#677181]">
             Leave a blank line for a new paragraph. **stars** make bold, and [words](https://…) make a
             link.
           </p>
         </>
       )}
 
-      {block.type === "image" && (
+      {block.type ==="image" && (
         <div className="flex flex-col gap-2">
           {block.url && (
             <img
@@ -149,13 +148,13 @@ function BlockCard({ block, index, count, onChange, onMove, onRemove, onTrouble 
           )}
           <div className="flex flex-wrap items-center gap-2">
             <input
-              value={block.url || ""}
+              value={block.url ||""}
               onChange={(event) => set({ url: event.target.value })}
               placeholder="Paste a picture address…"
               className={`${field} flex-1`}
             />
-            <label className="shrink-0 cursor-pointer rounded-xl border border-white/25 px-4 py-2.5 font-ui text-sm text-white hover:bg-white/10">
-              {uploading ? "Sending…" : "Choose a file"}
+            <label className="shrink-0 cursor-pointer rounded-xl border border-[#e6e8ec] px-4 py-2.5 font-ui text-sm text-[#1b2233] hover:bg-[#f1f2f5]">
+              {uploading ?"Sending…" :"Choose a file"}
               <input
                 type="file"
                 accept="image/png,image/jpeg,image/gif"
@@ -165,13 +164,13 @@ function BlockCard({ block, index, count, onChange, onMove, onRemove, onTrouble 
             </label>
           </div>
           <input
-            value={block.alt || ""}
+            value={block.alt ||""}
             onChange={(event) => set({ alt: event.target.value })}
             placeholder="What the picture shows, for anyone whose mail app won't load it"
             className={field}
           />
           <input
-            value={block.href || ""}
+            value={block.href ||""}
             onChange={(event) => set({ href: event.target.value })}
             placeholder="Where it leads, if anywhere (optional)"
             className={field}
@@ -179,16 +178,16 @@ function BlockCard({ block, index, count, onChange, onMove, onRemove, onTrouble 
         </div>
       )}
 
-      {block.type === "button" && (
+      {block.type ==="button" && (
         <div className="flex flex-col gap-2 sm:flex-row">
           <input
-            value={block.text || ""}
+            value={block.text ||""}
             onChange={(event) => set({ text: event.target.value })}
             placeholder="See them"
             className={`${field} sm:w-[180px]`}
           />
           <input
-            value={block.href || ""}
+            value={block.href ||""}
             onChange={(event) => set({ href: event.target.value })}
             placeholder="https://www.vantaorigin.com/discover"
             className={`${field} flex-1`}
@@ -196,21 +195,21 @@ function BlockCard({ block, index, count, onChange, onMove, onRemove, onTrouble 
         </div>
       )}
 
-      {block.type === "divider" && (
-        <div className="h-px w-full bg-white/15" aria-hidden="true" />
+      {block.type ==="divider" && (
+        <div className="h-px w-full bg-[#eef0f4]" aria-hidden="true" />
       )}
 
-      {block.type === "html" && (
+      {block.type ==="html" && (
         <>
           <textarea
-            value={block.code || ""}
+            value={block.code ||""}
             onChange={(event) => set({ code: event.target.value })}
             rows={10}
             spellCheck={false}
             placeholder={'<table width="100%"><tr><td style="padding:24px">…</td></tr></table>'}
             className={`${field} resize-y whitespace-pre font-mono text-[12.5px] leading-relaxed`}
           />
-          <p className="mt-2 font-ui text-xs text-neutral-500">
+          <p className="mt-2 font-ui text-xs text-[#677181]">
             Paste an email you have already built. It goes in as written, inside the VantaOrigin
             shell, so it keeps the banner and the unsubscribe line. Style the elements themselves.
             a style tag is ignored by Gmail, so it is dropped rather than left to look right here
@@ -231,48 +230,48 @@ function Record({ issue }) {
   const failures = Array.isArray(issue.failures) ? issue.failures : [];
   const when = issue.sentAt
     ? new Date(issue.sentAt).toLocaleString(undefined, {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
+        day:"numeric",
+        month:"long",
+        year:"numeric",
+        hour:"numeric",
+        minute:"2-digit",
       })
-    : "Not yet";
+    :"Not yet";
 
   return (
-    <div className="mt-4 flex flex-col gap-4 rounded-2xl border border-white/10 bg-[#222b3c] p-5">
+    <div className="mt-4 flex flex-col gap-4 rounded-xl border border-[#e6e8ec] bg-white p-5">
       <div className="flex flex-wrap items-baseline gap-x-8 gap-y-3">
         <div>
-          <p className="font-ui text-xs font-bold uppercase tracking-wide text-neutral-500">Sent</p>
-          <p className="mt-1 font-ui text-base text-white">{when}</p>
+          <p className="font-ui text-xs font-bold uppercase tracking-wide text-[#677181]">Sent</p>
+          <p className="mt-1 font-ui text-base text-[#1b2233]">{when}</p>
         </div>
         <div>
-          <p className="font-ui text-xs font-bold uppercase tracking-wide text-neutral-500">
+          <p className="font-ui text-xs font-bold uppercase tracking-wide text-[#677181]">
             Reached
           </p>
-          <p className="mt-1 font-ui text-base text-white">
-            {issue.sentCount} {issue.sentCount === 1 ? "person" : "people"}
+          <p className="mt-1 font-ui text-base text-[#1b2233]">
+            {issue.sentCount} {issue.sentCount === 1 ?"person" :"people"}
           </p>
         </div>
         {issue.failedCount > 0 && (
           <div>
-            <p className="font-ui text-xs font-bold uppercase tracking-wide text-neutral-500">
+            <p className="font-ui text-xs font-bold uppercase tracking-wide text-[#677181]">
               Did not arrive
             </p>
-            <p className="mt-1 font-ui text-base text-[#ffb4c4]">{issue.failedCount}</p>
+            <p className="mt-1 font-ui text-base text-[#9b1c44]">{issue.failedCount}</p>
           </div>
         )}
         {issue.skippedCount > 0 && (
           // Counted apart from both, and shown so the numbers add up. Without
-          // this, a letter to twelve that skipped three reads as "Reached 9"
+          // this, a letter to twelve that skipped three reads as"Reached 9"
           // with nothing saying where the others went, which looks like a
           // fault rather than the rules working.
           <div>
-            <p className="font-ui text-xs font-bold uppercase tracking-wide text-neutral-500">
+            <p className="font-ui text-xs font-bold uppercase tracking-wide text-[#677181]">
               Not sent on purpose
             </p>
-            <p className="mt-1 font-ui text-base text-white">{issue.skippedCount}</p>
-            <p className="mt-1 font-ui text-xs leading-relaxed text-neutral-400">
+            <p className="mt-1 font-ui text-base text-[#1b2233]">{issue.skippedCount}</p>
+            <p className="mt-1 font-ui text-xs leading-relaxed text-[#677181]">
               Left, never confirmed, paused, or an address we have been told to stop writing to.
             </p>
           </div>
@@ -281,21 +280,21 @@ function Record({ issue }) {
 
       {failures.length > 0 && (
         <div className="rounded-xl bg-black/25 p-4">
-          <p className="font-ui text-sm text-neutral-400">
+          <p className="font-ui text-sm text-[#677181]">
             These addresses did not take it. Worth checking, or taking off the list.
           </p>
           <ul className="mt-3 flex flex-col gap-2">
             {failures.map((failure, index) => (
               <li key={index} className="font-ui text-sm">
-                <span className="text-white">{failure.email}</span>
-                <span className="text-neutral-500">: {failure.reason}</span>
+                <span className="text-[#1b2233]">{failure.email}</span>
+                <span className="text-[#677181]">: {failure.reason}</span>
               </li>
             ))}
           </ul>
         </div>
       )}
 
-      <p className="font-ui text-sm text-neutral-400">
+      <p className="font-ui text-sm text-[#677181]">
         This one has gone out, so it is kept exactly as it was sent.
       </p>
     </div>
@@ -310,15 +309,15 @@ function Record({ issue }) {
 function SendBar({ issue, saved, onChanged, onTrouble }) {
   const [waiting, setWaiting] = useState(null);
   // Whether the server is actually working through the list right now, as
-  // opposed to an issue left marked "sending" by a server that stopped.
+  // opposed to an issue left marked"sending" by a server that stopped.
   const [running, setRunning] = useState(true);
   const [testTo, setTestTo] = useState("");
   const [testState, setTestState] = useState("");
   const [confirming, setConfirming] = useState(false);
   const [starting, setStarting] = useState(false);
 
-  const going = issue.status === "sending";
-  // A send nobody is working on. Without this the screen would show "going
+  const going = issue.status ==="sending";
+  // A send nobody is working on. Without this the screen would show"going
   // out now" for ever after a restart, and the rest of the list would never
   // be written to.
   const stopped = going && !running;
@@ -373,13 +372,13 @@ function SendBar({ issue, saved, onChanged, onTrouble }) {
     }
   };
 
-  if (issue.status === "sent") return null;
+  if (issue.status ==="sent") return null;
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-[#222b3c] p-5">
+    <div className="flex flex-col gap-4 rounded-xl border border-[#e6e8ec] bg-white p-5">
       {/* A copy to read in a real inbox */}
       <div className="flex flex-col gap-2">
-        <p className="font-ui text-sm font-bold text-white">Read it in your own inbox first</p>
+        <p className="font-ui text-sm font-bold text-[#1b2233]">Read it in your own inbox first</p>
         <div className="flex flex-wrap items-center gap-2">
           <input
             type="email"
@@ -393,26 +392,26 @@ function SendBar({ issue, saved, onChanged, onTrouble }) {
             onClick={test}
             // The copy is built from what is stored, so testing before the
             // last keystroke has been saved would post the version before it.
-            disabled={going || saved !== "Saved"}
-            title={saved !== "Saved" ? "Saving what you just typed…" : undefined}
-            className="shrink-0 rounded-full border border-white/25 px-5 py-2.5 font-ui text-sm text-white hover:bg-white/10 disabled:opacity-50"
+            disabled={going || saved !=="Saved"}
+            title={saved !=="Saved" ?"Saving what you just typed…" : undefined}
+            className="shrink-0 rounded-full border border-[#e6e8ec] px-5 py-2.5 font-ui text-sm text-[#1b2233] hover:bg-[#f1f2f5] disabled:opacity-50"
           >
             Send a test copy
           </button>
         </div>
-        {testState && <p className="font-ui text-sm text-neutral-400">{testState}</p>}
+        {testState && <p className="font-ui text-sm text-[#677181]">{testState}</p>}
       </div>
 
-      <div className="h-px w-full bg-white/10" aria-hidden="true" />
+      <div className="h-px w-full bg-[#f1f2f5]" aria-hidden="true" />
 
       {/* The real thing */}
       {stopped ? (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="font-ui text-base font-bold text-[#ffb4c4]">This send stopped partway.</p>
-            <p className="mt-1 font-ui text-sm text-neutral-400">
+            <p className="font-ui text-base font-bold text-[#9b1c44]">This send stopped partway.</p>
+            <p className="mt-1 font-ui text-sm text-[#677181]">
               {issue.sentCount} went out
-              {waiting ? `, ${waiting} still to go` : ", and everybody has been reached"}. Picking it
+              {waiting ? `, ${waiting} still to go` :", and everybody has been reached"}. Picking it
               up carries on from where it stopped, so nobody is written to twice.
             </p>
           </div>
@@ -420,30 +419,30 @@ function SendBar({ issue, saved, onChanged, onTrouble }) {
             type="button"
             onClick={send}
             disabled={starting}
-            className="rounded-full bg-gradient-to-r from-[#c2185b] to-[#a855f7] px-6 py-2.5 font-ui text-sm font-bold text-white hover:opacity-90 disabled:opacity-50"
+            className="rounded-full bg-gradient-to-r from-[#c2185b] to-[#a855f7] px-6 py-2.5 font-ui text-sm font-bold text-[#1b2233] hover:opacity-90 disabled:opacity-50"
           >
-            {starting ? "Picking it up…" : "Carry on sending"}
+            {starting ?"Picking it up…" :"Carry on sending"}
           </button>
         </div>
       ) : going ? (
         <div>
-          <p className="font-ui text-base font-bold text-white">Going out now…</p>
-          <p className="mt-1 font-ui text-sm text-neutral-400">
-            {issue.sentCount} sent{waiting ? `, ${waiting} to go` : ""}. You can leave this page; it
+          <p className="font-ui text-base font-bold text-[#1b2233]">Going out now…</p>
+          <p className="mt-1 font-ui text-sm text-[#677181]">
+            {issue.sentCount} sent{waiting ? `, ${waiting} to go` :""}. You can leave this page; it
             carries on without you.
           </p>
         </div>
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="font-ui text-base font-bold text-white">
+            <p className="font-ui text-base font-bold text-[#1b2233]">
               {waiting === null
-                ? "Counting who is waiting…"
+                ?"Counting who is waiting…"
                 : waiting === 0
-                  ? "Nobody is waiting for this one."
-                  : `Ready for ${waiting} ${waiting === 1 ? "person" : "people"}`}
+                  ?"Nobody is waiting for this one."
+                  : `Ready for ${waiting} ${waiting === 1 ?"person" :"people"}`}
             </p>
-            <p className="mt-1 font-ui text-sm text-neutral-400">
+            <p className="mt-1 font-ui text-sm text-[#677181]">
               Only people still on the list, each with their own way out.
             </p>
           </div>
@@ -456,12 +455,12 @@ function SendBar({ issue, saved, onChanged, onTrouble }) {
                 disabled={starting}
                 className="rounded-full bg-[#c2185b] px-6 py-2.5 font-ui text-sm font-bold text-white hover:opacity-90 disabled:opacity-50"
               >
-                {starting ? "Starting…" : `Yes, send it to ${waiting}`}
+                {starting ?"Starting…" : `Yes, send it to ${waiting}`}
               </button>
               <button
                 type="button"
                 onClick={() => setConfirming(false)}
-                className="rounded-full px-4 py-2.5 font-ui text-sm text-neutral-400 hover:text-white"
+                className="rounded-full px-4 py-2.5 font-ui text-sm text-[#677181] hover:text-[#1b2233]"
               >
                 Not yet
               </button>
@@ -470,9 +469,9 @@ function SendBar({ issue, saved, onChanged, onTrouble }) {
             <button
               type="button"
               onClick={() => setConfirming(true)}
-              disabled={!waiting || saved !== "Saved"}
-              title={saved !== "Saved" ? "Saving what you just typed…" : undefined}
-              className="rounded-full bg-gradient-to-r from-[#c2185b] to-[#a855f7] px-6 py-2.5 font-ui text-sm font-bold text-white hover:opacity-90 disabled:opacity-40"
+              disabled={!waiting || saved !=="Saved"}
+              title={saved !=="Saved" ?"Saving what you just typed…" : undefined}
+              className="rounded-full bg-gradient-to-r from-[#c2185b] to-[#a855f7] px-6 py-2.5 font-ui text-sm font-bold text-[#1b2233] hover:opacity-90 disabled:opacity-40"
             >
               Send it
             </button>
@@ -519,8 +518,8 @@ function Editor({ id, onClose, onTrouble }) {
     () => ({ subject, preheader, blocks: withoutKeys(blocks) }),
     [subject, preheader, blocks]
   );
-  const sent = issue?.status === "sent";
-  const going = issue?.status === "sending";
+  const sent = issue?.status ==="sent";
+  const going = issue?.status ==="sending";
   // Nothing can be rewritten once it has started leaving.
   const closed = sent || going;
 
@@ -596,12 +595,12 @@ function Editor({ id, onClose, onTrouble }) {
   // A letter is written in one go when it is empty or already one piece of
   // writing. Anything else was assembled out of blocks before this editor
   // existed, and keeps those.
-  const written = blocks.length === 0 || (blocks.length === 1 && blocks[0].type === "rich");
+  const written = blocks.length === 0 || (blocks.length === 1 && blocks[0].type ==="rich");
 
   const setWriting = (html) =>
-    change(() => setBlocks([withKey({ type: "rich", html })]));
+    change(() => setBlocks([withKey({ type:"rich", html })]));
 
-  if (!issue) return <Skeleton className="mt-5 h-[420px] rounded-2xl" />;
+  if (!issue) return <Skeleton className="mt-5 h-[420px] rounded-xl" />;
 
   return (
     <section className="mt-5">
@@ -610,7 +609,7 @@ function Editor({ id, onClose, onTrouble }) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-white/25 px-4 py-2 font-ui text-sm text-white hover:bg-white/10"
+            className="rounded-full border border-[#e6e8ec] px-4 py-2 font-ui text-sm text-[#1b2233] hover:bg-[#f1f2f5]"
           >
             ← All letters
           </button>
@@ -622,7 +621,7 @@ function Editor({ id, onClose, onTrouble }) {
                 value={templateName}
                 onChange={(event) => setTemplateName(event.target.value)}
                 placeholder="Call it something"
-                className="h-9 w-[180px] rounded-full border border-white/15 bg-black/25 px-4 font-ui text-sm text-white outline-none placeholder:text-neutral-500 focus:border-[#6b8ff5]"
+                className="h-9 w-[180px] rounded-full border border-[#e6e8ec] bg-black/25 px-4 font-ui text-sm text-[#1b2233] outline-none placeholder:text-[#677181] focus:border-[#6b8ff5]"
               />
               <button
                 type="button"
@@ -635,7 +634,7 @@ function Editor({ id, onClose, onTrouble }) {
               <button
                 type="button"
                 onClick={() => setKeeping(false)}
-                className="rounded-full px-3 py-2 font-ui text-sm text-neutral-400 hover:text-white"
+                className="rounded-full px-3 py-2 font-ui text-sm text-[#677181] hover:text-[#1b2233]"
               >
                 Cancel
               </button>
@@ -644,16 +643,16 @@ function Editor({ id, onClose, onTrouble }) {
             <button
               type="button"
               onClick={() => setKeeping(true)}
-              className="rounded-full border border-white/25 px-4 py-2 font-ui text-sm text-neutral-300 hover:bg-white/10 hover:text-white"
+              className="rounded-full border border-[#e6e8ec] px-4 py-2 font-ui text-sm text-[#39435a] hover:bg-[#f1f2f5] hover:text-[#1b2233]"
             >
               {kept || "Save as template"}
             </button>
           )}
         </div>
 
-        <p className="font-ui text-sm text-neutral-400">
+        <p className="font-ui text-sm text-[#677181]">
           {sent
-            ? `Sent ${day(issue.sentAt)} to ${issue.sentCount} ${issue.sentCount === 1 ? "person" : "people"}`
+            ? `Sent ${day(issue.sentAt)} to ${issue.sentCount} ${issue.sentCount === 1 ?"person" :"people"}`
             : going
               ? `Going out now · ${issue.sentCount} sent`
               : saved}
@@ -665,9 +664,9 @@ function Editor({ id, onClose, onTrouble }) {
       <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,460px)]">
         {/* What it says */}
         <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-[#222b3c] p-4">
+          <div className="flex flex-col gap-3 rounded-xl border border-[#e6e8ec] bg-white p-4">
             <label className="flex flex-col gap-1.5">
-              <span className="font-ui text-xs font-bold uppercase tracking-wide text-neutral-500">
+              <span className="font-ui text-xs font-bold uppercase tracking-wide text-[#677181]">
                 Subject
               </span>
               <input
@@ -680,7 +679,7 @@ function Editor({ id, onClose, onTrouble }) {
             </label>
 
             <label className="flex flex-col gap-1.5">
-              <span className="font-ui text-xs font-bold uppercase tracking-wide text-neutral-500">
+              <span className="font-ui text-xs font-bold uppercase tracking-wide text-[#677181]">
                 Preview line
               </span>
               <input
@@ -694,9 +693,9 @@ function Editor({ id, onClose, onTrouble }) {
           </div>
 
           {!closed && written && (
-            <section className="rounded-2xl border border-white/10 bg-[#0f1420] p-1.5">
+            <section className="rounded-xl border border-[#e6e8ec] bg-[#0f1420] p-1.5">
               <Writing
-                value={blocks[0]?.html || ""}
+                value={blocks[0]?.html ||""}
                 onChange={setWriting}
                 folder="newsletter"
                 height={520}
@@ -724,14 +723,14 @@ function Editor({ id, onClose, onTrouble }) {
                 ))}
               </ul>
 
-              <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-dashed border-white/15 p-3">
-                <span className="px-2 font-ui text-sm text-neutral-500">Add</span>
+              <div className="flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-[#e6e8ec] p-3">
+                <span className="px-2 font-ui text-sm text-[#677181]">Add</span>
                 {KINDS.map((kind) => (
                   <button
                     key={kind.type}
                     type="button"
                     onClick={() => addBlock(kind.type)}
-                    className="rounded-full bg-white/5 px-4 py-2 font-ui text-sm text-neutral-300 hover:bg-white/10 hover:text-white"
+                    className="rounded-full bg-[#f6f7f9] px-4 py-2 font-ui text-sm text-[#39435a] hover:bg-[#f1f2f5] hover:text-[#1b2233]"
                   >
                     {kind.label}
                   </button>
@@ -745,13 +744,13 @@ function Editor({ id, onClose, onTrouble }) {
 
         {/* What it will look like */}
         <div className="lg:sticky lg:top-6 lg:self-start">
-          <p className="mb-2 font-ui text-xs font-bold uppercase tracking-wide text-neutral-500">
+          <p className="mb-2 font-ui text-xs font-bold uppercase tracking-wide text-[#677181]">
             What arrives
           </p>
           <iframe
             title="What this letter will look like"
             srcDoc={preview}
-            className="h-[560px] w-full rounded-2xl border border-white/10 bg-[#0e1320]"
+            className="h-[560px] w-full rounded-xl border border-[#e6e8ec] bg-white"
           />
         </div>
       </div>
@@ -804,8 +803,8 @@ export default function NewsletterLetters({ onTrouble }) {
     }
   };
 
-  const being = (issues || []).filter((issue) => issue.status !== "sent");
-  const gone = (issues || []).filter((issue) => issue.status === "sent");
+  const being = (issues || []).filter((issue) => issue.status !=="sent");
+  const gone = (issues || []).filter((issue) => issue.status ==="sent");
 
   if (openId) {
     return (
@@ -822,17 +821,17 @@ export default function NewsletterLetters({ onTrouble }) {
 
   return (
     <section className="mt-5">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#222b3c] p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#e6e8ec] bg-white p-5">
         <div>
-          <p className="font-ui text-base font-bold text-white">Letters</p>
-          <p className="mt-1 font-ui text-sm text-neutral-400">
+          <p className="font-ui text-base font-bold text-[#1b2233]">Letters</p>
+          <p className="mt-1 font-ui text-sm text-[#677181]">
             Write now, send when it is ready. Nothing leaves until you say so.
           </p>
         </div>
         <button
           type="button"
           onClick={() => begin()}
-          className="rounded-full bg-gradient-to-r from-[#c2185b] to-[#a855f7] px-6 py-2.5 font-ui text-sm font-bold text-white hover:opacity-90"
+          className="rounded-full bg-gradient-to-r from-[#c2185b] to-[#a855f7] px-6 py-2.5 font-ui text-sm font-bold text-[#1b2233] hover:opacity-90"
         >
           Start a letter
         </button>
@@ -840,14 +839,14 @@ export default function NewsletterLetters({ onTrouble }) {
 
       {/* The shapes you have kept, each one a letter already built. */}
       {templates.length > 0 && (
-        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-dashed border-white/15 p-3">
-          <span className="px-2 font-ui text-sm text-neutral-500">Or start from</span>
+        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-[#e6e8ec] p-3">
+          <span className="px-2 font-ui text-sm text-[#677181]">Or start from</span>
           {templates.map((template) => (
-            <span key={template.id} className="flex items-center overflow-hidden rounded-full bg-white/5">
+            <span key={template.id} className="flex items-center overflow-hidden rounded-full bg-[#f6f7f9]">
               <button
                 type="button"
                 onClick={() => begin(template.id)}
-                className="py-2 pl-4 pr-3 font-ui text-sm text-neutral-200 hover:bg-white/10 hover:text-white"
+                className="py-2 pl-4 pr-3 font-ui text-sm text-[#39435a] hover:bg-[#f1f2f5] hover:text-[#1b2233]"
               >
                 {template.name}
               </button>
@@ -855,7 +854,7 @@ export default function NewsletterLetters({ onTrouble }) {
                 type="button"
                 onClick={() => dropTemplate(template.id)}
                 aria-label={`Forget the ${template.name} template`}
-                className="py-2 pr-3 font-ui text-sm text-neutral-600 hover:text-[#ffb4c4]"
+                className="py-2 pr-3 font-ui text-sm text-[#677181] hover:text-[#9b1c44]"
               >
                 ✕
               </button>
@@ -864,10 +863,10 @@ export default function NewsletterLetters({ onTrouble }) {
         </div>
       )}
 
-      {!issues && <Skeleton className="mt-4 h-[180px] rounded-2xl" />}
+      {!issues && <Skeleton className="mt-4 h-[180px] rounded-xl" />}
 
       {issues?.length === 0 && (
-        <p className="mt-4 rounded-2xl border border-dashed border-white/15 px-6 py-12 text-center font-ui text-base text-neutral-400">
+        <p className="mt-4 rounded-xl border border-dashed border-[#e6e8ec] px-6 py-12 text-center font-ui text-base text-[#677181]">
           No letters yet.
         </p>
       )}
@@ -876,28 +875,28 @@ export default function NewsletterLetters({ onTrouble }) {
           things: one is work, the other is a record. */}
       {being.length > 0 && (
         <>
-          <h3 className="mt-6 font-ui text-sm font-bold uppercase tracking-wide text-neutral-500">
+          <h3 className="mt-6 font-ui text-sm font-bold uppercase tracking-wide text-[#677181]">
             Being written
           </h3>
           <ul className="mt-3 flex flex-col gap-3">
             {being.map((issue) => (
               <li
                 key={issue.id}
-                className="flex flex-wrap items-center gap-4 rounded-2xl border border-white/10 bg-[#222b3c] p-4"
+                className="flex flex-wrap items-center gap-4 rounded-xl border border-[#e6e8ec] bg-white p-4"
               >
                 <div className="min-w-0 flex-1">
                   <button
                     type="button"
                     onClick={() => setOpenId(issue.id)}
-                    className="block max-w-full truncate text-left font-ui text-base font-bold text-white hover:text-[#6b8ff5]"
+                    className="block max-w-full truncate text-left font-ui text-base font-bold text-[#1b2233] hover:text-[#6b8ff5]"
                   >
-                    {issue.subject || "Untitled letter"}
+                    {issue.subject ||"Untitled letter"}
                   </button>
-                  <p className="mt-1 font-ui text-sm text-neutral-400">
-                    {issue.status === "sending"
+                  <p className="mt-1 font-ui text-sm text-[#677181]">
+                    {issue.status ==="sending"
                       ? `Going out now · ${issue.sentCount} sent`
                       : `Draft · last touched ${day(issue.updatedAt)}`}
-                    {issue.author ? ` · ${issue.author}` : ""}
+                    {issue.author ? ` · ${issue.author}` :""}
                   </p>
                 </div>
 
@@ -905,12 +904,12 @@ export default function NewsletterLetters({ onTrouble }) {
                   <button
                     type="button"
                     onClick={() => setOpenId(issue.id)}
-                    className="rounded-full border border-white/25 px-4 py-2 font-ui text-sm text-white hover:bg-white/10"
+                    className="rounded-full border border-[#e6e8ec] px-4 py-2 font-ui text-sm text-[#1b2233] hover:bg-[#f1f2f5]"
                   >
                     Open
                   </button>
 
-                  {issue.status === "draft" &&
+                  {issue.status ==="draft" &&
                     (confirming === issue.id ? (
                       <button
                         type="button"
@@ -923,7 +922,7 @@ export default function NewsletterLetters({ onTrouble }) {
                       <button
                         type="button"
                         onClick={() => setConfirming(issue.id)}
-                        className="rounded-full px-3 py-2 font-ui text-sm text-neutral-500 hover:text-[#ffb4c4]"
+                        className="rounded-full px-3 py-2 font-ui text-sm text-[#677181] hover:text-[#9b1c44]"
                       >
                         Discard
                       </button>
@@ -937,32 +936,32 @@ export default function NewsletterLetters({ onTrouble }) {
 
       {gone.length > 0 && (
         <>
-          <h3 className="mt-8 font-ui text-sm font-bold uppercase tracking-wide text-neutral-500">
+          <h3 className="mt-8 font-ui text-sm font-bold uppercase tracking-wide text-[#677181]">
             Already sent
           </h3>
           <ol className="mt-3 flex flex-col gap-3">
             {gone.map((issue) => (
               <li
                 key={issue.id}
-                className="flex flex-wrap items-center gap-4 rounded-2xl border border-white/10 bg-[#1e2637] p-4"
+                className="flex flex-wrap items-center gap-4 rounded-xl border border-[#e6e8ec] bg-[#1e2637] p-4"
               >
                 <div className="min-w-0 flex-1">
                   <button
                     type="button"
                     onClick={() => setOpenId(issue.id)}
-                    className="block max-w-full truncate text-left font-ui text-base font-bold text-white hover:text-[#6b8ff5]"
+                    className="block max-w-full truncate text-left font-ui text-base font-bold text-[#1b2233] hover:text-[#6b8ff5]"
                   >
-                    {issue.subject || "Untitled letter"}
+                    {issue.subject ||"Untitled letter"}
                   </button>
-                  <p className="mt-1 font-ui text-sm text-neutral-400">
+                  <p className="mt-1 font-ui text-sm text-[#677181]">
                     {day(issue.sentAt)} · reached {issue.sentCount}{" "}
-                    {issue.sentCount === 1 ? "person" : "people"}
-                    {issue.author ? ` · ${issue.author}` : ""}
+                    {issue.sentCount === 1 ?"person" :"people"}
+                    {issue.author ? ` · ${issue.author}` :""}
                   </p>
                 </div>
 
                 {issue.failedCount > 0 && (
-                  <span className="shrink-0 rounded-full bg-[#3a2030] px-3 py-1 font-ui text-xs font-bold text-[#ffb4c4]">
+                  <span className="shrink-0 rounded-full bg-[#fdf2f7] px-3 py-1 font-ui text-xs font-bold text-[#9b1c44]">
                     {issue.failedCount} did not arrive
                   </span>
                 )}
@@ -970,7 +969,7 @@ export default function NewsletterLetters({ onTrouble }) {
                 <button
                   type="button"
                   onClick={() => setOpenId(issue.id)}
-                  className="shrink-0 rounded-full border border-white/25 px-4 py-2 font-ui text-sm text-white hover:bg-white/10"
+                  className="shrink-0 rounded-full border border-[#e6e8ec] px-4 py-2 font-ui text-sm text-[#1b2233] hover:bg-[#f1f2f5]"
                 >
                   Read it
                 </button>

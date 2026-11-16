@@ -81,3 +81,8 @@ export const loadSuppressions = (q = "") =>
 // about somebody's access, and the record of why is the point.
 export const liftSuppression = (email, note) =>
   api.delete("/admin/suppressions", { email, note });
+
+// What the sender has told us lately. The one screen that can say whether
+// the webhook is set up at all, which is otherwise a question only a SQL
+// console can answer.
+export const loadWebhookEvents = () => api.get("/admin/webhooks/recent");

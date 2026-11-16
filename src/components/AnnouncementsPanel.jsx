@@ -6,7 +6,7 @@
 // to be chosen before anything can be sent, the screen says out loud who
 // that choice reaches, and the number of people has to be agreed to at the
 // moment of sending rather than glanced at earlier.
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from"react";
 import {
   audienceFor,
   discardAnnouncement,
@@ -16,83 +16,83 @@ import {
   sendAnnouncement,
   startAnnouncement,
   testAnnouncement,
-} from "../data/announcements";
+} from"../data/announcements";
 
-const CARD = "rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6";
+const CARD ="rounded-xl border border-[#e6e8ec] bg-[#f6f7f9] p-5 sm:p-6";
 
 // Said in the words somebody choosing would use, not the column values.
 const REASONS = {
   terms_change: {
-    label: "A change to the terms",
-    note: "Reaches everybody, including people who reported us as spam.",
+    label:"A change to the terms",
+    note:"Reaches everybody, including people who reported us as spam.",
     unavoidable: true,
   },
   privacy_change: {
-    label: "A change to the privacy policy",
-    note: "Reaches everybody, including people who reported us as spam.",
+    label:"A change to the privacy policy",
+    note:"Reaches everybody, including people who reported us as spam.",
     unavoidable: true,
   },
   security_notice: {
-    label: "A security notice",
-    note: "Reaches everybody, including people who reported us as spam.",
+    label:"A security notice",
+    note:"Reaches everybody, including people who reported us as spam.",
     unavoidable: true,
   },
   downtime: {
-    label: "Planned downtime",
-    note: "Does not reach people who reported us as spam, or whose address bounced.",
+    label:"Planned downtime",
+    note:"Does not reach people who reported us as spam, or whose address bounced.",
     unavoidable: false,
   },
   account_policy: {
-    label: "A change to account rules",
-    note: "Does not reach people who reported us as spam, or whose address bounced.",
+    label:"A change to account rules",
+    note:"Does not reach people who reported us as spam, or whose address bounced.",
     unavoidable: false,
   },
 };
 
 const day = (value) =>
-  value ? new Date(value).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "";
+  value ? new Date(value).toLocaleDateString(undefined, { day:"numeric", month:"short", year:"numeric" }) :"";
 
 // One textarea, split into paragraphs on blank lines. An announcement is
 // plain by nature: nobody needs image blocks and buttons to say that the
 // terms are changing, and the fewer ways there are to decorate this, the
 // more likely it reads like a person wrote it.
 const toBlocks = (text) =>
-  String(text || "")
+  String(text ||"")
     .split(/\n{2,}/)
     .map((part) => part.trim())
     .filter(Boolean)
-    .map((part) => ({ type: "text", text: part }));
+    .map((part) => ({ type:"text", text: part }));
 
 const fromBlocks = (blocks) =>
-  (blocks || []).map((b) => b.text || b.html || "").filter(Boolean).join("\n\n");
+  (blocks || []).map((b) => b.text || b.html ||"").filter(Boolean).join("\n\n");
 
 function Sent({ row }) {
   return (
     <li className={CARD}>
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <p className="font-ui text-base font-bold text-white">{row.subject}</p>
-        <span className="font-ui text-xs text-neutral-500">{day(row.sentAt)}</span>
+        <p className="font-ui text-base font-bold text-[#1b2233]">{row.subject}</p>
+        <span className="font-ui text-xs text-[#677181]">{day(row.sentAt)}</span>
       </div>
-      <p className="mt-1 font-ui text-sm text-neutral-400">
+      <p className="mt-1 font-ui text-sm text-[#677181]">
         {REASONS[row.reasonCategory]?.label || row.reasonCategory}
-        {row.termsVersion ? ` · version ${row.termsVersion}` : ""}
+        {row.termsVersion ? ` · version ${row.termsVersion}` :""}
       </p>
       {/* The audit, on the screen rather than only in the database. */}
-      <p className="mt-3 font-ui text-xs leading-relaxed text-neutral-500">
+      <p className="mt-3 font-ui text-xs leading-relaxed text-[#677181]">
         Sent by {row.sentByEmail || row.createdByEmail} to {row.audienceCount} people.{" "}
         {row.sentCount} delivered
-        {row.skippedCount > 0 ? `, ${row.skippedCount} not sent on purpose` : ""}
-        {row.failedCount > 0 ? `, ${row.failedCount} did not arrive` : ""}.
+        {row.skippedCount > 0 ? `, ${row.skippedCount} not sent on purpose` :""}
+        {row.failedCount > 0 ? `, ${row.failedCount} did not arrive` :""}.
       </p>
     </li>
   );
 }
 
 function Editor({ row, versions, onChanged, onTrouble }) {
-  const [subject, setSubject] = useState(row.subject || "");
+  const [subject, setSubject] = useState(row.subject ||"");
   const [text, setText] = useState(fromBlocks(row.blocks));
-  const [reason, setReason] = useState(row.reasonCategory || "");
-  const [version, setVersion] = useState(row.termsVersion || "");
+  const [reason, setReason] = useState(row.reasonCategory ||"");
+  const [version, setVersion] = useState(row.termsVersion ||"");
   const [preview, setPreview] = useState(null);
   const [audience, setAudience] = useState(null);
   const [confirming, setConfirming] = useState(false);
@@ -160,17 +160,17 @@ function Editor({ row, versions, onChanged, onTrouble }) {
 
   return (
     <div className={CARD}>
-      <label className="block font-ui text-xs font-bold uppercase tracking-wide text-neutral-500">
+      <label className="block font-ui text-xs font-bold uppercase tracking-wide text-[#677181]">
         Subject
       </label>
       <input
         value={subject}
         onChange={(event) => setSubject(event.target.value)}
         placeholder="We are changing the terms"
-        className="mt-2 w-full rounded-xl border border-white/15 bg-black/30 px-4 py-3 font-ui text-base text-white outline-none placeholder:text-neutral-600 focus:border-white/40"
+        className="mt-2 w-full rounded-xl border border-[#e6e8ec] bg-black/30 px-4 py-3 font-ui text-base text-[#1b2233] outline-none placeholder:text-[#677181] focus:border-[#e6e8ec]"
       />
 
-      <label className="mt-5 block font-ui text-xs font-bold uppercase tracking-wide text-neutral-500">
+      <label className="mt-5 block font-ui text-xs font-bold uppercase tracking-wide text-[#677181]">
         What it says
       </label>
       <textarea
@@ -178,12 +178,12 @@ function Editor({ row, versions, onChanged, onTrouble }) {
         onChange={(event) => setText(event.target.value)}
         rows={8}
         placeholder={"Leave a blank line between paragraphs.\n\nSay what is changing, when, and what somebody has to do about it."}
-        className="mt-2 w-full rounded-xl border border-white/15 bg-black/30 px-4 py-3 font-ui text-base leading-relaxed text-white outline-none placeholder:text-neutral-600 focus:border-white/40"
+        className="mt-2 w-full rounded-xl border border-[#e6e8ec] bg-black/30 px-4 py-3 font-ui text-base leading-relaxed text-[#1b2233] outline-none placeholder:text-[#677181] focus:border-[#e6e8ec]"
       />
 
       <label
         htmlFor={`why-${row.id}`}
-        className="mt-5 block font-ui text-xs font-bold uppercase tracking-wide text-neutral-500"
+        className="mt-5 block font-ui text-xs font-bold uppercase tracking-wide text-[#677181]"
       >
         Why this is being sent
       </label>
@@ -191,7 +191,7 @@ function Editor({ row, versions, onChanged, onTrouble }) {
         id={`why-${row.id}`}
         value={reason}
         onChange={(event) => setReason(event.target.value)}
-        className="mt-2 w-full rounded-xl border border-white/15 bg-black/30 px-4 py-3 font-ui text-base text-white outline-none focus:border-white/40"
+        className="mt-2 w-full rounded-xl border border-[#e6e8ec] bg-black/30 px-4 py-3 font-ui text-base text-[#1b2233] outline-none focus:border-[#e6e8ec]"
       >
         <option value="">Choose a reason</option>
         {Object.entries(REASONS).map(([value, { label }]) => (
@@ -207,19 +207,19 @@ function Editor({ row, versions, onChanged, onTrouble }) {
         <p
           className={`mt-2 rounded-xl p-3 font-ui text-sm leading-relaxed ${
             chosen.unavoidable
-              ? "bg-amber-400/10 text-amber-200"
-              : "bg-white/5 text-neutral-400"
+              ?"bg-amber-400/10 text-amber-200"
+              :"bg-[#f6f7f9] text-[#677181]"
           }`}
         >
           {chosen.note}
         </p>
       )}
 
-      {reason === "terms_change" && (
+      {reason ==="terms_change" && (
         <>
           <label
             htmlFor={`version-${row.id}`}
-            className="mt-5 block font-ui text-xs font-bold uppercase tracking-wide text-neutral-500"
+            className="mt-5 block font-ui text-xs font-bold uppercase tracking-wide text-[#677181]"
           >
             Which version
           </label>
@@ -227,7 +227,7 @@ function Editor({ row, versions, onChanged, onTrouble }) {
             id={`version-${row.id}`}
             value={version}
             onChange={(event) => setVersion(event.target.value)}
-            className="mt-2 w-full rounded-xl border border-white/15 bg-black/30 px-4 py-3 font-ui text-base text-white outline-none focus:border-white/40"
+            className="mt-2 w-full rounded-xl border border-[#e6e8ec] bg-black/30 px-4 py-3 font-ui text-base text-[#1b2233] outline-none focus:border-[#e6e8ec]"
           >
             <option value="">Choose a version</option>
             {versions.map((v) => (
@@ -236,7 +236,7 @@ function Editor({ row, versions, onChanged, onTrouble }) {
               </option>
             ))}
           </select>
-          <p className="mt-2 font-ui text-xs text-neutral-500">
+          <p className="mt-2 font-ui text-xs text-[#677181]">
             The in app banner asks people to accept this version.
           </p>
         </>
@@ -253,7 +253,7 @@ function Editor({ row, versions, onChanged, onTrouble }) {
           type="button"
           disabled={busy}
           onClick={save}
-          className="rounded-full bg-white/10 px-5 py-2.5 font-ui text-sm font-bold text-white transition hover:bg-white/20 disabled:opacity-50"
+          className="rounded-full bg-[#f1f2f5] px-5 py-2.5 font-ui text-sm font-bold text-[#1b2233] transition hover:bg-[#e6e8ec] disabled:opacity-50"
         >
           Save
         </button>
@@ -269,7 +269,7 @@ function Editor({ row, versions, onChanged, onTrouble }) {
               onTrouble?.(error.message);
             }
           }}
-          className="rounded-full border border-white/20 px-5 py-2.5 font-ui text-sm font-bold text-white transition hover:bg-white/10 disabled:opacity-50"
+          className="rounded-full border border-[#e6e8ec] px-5 py-2.5 font-ui text-sm font-bold text-[#1b2233] transition hover:bg-[#f1f2f5] disabled:opacity-50"
         >
           Send me a test copy
         </button>
@@ -288,7 +288,7 @@ function Editor({ row, versions, onChanged, onTrouble }) {
             await discardAnnouncement(row.id);
             onChanged();
           }}
-          className="rounded-full px-5 py-2.5 font-ui text-sm text-neutral-400 transition hover:text-white disabled:opacity-50"
+          className="rounded-full px-5 py-2.5 font-ui text-sm text-[#677181] transition hover:text-[#1b2233] disabled:opacity-50"
         >
           Discard
         </button>
@@ -296,27 +296,27 @@ function Editor({ row, versions, onChanged, onTrouble }) {
 
       {preview?.html && (
         <details className="mt-6">
-          <summary className="cursor-pointer font-ui text-sm font-bold text-neutral-300">
+          <summary className="cursor-pointer font-ui text-sm font-bold text-[#39435a]">
             What it will look like
           </summary>
           <iframe
             title="Preview"
             srcDoc={preview.html}
-            className="mt-3 h-[420px] w-full rounded-xl border border-white/10 bg-white"
+            className="mt-3 h-[420px] w-full rounded-xl border border-[#e6e8ec] bg-white"
           />
         </details>
       )}
 
       {confirming && audience && (
-        <div className="mt-6 rounded-2xl border border-amber-400/40 bg-amber-400/10 p-5">
-          <p className="font-ui text-base font-bold text-white">
-            Send to {audience.total} {audience.total === 1 ? "person" : "people"}?
+        <div className="mt-6 rounded-xl border border-amber-400/40 bg-amber-400/10 p-5">
+          <p className="font-ui text-base font-bold text-[#1b2233]">
+            Send to {audience.total} {audience.total === 1 ?"person" :"people"}?
           </p>
-          <p className="mt-2 font-ui text-sm leading-relaxed text-neutral-200">
+          <p className="mt-2 font-ui text-sm leading-relaxed text-[#39435a]">
             {chosen?.note} This cannot be taken back once it starts.
           </p>
           {audience.waiting !== audience.total && (
-            <p className="mt-2 font-ui text-sm text-neutral-300">
+            <p className="mt-2 font-ui text-sm text-[#39435a]">
               {audience.waiting} have not been written to yet. The rest already have.
             </p>
           )}
@@ -332,7 +332,7 @@ function Editor({ row, versions, onChanged, onTrouble }) {
             <button
               type="button"
               onClick={() => setConfirming(false)}
-              className="rounded-full border border-white/20 px-6 py-2.5 font-ui text-sm font-bold text-white transition hover:bg-white/10"
+              className="rounded-full border border-[#e6e8ec] px-6 py-2.5 font-ui text-sm font-bold text-[#1b2233] transition hover:bg-[#f1f2f5]"
             >
               Not yet
             </button>
@@ -361,14 +361,14 @@ export default function AnnouncementsPanel({ onTrouble }) {
     refresh();
   }, [refresh]);
 
-  if (!data) return <p className="mt-5 font-ui text-base text-neutral-400">Loading…</p>;
+  if (!data) return <p className="mt-5 font-ui text-base text-[#677181]">Loading…</p>;
 
-  const drafts = data.broadcasts.filter((b) => b.status !== "sent");
-  const gone = data.broadcasts.filter((b) => b.status === "sent");
+  const drafts = data.broadcasts.filter((b) => b.status !=="sent");
+  const gone = data.broadcasts.filter((b) => b.status ==="sent");
 
   return (
     <section className="mt-5">
-      <p className="font-ui text-base leading-relaxed text-neutral-300">
+      <p className="font-ui text-base leading-relaxed text-[#39435a]">
         For things people cannot opt out of: a change to the terms, a change to the privacy
         policy, a security notice. Everything else belongs in the newsletter.
       </p>
@@ -403,18 +403,18 @@ export default function AnnouncementsPanel({ onTrouble }) {
 
       {drafts.length > 0 && !editing && (
         <div className="mt-8">
-          <h3 className="font-ui text-lg font-bold text-white">Not sent yet</h3>
+          <h3 className="font-ui text-lg font-bold text-[#1b2233]">Not sent yet</h3>
           <ul className="mt-3 flex flex-col gap-2">
             {drafts.map((row) => (
               <li key={row.id}>
                 <button
                   type="button"
                   onClick={() => setEditing(row)}
-                  className="w-full rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 text-left font-ui text-sm text-white transition hover:bg-white/5"
+                  className="w-full rounded-xl border border-[#e6e8ec] bg-[#f6f7f9] px-4 py-3 text-left font-ui text-sm text-[#1b2233] transition hover:bg-[#f6f7f9]"
                 >
-                  {row.subject || "Untitled"}
-                  <span className="ml-2 text-neutral-500">
-                    {row.status === "sending" ? "going out now" : "draft"}
+                  {row.subject ||"Untitled"}
+                  <span className="ml-2 text-[#677181]">
+                    {row.status ==="sending" ?"going out now" :"draft"}
                   </span>
                 </button>
               </li>
@@ -425,8 +425,8 @@ export default function AnnouncementsPanel({ onTrouble }) {
 
       {gone.length > 0 && (
         <div className="mt-8">
-          <h3 className="font-ui text-lg font-bold text-white">Already sent</h3>
-          <p className="mt-1 font-ui text-sm text-neutral-500">
+          <h3 className="font-ui text-lg font-bold text-[#1b2233]">Already sent</h3>
+          <p className="mt-1 font-ui text-sm text-[#677181]">
             Kept as the record of what was said, to whom, and by whom. These cannot be edited or
             removed.
           </p>

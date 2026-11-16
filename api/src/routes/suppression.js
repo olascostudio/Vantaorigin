@@ -86,6 +86,56 @@ export default async function suppressionRoutes(app) {
     return { suppressions: detailed, total: Number(counted?.value ?? 0), lifts };
   });
 
+
+  // What the sender has told us lately.
+  //
+  // Here because setting the webhook up is the one moment somebody needs
+  // to see that it works, and until now the only way to find out was a SQL
+  // console or waiting for a real bounce to appear. A screen that can say
+  // "nothing has ever arrived" is the difference between a misconfigured
+  // endpoint found today and one found in three months, by which time the
+  // bounces it should have caught have already cost the domain its
+  // reputation.
+  app.get("/admin/webhooks/recent", { preHandler: requireAdmin() }, async () => {
+    const rows = await db
+      .select({
+        id: webhookEvents.id,
+        type: webhookEvents.eventType,
+        email: webhookEvents.email,
+        at: webhookEvents.receivedAt,
+        payload: webhookEvents.payload,
+      })
+      .from(webhookEvents)
+      .orderBy(desc(webhookEvents.receivedAt))
+      .limit(25);
+
+    const week = new Date(Date.now() - 7 * 86400000);
+    const counts = await db
+      .select({ type: webhookEvents.eventType, value: sql`count(*)::int` })
+      .from(webhookEvents)
+      .where(sql`${webhookEvents.receivedAt} >= ${week}`)
+      .groupBy(webhookEvents.eventType);
+
+    const [ever] = await db.select({ value: sql`count(*)::int` }).from(webhookEvents);
+
+    return {
+      // The one fact somebody setting this up is looking for.
+      everReceived: Number(ever?.value ?? 0) > 0,
+      total: Number(ever?.value ?? 0),
+      lastAt: rows[0]?.at ?? null,
+      thisWeek: counts.map((c) => ({ type: c.type, value: Number(c.value) })),
+      events: rows.map((row) => ({
+        id: row.id,
+        type: row.type,
+        email: row.email,
+        at: row.at,
+        // The bounce type where there is one, because that is what decided
+        // whether the address was suppressed.
+        bounceType: row.payload?.data?.bounce?.type ?? null,
+      })),
+    };
+  });
+
   // Lift one. Takes the address rather than the id, because the admin is
   // acting on an address they were given -- somebody wrote in -- and making
   // them find a row id first is a step that only invites picking the wrong
