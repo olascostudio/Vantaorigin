@@ -85,6 +85,7 @@ const fullName = (user) =>
 const ONWARD = [
   ["/", "VantaOrigin"],
   ["/discover", "Explore characters"],
+  ["/creators", "Browse creators"],
   ["/blog", "Blog"],
   ["/marketplace", "Marketplace"],
   ["/community", "Community"],
@@ -499,6 +500,109 @@ export default async function previewRoutes(app) {
       .send(page({ title: "Discover characters | VantaOrigin", description, canonical, jsonLd, body }));
   });
 
+  // The creators, rather than the characters. Built the same way the page
+  // is: from published work, so nobody who has published nothing is listed.
+  app.get("/preview/creators", async (request, reply) => {
+    const rows = await db
+      .select({ character: characters, creator: users })
+      .from(characters)
+      .innerJoin(users, eq(users.id, characters.userId))
+      .where(eq(characters.isPublic, true))
+      .orderBy(desc(characters.createdAt))
+      .limit(500);
+
+    const byCreator = new Map();
+    for (const { character, creator } of rows) {
+      let held = byCreator.get(creator.id);
+      if (!held) {
+        held = { creator, characters: [] };
+        byCreator.set(creator.id, held);
+      }
+      held.characters.push(character);
+    }
+    const creators = [...byCreator.values()];
+
+    const canonical = `${SITE}/creators`;
+    const names = creators.slice(0, 12).map(({ creator }) => fullName(creator));
+    const description = summarise(
+      creators.length
+        ? `${creators.length} creator${creators.length === 1 ? "" : "s"} publishing characters on VantaOrigin${
+            names.length ? `, including ${names.join(", ")}` : ""
+          }.`
+        : "The creators publishing characters on VantaOrigin."
+    );
+
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: "Creators on VantaOrigin",
+      url: canonical,
+      description,
+      mainEntity: {
+        "@type": "ItemList",
+        numberOfItems: creators.length,
+        itemListElement: creators.map(({ creator, characters: theirs }, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          url: `${SITE}/creator/${creator.username.replace(/^@/, "")}`,
+          name: fullName(creator),
+          item: {
+            "@type": "Person",
+            name: fullName(creator),
+            alternateName: creator.username,
+            url: `${SITE}/creator/${creator.username.replace(/^@/, "")}`,
+            ...(creator.bio ? { description: summarise(creator.bio, 240) } : {}),
+            ...(theirs.length
+              ? {
+                  subjectOf: theirs.map((character) => ({
+                    "@type": "CreativeWork",
+                    name: character.name,
+                    url: `${SITE}/character/${character.slug || character.id}`,
+                  })),
+                }
+              : {}),
+          },
+        })),
+      },
+    };
+
+    const body = `
+    <main>
+      <h1>Creators on VantaOrigin</h1>
+      <p>Everyone below has published at least one character. Each has a page of their own.</p>
+      ${
+        creators.length
+          ? `<ul>${creators
+              .map(({ creator, characters: theirs }) => {
+                const handle = creator.username.replace(/^@/, "");
+                const made = theirs
+                  .map(
+                    (character) =>
+                      `<a href="${SITE}/character/${escape(
+                        character.slug || character.id
+                      )}">${escape(character.name)}</a>`
+                  )
+                  .join(", ");
+                return `<li>
+        <a href="${SITE}/creator/${escape(handle)}">${escape(fullName(creator))} (${escape(
+                  creator.username
+                )})</a>${creator.bio ? `: ${escape(summarise(creator.bio, 240))}` : ""} Published ${
+                  theirs.length === 1 ? "one character" : `${theirs.length} characters`
+                }: ${made}.
+      </li>`;
+              })
+              .join("\n")}</ul>`
+          : "<p>Nobody has published a character yet.</p>"
+      }
+      <p><a href="${escape(canonical)}">Browse creators on VantaOrigin</a></p>
+    </main>`;
+
+    return reply
+      .type("text/html; charset=utf-8")
+      .header("cache-control", "public, max-age=60, s-maxage=300")
+      .send(page({ title: "Creators | VantaOrigin", description, canonical, jsonLd, body }));
+  });
+
   // ---- how a crawler finds all of it ----
   app.get("/sitemap.xml", async (request, reply) => {
     const [published, creators, posts] = await Promise.all([
@@ -531,6 +635,7 @@ export default async function previewRoutes(app) {
     const urls = [
       { loc: SITE, priority: "1.0" },
       { loc: `${SITE}/discover`, priority: "0.8" },
+      { loc: `${SITE}/creators`, priority: "0.8" },
       { loc: `${SITE}/blog`, priority: "0.8" },
       { loc: `${SITE}/marketplace`, priority: "0.6" },
       { loc: `${SITE}/marketplace/how-it-works`, priority: "0.5" },
@@ -720,6 +825,7 @@ ${urls
       `- [What VantaOrigin is](${SITE}/about): a home for the characters a creator makes, grouped by project and shared from one page.`,
       `- [How to use it](${SITE}/help): making a character, publishing it, sharing your page.`,
       `- [Discover](${SITE}/discover): every character creators have published.`,
+      `- [Creators](${SITE}/creators): the people publishing here, and a page for each of them.`,
       `- [Marketplace](${SITE}/marketplace): commission work from the creators here.`,
       `- [Community](${SITE}/community): where the creators gather.`,
       "",

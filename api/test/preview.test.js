@@ -317,3 +317,36 @@ test("the marketplace lists the studio's work, grouped as the albums are", async
     forgetPortfolio();
   }
 });
+
+// The browse page moved traffic off /discover, which a crawler can read, so
+// it has to be readable the same way: in plain HTML, with the links out.
+test("the creators page lists everybody who has published, in plain HTML", async () => {
+  const res = await app.inject({ method: "GET", url: "/preview/creators" });
+  assert.equal(res.statusCode, 200);
+
+  const html = res.body;
+  assert.match(html, /<h1>Creators on VantaOrigin<\/h1>/);
+  assert.match(html, /Ola Oriola \(@Vtgshadowscribe\)/);
+  assert.ok(html.includes("/creator/Vtgshadowscribe"), "links to the creator's own page");
+  assert.ok(html.includes("/character/urokojin"), "and on to what they published");
+  assert.ok(!html.includes("Work In Progress"), "private work stays private");
+
+  const jsonLd = JSON.parse(html.match(/<script type="application\/ld\+json">(.+?)<\/script>/s)[1]);
+  assert.equal(jsonLd["@type"], "CollectionPage");
+  assert.equal(jsonLd.mainEntity["@type"], "ItemList");
+  assert.equal(jsonLd.mainEntity.itemListElement[0].item["@type"], "Person");
+  assert.equal(jsonLd.mainEntity.itemListElement[0].name, "Ola Oriola");
+});
+
+// A bot page nobody links to is a bot page nobody reads.
+test("the creators page is reachable from the sitemap, llms.txt and the footer", async () => {
+  const sitemap = await app.inject({ method: "GET", url: "/sitemap.xml" });
+  assert.match(sitemap.body, /<loc>https:\/\/www\.vantaorigin\.com\/creators<\/loc>/);
+
+  const llms = await app.inject({ method: "GET", url: "/llms.txt" });
+  assert.match(llms.body, /\[Creators\]\(https:\/\/www\.vantaorigin\.com\/creators\)/);
+
+  // Every preview page carries the same footer, so one of them proves it.
+  const discover = await app.inject({ method: "GET", url: "/preview/discover" });
+  assert.ok(discover.body.includes('href="https://www.vantaorigin.com/creators"'));
+});

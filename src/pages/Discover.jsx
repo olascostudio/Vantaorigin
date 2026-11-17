@@ -38,7 +38,7 @@ const hintsFrom = (characters) =>
 function CharacterCard({ title, author, colour, art, overlay, excerpt, to = "/character" }) {
   return (
     <article
-      className="group relative flex w-[360px] shrink-0 flex-col gap-[18px] overflow-hidden rounded-[25px] border-[1.667px] bg-black/40 p-4 transition-colors hover:bg-black/60 sm:w-[500px] sm:p-[25px]"
+      className="relative flex w-[360px] shrink-0 flex-col gap-[18px] overflow-hidden rounded-[25px] border-[1.667px] bg-black/40 p-4 transition-colors hover:bg-black/60 sm:w-[500px] sm:p-[25px]"
       style={{ borderColor: colour }}
       data-testid="character-card"
     >
@@ -92,6 +92,26 @@ function CharacterCard({ title, author, colour, art, overlay, excerpt, to = "/ch
 // sit between the ones above rather than under them. They drift at slightly
 // different speeds, which is what makes the whole thing look like it floats.
 // The list in each rail is duplicated so its loop is seamless.
+// Where a rail should be after one frame.
+//
+//   at      where this loop believes the rail is, as a fraction
+//   wrote   what it last wrote out, after the browser rounded it
+//   actual  where the rail actually is now
+//
+// scrollLeft is rounded to whole pixels, so `at` is kept apart from it: at
+// these speeds a frame moves less than a pixel, and writing that into
+// scrollLeft and reading it back loses the remainder every time.
+//
+// `actual` differing from `wrote` means something other than this loop moved
+// the rail, which is a finger swiping it or the browser bringing a focused
+// card into view. That movement is the reader's, so it wins.
+export function nextPosition({ at, wrote, actual, elapsed, speed, half }) {
+  let position = Math.abs(actual - wrote) > 1 ? actual : at;
+  position += elapsed * speed;
+  if (half > 0 && position >= half) position -= half; // loop seamlessly
+  return position;
+}
+
 function CharacterMarquee({ characters }) {
   const topRail = useRef(null);
   const lowerRail = useRef(null);
@@ -107,6 +127,9 @@ function CharacterMarquee({ characters }) {
   // stutter. Keeping the real position here and writing the rounded value
   // out means the fraction carries over.
   const at = useRef([0, 0]);
+  // What this loop last wrote, after the browser rounded it. Anything that
+  // does not match means something else moved the rail.
+  const wrote = useRef([0, 0]);
 
   // Half each, so twice as many characters are in view as a single row showed.
   const half = Math.ceil(characters.length / 2);
@@ -132,6 +155,7 @@ function CharacterMarquee({ characters }) {
 
     els.forEach((el, index) => {
       at.current[index] = el.scrollLeft;
+      wrote.current[index] = el.scrollLeft;
     });
 
     let frame;
@@ -154,10 +178,21 @@ function CharacterMarquee({ characters }) {
           }
           // An arrow moved it, so the drift carries on from where it landed.
           at.current[index] = el.scrollLeft;
+          wrote.current[index] = el.scrollLeft;
         } else if (!reduceMotion && !paused.current && half > 0) {
-          at.current[index] += elapsed * speeds[index];
-          if (at.current[index] >= half) at.current[index] -= half; // loop seamlessly
+          at.current[index] = nextPosition({
+            at: at.current[index],
+            wrote: wrote.current[index],
+            actual: el.scrollLeft,
+            elapsed,
+            speed: speeds[index],
+            half,
+          });
           el.scrollLeft = at.current[index];
+          // Read back rather than storing what we asked for: scrollLeft is
+          // rounded to whole pixels, and that difference is what tells us
+          // next frame whether anybody else touched it.
+          wrote.current[index] = el.scrollLeft;
         }
       });
 
@@ -190,6 +225,15 @@ function CharacterMarquee({ characters }) {
       paused.current = true;
     },
     onPointerUp: () => {
+      paused.current = false;
+    },
+    // Tabbing into the rail stops it. Nothing else here pauses for a
+    // keyboard: without this the browser scrolls the focused card into view
+    // and the drift carries it straight back out again.
+    onFocusCapture: () => {
+      paused.current = true;
+    },
+    onBlurCapture: () => {
       paused.current = false;
     },
   };
@@ -296,7 +340,10 @@ export default function Discover() {
           </p>
           <p className="mx-auto mt-4 text-center font-ui text-lg text-neutral-300">
             Looking for the people rather than the characters?{" "}
-            <Link to="/creators" className="font-medium text-accent underline underline-offset-4">
+            {/* White, not the accent: over the hero photograph the accent
+                measures as low as 3.5:1, and where it passes depends on how
+                the image happens to crop. */}
+            <Link to="/creators" className="font-medium text-white underline underline-offset-4">
               Browse creators
             </Link>
             .

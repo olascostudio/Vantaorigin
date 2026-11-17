@@ -94,9 +94,24 @@ describe("Creators", () => {
   });
 
   // A page that fails silently looks the same as a site with nobody on it.
-  it("says so when the list cannot be loaded", async () => {
+  it("says so when the list cannot be loaded, and does not also claim nobody is here", async () => {
     loadPublicCreators.mockRejectedValue(new Error("offline"));
     show();
     expect(await screen.findByText(/could not load the creators/i)).toBeInTheDocument();
+    // The empty list after a failure is an empty list we never received, not
+    // a site with nobody on it. Printing both told the reader two different
+    // things, one of them false.
+    expect(screen.queryByText(/No creators have published anything yet/)).not.toBeInTheDocument();
+  });
+
+  // The ring is drawn inside the link, because the card clips to its corners
+  // and anything offset outward is cut away.
+  it("keeps the focus ring inside the card that clips it", async () => {
+    loadPublicCreators.mockResolvedValue([creator("@Heartline", { name: "Heartline Comics" })]);
+    show();
+    const card = await screen.findByRole("article");
+    const link = within(card).getByRole("link");
+    expect(link.className).toContain("focus-visible:outline-offset-[-3px]");
+    expect(link.className).not.toContain("focus-visible:outline-offset-2");
   });
 });

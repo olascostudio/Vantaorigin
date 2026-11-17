@@ -59,7 +59,9 @@ function CreatorCard({ creator }) {
           )}
           <div className="min-w-0">
             <h2 className="truncate font-ui text-lg font-bold text-white">{name}</h2>
-            {!sameTwice && <p className="truncate font-ui text-sm text-accent">{username}</p>}
+            {/* A lighter accent than the token: #bd7132 measures 4.17:1 on
+                this card, and 14px needs 4.5. This one is 4.8. */}
+            {!sameTwice && <p className="truncate font-ui text-sm text-[#c87c38]">{username}</p>}
           </div>
         </div>
 
@@ -80,7 +82,10 @@ function CreatorCard({ creator }) {
           there is still something to read out and tab to. */}
       <Link
         to={`/creator/${handle}`}
-        className="absolute inset-0 rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        // The ring is drawn inside the link's own box. The card clips to
+        // its rounded corners, so a ring offset outward is cut away
+        // entirely and a keyboard user sees nothing at all.
+        className="absolute inset-0 rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-primary"
       >
         <span className="sr-only">{`Open ${name}'s page`}</span>
       </Link>
@@ -165,7 +170,7 @@ export default function Creators() {
               <Skeleton key={index} className="h-[380px] rounded-2xl" />
             ))}
           </div>
-        ) : shown.length === 0 ? (
+        ) : shown.length === 0 && !problem ? (
           <p className="mt-10 font-ui text-lg text-neutral-300">
             {query.trim()
               ? `No creators match “${query.trim()}”.`

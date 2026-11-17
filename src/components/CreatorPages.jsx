@@ -71,7 +71,13 @@ function PageCard({ name, universe, tagline, body, art, artSmall, to, characterT
       </p>
       <h3 className="relative mt-3 max-w-[484.211px] font-ui text-[32px] font-black leading-[1.05] tracking-[-0.2105px] text-white sm:text-[42.105px]">
         {characterTo ? (
-          <Link to={characterTo} className="underline-offset-[6px] hover:underline">
+          // Underlined all the time, faintly. The button goes to the
+          // creator now, so this is the card's only way to the character,
+          // and a link that looks exactly like a heading is not one.
+          <Link
+            to={characterTo}
+            className="underline decoration-white/40 decoration-2 underline-offset-[6px] transition-colors hover:decoration-white"
+          >
             {name}
           </Link>
         ) : (
