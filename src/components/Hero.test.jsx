@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, act } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Hero from "./Hero";
 
@@ -71,5 +71,72 @@ describe("The hero on a phone", () => {
     const showcase = container.querySelector('[data-testid="showcase"]').closest("div.-mx-4");
     expect(showcase.className).toContain("lg:mt-auto");
     expect(showcase.className).not.toMatch(/(^|\s)mt-auto/);
+  });
+});
+
+// The fan advances rather than the cards bobbing in place.
+//
+// The five positions come straight from Figma, each with its own size, tilt
+// and badge placement, and moving the cards themselves would mean giving all
+// of that up. So the slots hold still and the artwork steps between them.
+describe("the showcase advances", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const artOf = () =>
+    screen
+      .getAllByTestId("showcase-card")
+      .map((card) => card.querySelector("img")?.getAttribute("src"));
+
+  const slotsOf = () =>
+    screen.getAllByTestId("showcase-card").map((card) => card.getAttribute("style"));
+
+  it("deals a different character into each slot, leaving the slots alone", () => {
+    render(<Hero />, { wrapper: MemoryRouter });
+
+    const before = artOf();
+    const slotsBefore = slotsOf();
+    expect(before.filter(Boolean)).toHaveLength(5);
+
+    act(() => {
+      vi.advanceTimersByTime(4200);
+    });
+
+    const after = artOf();
+    expect(after).not.toEqual(before);
+    // Everybody moved along by one, so the card that was second is now first.
+    expect(after[0]).toBe(before[1]);
+    expect(after[4]).toBe(before[0]);
+    // And the fan itself has not shifted a pixel.
+    expect(slotsOf()).toEqual(slotsBefore);
+  });
+
+  it("comes back round to where it started", () => {
+    render(<Hero />, { wrapper: MemoryRouter });
+    const before = artOf();
+
+    act(() => {
+      vi.advanceTimersByTime(4200 * 5);
+    });
+    expect(artOf()).toEqual(before);
+  });
+
+  it("holds still for somebody who asked for less movement", () => {
+    const real = window.matchMedia;
+    window.matchMedia = () => ({ matches: true, addEventListener() {}, removeEventListener() {} });
+    try {
+      render(<Hero />, { wrapper: MemoryRouter });
+      const before = artOf();
+      act(() => {
+        vi.advanceTimersByTime(4200 * 3);
+      });
+      expect(artOf()).toEqual(before);
+    } finally {
+      window.matchMedia = real;
+    }
   });
 });

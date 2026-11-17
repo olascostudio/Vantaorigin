@@ -45,6 +45,14 @@ export default {
           "0%": { opacity: "0", transform: "translateY(8px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
+        // A card arriving in its slot, as if dealt into it. Slides in
+        // from the right and settles. The cards carry their tilt as an
+        // inline transform on a wrapper above this, so animating the
+        // artwork itself leaves the tilt alone.
+        deal: {
+          "0%": { opacity: "0", transform: "translateX(26%) scale(1.04)" },
+          "100%": { opacity: "1", transform: "translateX(0) scale(1)" },
+        },
         // For a bar that fills to show how far along something is.
         grow: {
           "0%": { transform: "scaleX(0)" },
@@ -56,6 +64,7 @@ export default {
         drift: "drift 9s ease-in-out infinite",
         rise: "rise 420ms cubic-bezier(0.22, 1, 0.36, 1) both",
         grow: "grow 700ms cubic-bezier(0.22, 1, 0.36, 1) both",
+        deal: "deal 620ms cubic-bezier(0.22, 1, 0.36, 1) both",
       },
       boxShadow: {
         // Offset white block behind the rectangular CTAs (Figma draws it as a

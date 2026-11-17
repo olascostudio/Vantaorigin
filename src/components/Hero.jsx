@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "./Navbar";
 import Rotated from "./Rotated";
@@ -112,9 +113,14 @@ const CARD_SIZES = [
   "372px",
 ].join(", ");
 
-// Positions are relative to the 1307px showcase stage; `x` is the offset of
-// the card's bounding-box centre from the stage centre. Paint order matches
-// Figma (last = on top).
+// A slot is where a card sits: the offset from the stage centre, the box it
+// occupies, its tilt and where its badge goes. Straight from Figma, and
+// nothing here moves. What travels is the artwork, which steps from one slot
+// to the next so a different character reaches the middle every few seconds.
+// Moving the cards themselves instead would mean giving up the per-slot
+// sizes and tilts, which is the fan.
+//
+// Paint order matches Figma (last = on top).
 const SHOWCASE_CARDS = [
   {
     id: "vtuber",
@@ -178,7 +184,25 @@ function CardBadge({ box, transform }) {
   );
 }
 
-function ShowcaseCard({ id, x, box, transform, bg, art, artSmall, badge, drift = 0 }) {
+// What travels between the slots: the backing colour and the artwork. Taken
+// from the same five entries, so the fan starts exactly as Figma drew it and
+// only then begins to move.
+const CAST = SHOWCASE_CARDS.map(({ id, bg, art, artSmall }) => ({ id, bg, art, artSmall }));
+
+// How long a character holds a slot before the next one is dealt in.
+const DEAL_EVERY = 4200;
+
+// Somebody who has asked their system for less movement gets the fan as it
+// was drawn, still, and it never advances.
+const wantsStillness = () => {
+  try {
+    return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+  } catch {
+    return false;
+  }
+};
+
+function ShowcaseCard({ id, x, box, transform, bg, art, artSmall, badge, drift = 0, dealt = 0 }) {
   const [top, width, height] = box;
   return (
     <div
@@ -202,16 +226,21 @@ function ShowcaseCard({ id, x, box, transform, bg, art, artSmall, badge, drift =
       >
         <div className="flex-none" style={{ transform }}>
           <div
-            className="relative h-[451px] w-[372px] overflow-hidden rounded-t-[40px] shadow-card"
+            className="relative h-[451px] w-[372px] overflow-hidden rounded-t-[40px] shadow-card transition-colors duration-500"
             style={{ backgroundColor: bg }}
           >
-            {/* The artwork fills the card and tilts with it, as a card would */}
+            {/* The artwork fills the card and tilts with it, as a card would.
+                Keyed on the artwork so that a new character remounts the
+                image and the deal plays; the stagger makes the change travel
+                across the fan rather than happening to all five at once. */}
             <img
+              key={art}
               src={art}
               srcSet={`${artSmall} 380w, ${art} 744w`}
               sizes={CARD_SIZES}
               alt=""
-              className="absolute inset-0 size-full object-cover"
+              style={{ animationDelay: `${dealt * 90}ms` }}
+              className="absolute inset-0 size-full object-cover motion-safe:animate-deal"
             />
             <CardBadge {...badge} />
           </div>
@@ -222,6 +251,16 @@ function ShowcaseCard({ id, x, box, transform, bg, art, artSmall, badge, drift =
 }
 
 function Showcase() {
+  // Every few seconds each character steps one slot along, so a different
+  // one reaches the middle with the next beside it. The slots themselves
+  // never move: they are the fan.
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    if (wantsStillness()) return undefined;
+    const tick = setInterval(() => setStep((n) => n + 1), DEAL_EVERY);
+    return () => clearInterval(tick);
+  }, []);
+
   return (
     // Visible window onto the 698px-tall stage; the hero clips the rest.
     <div className="relative h-[141px] sm:h-[176px] md:h-[211px] lg:h-[clamp(150px,34vh,390px)]">
@@ -235,9 +274,24 @@ function Showcase() {
               <img src={glowEllipse} alt="" className="block size-full max-w-none" />
             </div>
           </div>
-          {SHOWCASE_CARDS.map(({ id, ...card }) => (
-            <ShowcaseCard key={id} id={id} {...card} />
-          ))}
+          {SHOWCASE_CARDS.map(({ id, x, box, transform, badge }, index) => {
+            const showing = CAST[(index + step) % CAST.length];
+            return (
+              <ShowcaseCard
+                key={id}
+                id={id}
+                x={x}
+                box={box}
+                transform={transform}
+                badge={badge}
+                bg={showing.bg}
+                art={showing.art}
+                artSmall={showing.artSmall}
+                drift={index * 430}
+                dealt={index}
+              />
+            );
+          })}
         </div>
         <img
           src={bottomFade}
