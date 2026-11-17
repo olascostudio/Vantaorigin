@@ -183,3 +183,85 @@ test("the listing says nothing about addresses or passwords", async () => {
   assert.ok(!body.includes("vantaorigin.test"), "no email addresses");
   assert.ok(!/passwordHash|password_hash/.test(body), "no password hashes");
 });
+
+// slice(0, limit) counts from the end when limit is negative, so a clamp on
+// the upper bound alone quietly dropped creators off the bottom of the list.
+test("a limit that makes no sense does not shorten the list", async () => {
+  // A second publisher, so dropping one off the end is visible at all.
+  const other = cookieFrom(
+    await app.inject({
+      method: "POST",
+      url: "/auth/signup",
+      payload: { email: "second-publisher@vantaorigin.test", username: "inkwell", password: "supersecret1" },
+    })
+  );
+  await confirm(other);
+  const theirCategory = await app
+    .inject({ method: "POST", url: "/categories", headers: { cookie: other }, payload: { name: "Comic" } })
+    .then((res) => res.json());
+  await app.inject({
+    method: "POST",
+    url: "/characters",
+    headers: { cookie: other },
+    payload: { name: "Quill", categoryId: theirCategory.id, isPublic: true },
+  });
+
+  const all = await app.inject({ method: "GET", url: "/public/creators" }).then((r) => r.json());
+  assert.ok(all.length > 1, "need more than one creator for this to mean anything");
+
+  for (const limit of ["-1", "-2", "0", "abc", "", "null", "-1e9"]) {
+    const rows = await app
+      .inject({ method: "GET", url: `/public/creators?limit=${limit}` })
+      .then((r) => r.json());
+    assert.equal(rows.length, all.length, `limit=${limit}`);
+  }
+
+  // A fraction is floored rather than handed to slice as it is.
+  const two = await app
+    .inject({ method: "GET", url: "/public/creators?limit=2.7" })
+    .then((r) => r.json());
+  assert.equal(two.length, 2);
+
+  // And the ceiling still holds.
+  const capped = await app
+    .inject({ method: "GET", url: "/public/creators?limit=100000" })
+    .then((r) => r.json());
+  assert.equal(capped.length, all.length);
+});
+
+// ---- the public page, grouped the way the hub groups it ----
+// A creator files characters under categories they named. The public page
+// shows those groups, so the names have to reach it.
+test("the creator page carries the categories their published work sits in", async () => {
+  const page = await app.inject({ method: "GET", url: "/public/creators/emberforge" }).then((r) => r.json());
+  assert.ok(Array.isArray(page.categories), "categories came back");
+  assert.deepEqual(page.categories.map((c) => c.name), ["Comic"]);
+
+  // The character has to carry the id, or the page cannot file it.
+  const ember = page.characters.find((c) => c.name === "Ember Knight");
+  assert.equal(ember.categoryId, page.categories[0].id);
+});
+
+// A category holding nothing but private work names a project the creator
+// has not announced, and would draw an empty box on their page.
+test("a category with nothing published in it is not named", async () => {
+  const secret = await app
+    .inject({
+      method: "POST",
+      url: "/categories",
+      headers: { cookie },
+      payload: { name: "Unannounced sequel" },
+    })
+    .then((res) => res.json());
+
+  await app.inject({
+    method: "POST",
+    url: "/characters",
+    headers: { cookie },
+    payload: { name: "Still Drafting", categoryId: secret.id, isPublic: false },
+  });
+
+  const page = await app.inject({ method: "GET", url: "/public/creators/emberforge" }).then((r) => r.json());
+  assert.ok(!page.categories.some((c) => c.name === "Unannounced sequel"));
+  assert.ok(!JSON.stringify(page.characters).includes("Still Drafting"));
+});

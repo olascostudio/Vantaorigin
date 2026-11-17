@@ -2,8 +2,13 @@
 // in a single request. Reuses the existing tables, with no new concepts.
 import { and, asc, desc, eq } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { characterAssets, characters, highlights, users } from "../db/schema.js";
+import { categories, characterAssets, characters, highlights, users } from "../db/schema.js";
 import { userByHandle } from "../db/handles.js";
+
+// Every published character is read to count them and pick covers, so the
+// read itself is bounded. Nine creators and twelve characters today: this is
+// a guard against a runaway query, not a page size.
+const PUBLISHED_CEILING = 5000;
 
 export default async function creatorRoutes(app) {
   // Everybody with something published, for the browse page.
@@ -14,7 +19,8 @@ export default async function creatorRoutes(app) {
   // listed, which is the point: this is a shelf of work, not a directory of
   // accounts.
   app.get("/public/creators", async (request) => {
-    const limit = Math.min(Number(request.query.limit) || 60, 120);
+    const asked = Number(request.query.limit);
+    const limit = Number.isFinite(asked) && asked > 0 ? Math.min(Math.floor(asked), 120) : 60;
 
     const rows = await db
       .select({
@@ -33,7 +39,8 @@ export default async function creatorRoutes(app) {
       .from(characters)
       .innerJoin(users, eq(users.id, characters.userId))
       .where(eq(characters.isPublic, true))
-      .orderBy(desc(characters.createdAt));
+      .orderBy(desc(characters.createdAt))
+      .limit(PUBLISHED_CEILING);
 
     // Grouped here rather than in SQL: the published set is small, and this
     // keeps it to one query instead of one per creator.
@@ -96,6 +103,21 @@ export default async function creatorRoutes(app) {
       }))
     );
 
+    // The categories a creator has filed their characters under. Only the
+    // ones holding something published: a category whose characters are all
+    // private would show a visitor an empty box and tell them nothing, while
+    // still naming a project the creator has not announced.
+    const filed = new Set(published.map((character) => character.categoryId).filter(Boolean));
+    const groups = filed.size
+      ? (
+          await db
+            .select({ id: categories.id, name: categories.name, position: categories.position })
+            .from(categories)
+            .where(eq(categories.userId, creator.id))
+            .orderBy(asc(categories.position), asc(categories.createdAt))
+        ).filter((group) => filed.has(group.id))
+      : [];
+
     const posts = await db
       .select()
       .from(highlights)
@@ -111,6 +133,7 @@ export default async function creatorRoutes(app) {
         avatarUrl: creator.avatarUrl,
         bannerUrl: creator.bannerUrl,
       },
+      categories: groups,
       characters: withArtwork,
       highlights: posts,
     };

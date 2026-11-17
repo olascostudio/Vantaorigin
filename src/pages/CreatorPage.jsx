@@ -63,6 +63,54 @@ function PostView({ post, onClose }) {
   );
 }
 
+function CharacterTile({ character }) {
+  return (
+    <Link
+      to={`/character/${character.slug || character.id}`}
+      className="group overflow-hidden rounded-2xl border border-white/10 bg-[#222b3c] transition-colors hover:border-white/30"
+    >
+      <Art
+        src={character.coverUrl || characterCover}
+        alt={character.name}
+        loading="lazy"
+        className="aspect-[3/4] w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+      />
+      <div className="p-2.5 sm:p-3">
+        <p className="truncate font-ui text-sm font-bold text-white">{character.name}</p>
+        {character.tagline && (
+          <p className="truncate font-ui text-xs text-neutral-400">{character.tagline}</p>
+        )}
+      </div>
+    </Link>
+  );
+}
+
+// One category, as the hub draws it: the name the creator gave it, and its
+// characters inside a bordered box of their own. The hub puts an "add
+// character" slot at the end of that row; a visitor gets the row without it.
+function CategoryGroup({ name, characters, bare = false }) {
+  const tiles = (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+      {characters.map((character) => (
+        <CharacterTile key={character.id} character={character} />
+      ))}
+    </div>
+  );
+
+  // Nothing to name and nothing to separate it from: no box either, or the
+  // page gains a frame around a single group for no reason.
+  if (bare) return tiles;
+
+  return (
+    <section aria-label={name || "Characters"}>
+      {name && (
+        <h2 className="mb-3 font-ui text-lg font-bold text-white sm:text-xl">{name}</h2>
+      )}
+      <div className="rounded-2xl border-2 border-[#a855f7] p-3 sm:p-4">{tiles}</div>
+    </section>
+  );
+}
+
 export default function CreatorPage() {
   const { username } = useParams();
   const { user } = useAuth();
@@ -79,6 +127,11 @@ export default function CreatorPage() {
   // This is the page a creator's link lands on, so it is where someone who
   // likes what they see is asked to make a page of their own.
   const joinPrompt = useJoinPrompt({ enabled: !user && Boolean(page) });
+
+  const sameHandle = (a, b) =>
+    String(a || "").replace(/^@+/, "").toLowerCase() ===
+    String(b || "").replace(/^@+/, "").toLowerCase();
+  const mine = Boolean(user && page?.creator && sameHandle(user.username, page.creator.username));
 
   // Somebody who has not filled in their name is known by their handle, since the
   // API hands back the handle as the name in that case, and saying it twice
@@ -140,6 +193,20 @@ export default function CreatorPage() {
   const { creator, characters, highlights } = page;
   const showing = tab === "Characters" ? characters : highlights;
 
+  // The same shape the hub uses: a creator files characters under categories
+  // they named themselves, and this is that page as a visitor sees it. A
+  // category the API did not send, or none at all, leaves its characters in a
+  // group of their own rather than dropping them off the page.
+  const groups = page.categories || [];
+  const grouped = groups
+    .map((category) => ({
+      ...category,
+      characters: characters.filter((character) => character.categoryId === category.id),
+    }))
+    .filter((category) => category.characters.length > 0);
+  const named = new Set(grouped.map((category) => category.id));
+  const unfiled = characters.filter((character) => !named.has(character.categoryId));
+
   return (
     <div className="min-h-screen bg-background pb-16">
       <div className="mx-auto max-w-[680px]">
@@ -153,13 +220,22 @@ export default function CreatorPage() {
             )}
           </div>
 
-          {/* Bordered, so it reads against a light or a dark banner */}
-          <Link
-            to="/discover"
-            className="absolute right-3 top-3 rounded-full border border-white/80 bg-black/40 px-4 py-2 font-ui text-xs font-bold text-white backdrop-blur-sm transition-colors hover:bg-black/60 sm:right-4 sm:top-4 sm:text-sm"
-          >
-            Visit Profile ↗
-          </Link>
+          {/* This page is the one a creator shares: it is their page as
+              anybody else sees it. The way back to the hub is useful to the
+              person whose page it is and to nobody else, so only they are
+              shown it. It pointed at /discover before, which sent everybody
+              who pressed it to the site's character list and made the page
+              look like a preview of some fuller profile elsewhere.
+
+              Bordered, so it reads against a light or a dark banner. */}
+          {mine && (
+            <Link
+              to="/creators-hub"
+              className="absolute right-3 top-3 rounded-full border border-white/80 bg-black/40 px-4 py-2 font-ui text-xs font-bold text-white backdrop-blur-sm transition-colors hover:bg-black/60 sm:right-4 sm:top-4 sm:text-sm"
+            >
+              Visit Profile ↗
+            </Link>
+          )}
 
           <div className="absolute inset-x-0 -bottom-10 flex justify-center sm:-bottom-12">
             {creator.avatarUrl ? (
@@ -178,6 +254,14 @@ export default function CreatorPage() {
 
         <header className="mt-14 px-5 text-center sm:mt-16">
           <h1 className="font-ui text-2xl font-bold text-white sm:text-3xl">{creator.name}</h1>
+          {/* The hub shows the handle under the name and this page did not,
+              so the page somebody shares did not say who it belonged to in
+              the form anybody would search for. Left out only when the
+              creator has no name of their own and the handle is already the
+              heading. */}
+          {creatorName && (
+            <p className="mt-1 font-ui text-base font-bold text-accent sm:text-lg">{handle}</p>
+          )}
           {creator.bio && (
             <p className="mx-auto mt-2 max-w-[520px] font-ui text-sm leading-relaxed text-neutral-300 sm:text-base">
               {creator.bio}
@@ -230,27 +314,17 @@ export default function CreatorPage() {
           )}
 
           {tab === "Characters" && characters.length > 0 && (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
-              {characters.map((character) => (
-                <Link
-                  key={character.id}
-                  to={`/character/${character.slug || character.id}`}
-                  className="group overflow-hidden rounded-2xl border border-white/10 bg-[#222b3c] transition-colors hover:border-white/30"
-                >
-                  <Art
-                    src={character.coverUrl || characterCover}
-                    alt={character.name}
-                    loading="lazy"
-                    className="aspect-[3/4] w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                  />
-                  <div className="p-2.5 sm:p-3">
-                    <p className="truncate font-ui text-sm font-bold text-white">{character.name}</p>
-                    {character.tagline && (
-                      <p className="truncate font-ui text-xs text-neutral-400">{character.tagline}</p>
-                    )}
-                  </div>
-                </Link>
+            <div className="flex flex-col gap-8">
+              {grouped.map((category) => (
+                <CategoryGroup key={category.id} name={category.name} characters={category.characters} />
               ))}
+              {unfiled.length > 0 && (
+                <CategoryGroup
+                  name={grouped.length > 0 ? "More characters" : ""}
+                  characters={unfiled}
+                  bare={grouped.length === 0}
+                />
+              )}
             </div>
           )}
 
