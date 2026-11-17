@@ -16,39 +16,63 @@ const BLANK_STATS = [
 ];
 
 // Shown on the marketing pages, where there is no signed-in creator.
+//
+// A real published character, so every ability and number here is his rather
+// than something invented to fill the shape. He belongs to Heartline Comics,
+// not to this site, and the credit below is the whole reason it is safe to
+// show him at all.
 export const DEFAULT_CHARACTER = {
   id: null,
-  alias: "Switch Face",
-  universe: "The Emberforge of Creation",
+  alias: "Hope Breaker",
+  universe: "The Heartline Universe",
   cover: null,
   banner: null,
   visibility: "private",
-  power: "1.3M",
-  likes: 1300000,
+  power: "0",
+  likes: 1,
   liked: false,
-  creator: "Joseph Marine",
-  tagline: "The One Who Becomes Anyone.",
+  creator: "@Heartline",
+  tagline: "I came to humble some false gods",
   backstory:
-    "Born in the underground city of Vantora District 7, Switch Face was once a top-tier illusion engineer, an elite specialist who designed holographic masks for espionage operatives. After a betrayal by his own unit, his face was erased from identity records, leaving him legally nonexistent.",
+    "Marcus Sinclair was a highly trained soldier on a mission inside an ancient temple. During the operation, his teammate Dom Hawkins betrayed the squad, killing their fellow soldiers. Marcus fought Dom, and both fell into a mysterious pit.",
   core: {
-    name: "Facial & Form Morphing Illusion",
+    name: "Nether Energy",
     description:
-      "Switch Face can seamlessly replicate another person’s appearance, vocal tone, and physical silhouette for short periods.",
+      "Manipulates black-and-white ghostly energy to create devastating supernatural attacks, weapons, and defensive constructs.",
     extras: [
-      { name: "Perfect Mimicry (Short Duration)", description: "Copies a face, voice and build exactly." },
-      { name: "Voice Pattern Cloning", description: "Reproduces anyone’s voice after a few seconds." },
+      {
+        name: "Wraith Form",
+        description:
+          "Becomes invisible and intangible, allowing him to pass through solid objects and avoid conventional attacks.",
+      },
+      {
+        name: "Soul Drain",
+        description: "Absorbs spiritual energy from enemies to weaken them and replenish his own power.",
+      },
     ],
   },
-  signature: { name: "Mirror Shatter Pulse", description: "Mirrored projections flicker in all directions." },
-  weakness: { name: "Identity Fracture", description: "Every mimic leaves a psychological imprint." },
-  alignment: { name: "Chaotic Neutral", description: "Guided by personal vendettas more than allegiance." },
+  signature: {
+    name: "Soul Chains",
+    description:
+      "Summons chains through Wraith Zone portals that bind an opponent’s soul, completely immobilising them and preventing ability use.",
+  },
+  weakness: {
+    name: "Anti-Wraith Technology",
+    description:
+      "Specialised technology can disrupt his abilities, particularly his invisibility and intangibility, leaving him open to conventional attacks.",
+  },
+  alignment: {
+    name: "Antihero, Chaotic Good",
+    description:
+      "A ruthless supernatural vigilante who protects innocent people and defends the Bronx. Motivated by justice, he operates outside the law.",
+  },
   assets: [],
   stats: [
-    { attribute: "Strength", level: 6, note: "Relies on deception not brute force" },
-    { attribute: "Agility", level: 8, note: "Vulnerable when illusions break" },
-    { attribute: "Durability", level: 4, note: "Agile, evasive movement" },
-    { attribute: "Intelligence", level: 10, note: "Highly strategic, adaptive" },
-    { attribute: "Energy", level: 10, note: "Illusions are elite-tier" },
+    { attribute: "Strength", level: 7, note: "" },
+    { attribute: "Agility", level: 8, note: "" },
+    { attribute: "Durability", level: 8, note: "" },
+    { attribute: "Intelligence", level: 8, note: "" },
+    { attribute: "Energy", level: 9, note: "" },
   ],
 };
 

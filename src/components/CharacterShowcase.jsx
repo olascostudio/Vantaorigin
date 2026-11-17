@@ -1,21 +1,26 @@
 import { Link } from "react-router-dom";
 import SectionHeading from "./SectionHeading";
 import cardFrame from "../assets/creator/card-frame.svg";
-import characterCover from "../assets/creator/character-cover.svg";
-import sword from "../assets/creator/sword.svg";
+import hopeBreaker from "../assets/landing/pages/hope-breaker.webp";
+import hopeBreakerSmall from "../assets/landing/pages/hope-breaker-small.webp";
 
 // A trimmed-down preview of a real character profile, so visitors can see what
 // they get before signing up.
+//
+// A real published character rather than an invented one, which means the
+// abilities and the numbers below are his and not a guess. He belongs to
+// Heartline Comics, so the card says so: this is somebody else's work being
+// used to sell the site, and the credit is not optional.
 const DETAILS = [
-  { label: "Core Ability", value: "Facial & Form Morphing Illusion" },
-  { label: "Signature Move", value: "Mirror Shatter Pulse" },
-  { label: "Alignment", value: "Chaotic Neutral" },
+  { label: "Core Ability", value: "Nether Energy" },
+  { label: "Signature Move", value: "Soul Chains" },
+  { label: "Alignment", value: "Antihero, Chaotic Good" },
 ];
 
 const STATS = [
-  ["Strength", 6],
+  ["Strength", 7],
   ["Agility", 8],
-  ["Intelligence", 10],
+  ["Intelligence", 8],
 ];
 
 export default function CharacterShowcase() {
@@ -32,13 +37,19 @@ export default function CharacterShowcase() {
           <div className="relative w-[260px] shrink-0 sm:w-[300px]">
             <img src={cardFrame} alt="" className="w-full"  loading="lazy" />
             <div className="absolute inset-[4%] overflow-hidden rounded-[22px]">
-              <img src={characterCover} alt="Switch Face" className="size-full object-cover"  loading="lazy" />
+              <img
+                src={hopeBreaker}
+                srcSet={`${hopeBreakerSmall} 300w, ${hopeBreaker} 600w`}
+                sizes="(max-width: 639px) 260px, 300px"
+                alt="Hope Breaker"
+                className="size-full object-cover"
+                loading="lazy"
+              />
               <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-1 bg-gradient-to-t from-black/85 to-transparent px-4 pb-6 pt-14">
-                <p className="font-ui text-2xl font-black text-white">Switch Face</p>
-                <p className="flex items-center gap-2 font-ui text-base font-bold text-white">
-                  <img src={sword} alt="" className="size-4"  loading="lazy" />
-                  1.3M
-                </p>
+                <p className="font-ui text-2xl font-black text-white">Hope Breaker</p>
+                {/* The like count here was invented. He has one. So the line
+                    carries the credit instead, which is worth more anyway. */}
+                <p className="font-ui text-base font-bold text-white">by @Heartline</p>
               </div>
             </div>
           </div>
