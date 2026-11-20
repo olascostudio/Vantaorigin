@@ -37,7 +37,11 @@ import streak5 from "../assets/creator/streak-5.svg";
 import { usePrivatePage } from "../data/pageMeta";
 import GettingStarted from "../components/GettingStarted";
 
-const TABS = ["Character", "Highlights", "Create Clans"];
+// Clans were a third tab here, permanently disabled and labelled "Not
+// available in v1". A feature that does not exist should not be taking a
+// third of the hub's navigation: it made the place look half-finished and
+// pushed Highlights, which is real, to the edge.
+const TABS = ["Character", "Highlights"];
 
 // Decorative lightning strokes under the tab row.
 function LightningDivider() {
@@ -174,20 +178,11 @@ function ProfileHeader() {
           </Link>
         )}
 
-        {/* Floats in the corner so the avatar never lands on top of it */}
-        <div className="absolute left-3 top-2 z-10 pt-2 lg:left-12 lg:top-4">
-          <span className="absolute -top-0.5 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-primary px-2 py-0.5 font-ui text-[10px] font-bold text-white shadow-md lg:px-3 lg:text-xs">
-            Coming soon
-          </span>
-          <button
-            type="button"
-            disabled
-            className="flex items-center gap-1.5 rounded-full bg-[#28303f] px-3 py-1.5 font-ui text-xs font-bold text-white opacity-90 lg:gap-2 lg:px-5 lg:py-2.5 lg:text-lg"
-          >
-            Creator Studio
-            <span aria-hidden="true" className="text-[10px] lg:text-xs">▾</span>
-          </button>
-        </div>
+        {/* Creator Studio used to float here in the corner as a disabled
+            pill with a "Coming soon" badge. It now sits under Selling in
+            the grouped nav below, with the rest of what this hub can do,
+            and two of them saying the same thing was the scatter being
+            fixed rather than reduced. */}
       </div>
     </>
   );
@@ -602,23 +597,55 @@ export default function CreatorHub() {
       <div className="mt-10 border-t border-white/10" />
 
       <div className="mx-auto max-w-[1620px] px-6 lg:px-12">
-        <div className="flex flex-wrap items-center justify-center gap-3 py-6">
-          <button
-            type="button"
-            className="rounded-full bg-[#2f86e8] px-7 py-2.5 font-ui text-lg font-bold text-white hover:opacity-90"
-          >
-            My Dashboard
-          </button>
-          {/* Added beside the button above rather than wired into it: that
-              one has never had an onClick, so what it was meant to open is
-              not mine to decide. */}
-          <Link
-            to="/creators-hub/subscribers"
-            className="rounded-full border border-white/25 px-7 py-2.5 font-ui text-lg font-bold text-white transition hover:bg-white/10"
-          >
-            Subscribers
-          </Link>
-        </div>
+        {/* Everything a creator can do from here, grouped by what it is for.
+            It used to be two loose buttons, one of which ("My Dashboard")
+            had never been given an onClick and so did nothing at all, while
+            the Subscribers link beside it already opened the dashboard. The
+            grouping is the point: the hub's parts were scattered across
+            tabs, buttons and a separate settings route with no single place
+            that showed what existed, which is most of why nobody found
+            Highlights. */}
+        <nav
+          aria-label="Your hub"
+          className="flex flex-wrap items-start justify-center gap-x-10 gap-y-6 py-6"
+        >
+          <div>
+            <p className="mb-2 text-center font-ui text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-400">
+              Your page
+            </p>
+            <Link
+              to={`/creator/${String(toSettings(user).username || "").replace(/^@+/, "")}`}
+              className="flex items-center gap-2 rounded-full border border-white/25 px-7 py-2.5 font-ui text-lg font-bold text-white transition hover:bg-white/10"
+            >
+              View your page
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M7 17 17 7" />
+                <path d="M9 7h8v8" />
+              </svg>
+            </Link>
+          </div>
+
+          <div>
+            <p className="mb-2 text-center font-ui text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-400">
+              Your audience
+            </p>
+            <Link
+              to="/creators-hub/subscribers"
+              className="block rounded-full bg-[#2f86e8] px-7 py-2.5 text-center font-ui text-lg font-bold text-white hover:opacity-90"
+            >
+              Subscribers
+            </Link>
+          </div>
+
+          <div>
+            <p className="mb-2 text-center font-ui text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-400">
+              Selling
+            </p>
+            <span className="block rounded-full border border-dashed border-white/20 px-7 py-2.5 text-center font-ui text-lg font-bold text-neutral-400">
+              Creator Studio, soon
+            </span>
+          </div>
+        </nav>
 
         <div
           className="scrollbar-none flex gap-6 overflow-x-auto border-b border-white/10 sm:gap-8"
@@ -626,7 +653,6 @@ export default function CreatorHub() {
           aria-label="Creator sections"
         >
           {TABS.map((name) => {
-            const disabled = name === "Create Clans";
             const active = tab === name;
             return (
               <button
@@ -634,12 +660,10 @@ export default function CreatorHub() {
                 type="button"
                 role="tab"
                 aria-selected={active}
-                disabled={disabled}
-                title={disabled ? "Not available in v1" : undefined}
-                onClick={() => !disabled && setTab(name)}
-                className={`-mb-px shrink-0 border-b-[3px] pb-3 font-ui text-lg transition-colors sm:text-2xl ${
+                onClick={() => setTab(name)}
+                className={`-mb-px shrink-0 border-b-[3px] pb-3 font-ui text-lg transition-colors hover:text-primary sm:text-2xl ${
                   active ? "border-primary text-primary" : "border-transparent text-white"
-                } ${disabled ? "cursor-not-allowed opacity-50" : "hover:text-primary"}`}
+                }`}
               >
                 {name}
               </button>
