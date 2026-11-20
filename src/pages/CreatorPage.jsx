@@ -85,10 +85,15 @@ function CharacterTile({ character }) {
   );
 }
 
-// One category, as the hub draws it: the name the creator gave it, and its
-// characters inside a bordered box of their own. The hub puts an "add
-// character" slot at the end of that row; a visitor gets the row without it.
-function CategoryGroup({ name, characters, bare = false }) {
+// One category: the name the creator gave it, then its characters.
+//
+// This used to put the characters inside a 2px purple box, copied across
+// from the hub. In the hub that box is an editing surface, with an "add
+// character" slot at the end of the row, so the frame means something. On a
+// page a visitor is reading it means nothing, and a bright outline around a
+// group of cards reads like a selection state or a stray debug border. The
+// heading and the space between sections separate them perfectly well.
+function CategoryGroup({ name, characters }) {
   const tiles = (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
       {characters.map((character) => (
@@ -97,16 +102,12 @@ function CategoryGroup({ name, characters, bare = false }) {
     </div>
   );
 
-  // Nothing to name and nothing to separate it from: no box either, or the
-  // page gains a frame around a single group for no reason.
-  if (bare) return tiles;
+  if (!name) return tiles;
 
   return (
-    <section aria-label={name || "Characters"}>
-      {name && (
-        <h2 className="mb-3 font-ui text-lg font-bold text-white sm:text-xl">{name}</h2>
-      )}
-      <div className="rounded-2xl border-2 border-[#a855f7] p-3 sm:p-4">{tiles}</div>
+    <section aria-label={name}>
+      <h2 className="mb-4 font-ui text-lg font-bold text-white sm:text-xl">{name}</h2>
+      {tiles}
     </section>
   );
 }
@@ -258,9 +259,15 @@ export default function CreatorPage() {
               so the page somebody shares did not say who it belonged to in
               the form anybody would search for. Left out only when the
               creator has no name of their own and the handle is already the
-              heading. */}
+              heading.
+
+              In the hub's colour, not the accent. The accent is #bd7132,
+              whose job in this codebase is author labels on world cards; an
+              amber handle here was a third brand colour in 200 pixels and
+              it fought the purple below it. This page is meant to be the
+              hub as a visitor sees it, so it should look like the hub. */}
           {creatorName && (
-            <p className="mt-1 font-ui text-base font-bold text-accent sm:text-lg">{handle}</p>
+            <p className="mt-1 font-ui text-base font-bold text-[#4ea1ff] sm:text-lg">{handle}</p>
           )}
           {creator.bio && (
             <p className="mx-auto mt-2 max-w-[520px] font-ui text-sm leading-relaxed text-neutral-300 sm:text-base">
@@ -322,7 +329,6 @@ export default function CreatorPage() {
                 <CategoryGroup
                   name={grouped.length > 0 ? "More characters" : ""}
                   characters={unfiled}
-                  bare={grouped.length === 0}
                 />
               )}
             </div>
