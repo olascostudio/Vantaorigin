@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import SectionHeading from "./SectionHeading";
-import cardGlow from "../assets/landing/features/card-glow.svg";
 import arrowUpRight from "../assets/landing/features/arrow-up-right.svg";
 import creator01 from "../assets/landing/features/creator-01.webp";
 import creator02 from "../assets/landing/features/creator-02.webp";
@@ -38,26 +37,49 @@ const BUILDERS = [
   },
 ];
 
+// The glow, as one gradient rather than three things pretending to be one.
+//
+// It used to be a glow image pinned at a fixed 246.97px from the left, plus
+// a separate inset shadow on the right edge. The pixel offset came from a
+// 400px Figma frame, and these cards render at 313px in a four-up grid, so
+// on every one of them the light source sat partly outside the card. A
+// gradient placed in percentages cannot drift: it is anchored just off the
+// top right corner whatever the card is doing.
+//
+// It stays on the right, away from the copy on the left, so the body text
+// keeps its contrast against the dark surface.
+const GLOW =
+  "radial-gradient(130% 110% at 90% -12%, rgba(147, 51, 234, 0.46) 0%, rgba(147, 51, 234, 0.17) 34%, rgba(147, 51, 234, 0) 66%)";
+
 function BuilderCard({ title, text }) {
   return (
-    <article className="relative h-[150px] w-full max-w-[400px] overflow-hidden rounded-[22.018px] bg-[rgba(43,43,43,0.2)] shadow-[0_11.743px_20.917px_0_rgba(0,0,0,0.05)]">
-      <div className="absolute left-[246.97px] top-[-1.47px] h-[126.239px] w-[153.761px]">
-        <div className="absolute" style={{ inset: "-43.02% -35.32%" }}>
-          <img src={cardGlow} alt="" className="block size-full max-w-none"  loading="lazy" />
-        </div>
-      </div>
-      <div className="absolute left-[25px] right-[80px] top-[25.07px] flex flex-col gap-[15px] capitalize">
+    // A flex column that grows with its copy, not a fixed 150px box with
+    // everything pinned inside it. The old version put "Learn More" at a
+    // hardcoded 113px from the top, so the moment a description ran to three
+    // lines the text slid underneath it: all four cards overlapped, and the
+    // longest overflowed its own card by 24px. Nothing here can collide,
+    // whatever anybody writes.
+    <article className="relative flex min-h-[150px] w-full max-w-[400px] flex-col overflow-hidden rounded-[22.018px] bg-[rgba(43,43,43,0.2)] p-[25px] shadow-[0_11.743px_20.917px_0_rgba(0,0,0,0.05)]">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 rounded-[inherit]"
+        style={{ backgroundImage: GLOW }}
+      />
+
+      <div className="relative flex flex-col gap-[15px] capitalize">
         <h3 className="font-ui text-[22px] font-bold text-white">{title}</h3>
         <p className="font-ui text-[15px] text-subtext">{text}</p>
       </div>
+
+      {/* mt-auto holds it to the bottom edge however tall the card ends up,
+          which is what keeps a row of them lined up. */}
       <a
         href="#features"
-        className="absolute right-[25px] top-[113.07px] flex items-center gap-1 font-ui text-xs font-medium text-white underline"
+        className="relative mt-auto flex items-center gap-1 self-end pt-5 font-ui text-xs font-medium text-white underline"
       >
         Learn More
         <img src={arrowUpRight} alt="" className="size-4"  loading="lazy" />
       </a>
-      <div className="pointer-events-none absolute inset-0 rounded-[inherit] shadow-[inset_-5.872px_0.734px_9.541px_0_#9333ea]" />
     </article>
   );
 }
