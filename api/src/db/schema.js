@@ -2,6 +2,7 @@
 // tied to a hosting provider, so the same schema runs on a laptop, on managed
 // Postgres and on a VPS.
 import {
+  bigint,
   boolean,
   index,
   integer,
@@ -639,3 +640,296 @@ export const emailPreferences = pgTable(
     marketingIdx: index("email_preferences_marketing_idx").on(table.marketingStatus),
   })
 );
+
+// ---- VantaOrigin Distribution ----
+//
+// The tables migration 0032 creates. Money is always bigint in minor units,
+// named _minor so a wrong unit is visible where it is used. The reasoning
+// behind each shape lives in the migration, which is the file somebody
+// reads when they want to know why.
+
+// Money, every time: integer minor units, read back as a number.
+const money = (name) => bigint(name, { mode: "number" });
+
+export const countries = pgTable("countries", {
+  code: text("code").primaryKey(),
+  name: text("name").notNull(),
+  currency: text("currency").notNull(),
+  paymentProvider: text("payment_provider").notNull(),
+  enabled: boolean("enabled").default(false).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const bookFormats = pgTable("book_formats", {
+  slug: text("slug").primaryKey(),
+  name: text("name").notNull(),
+  trimWidthMil: integer("trim_width_mil").notNull(),
+  trimHeightMil: integer("trim_height_mil").notNull(),
+  colour: text("colour").notNull(),
+  binding: text("binding").notNull(),
+  minPages: integer("min_pages").notNull(),
+  maxPages: integer("max_pages").notNull(),
+  enabled: boolean("enabled").default(true).notNull(),
+  position: integer("position").default(0).notNull(),
+});
+
+export const printers = pgTable(
+  "printers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    countryCode: text("country_code").notNull(),
+    contactEmail: text("contact_email"),
+    contactPhone: text("contact_phone"),
+    notes: text("notes"),
+    active: boolean("active").default(true).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({ countryIdx: index("printers_country_idx").on(table.countryCode) })
+);
+
+export const printerCosts = pgTable(
+  "printer_costs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    printerId: uuid("printer_id").notNull(),
+    formatSlug: text("format_slug").notNull(),
+    // A band applies from here upwards until the next one starts.
+    minQuantity: integer("min_quantity").default(1).notNull(),
+    unitCostMinor: money("unit_cost_minor").notNull(),
+    packagingMinor: money("packaging_minor").default(0).notNull(),
+    perPageMinor: money("per_page_minor").default(0).notNull(),
+    // True until a printer actually quotes. The engine will not let a price
+    // be published on top of one of these.
+    isPlaceholder: boolean("is_placeholder").default(true).notNull(),
+    quotedAt: timestamp("quoted_at", { withTimezone: true }),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    lookupIdx: index("printer_costs_lookup_idx").on(table.formatSlug, table.minQuantity),
+  })
+);
+
+export const deliveryRates = pgTable("delivery_rates", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  countryCode: text("country_code").notNull(),
+  region: text("region"),
+  parcelCostMinor: money("parcel_cost_minor").notNull(),
+  extraCopyMinor: money("extra_copy_minor").default(0).notNull(),
+  estDaysMin: integer("est_days_min").notNull(),
+  estDaysMax: integer("est_days_max").notNull(),
+  courier: text("courier"),
+  isPlaceholder: boolean("is_placeholder").default(true).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const books = pgTable(
+  "books",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    publicId: text("public_id").notNull(),
+    creatorId: uuid("creator_id").notNull(),
+    title: text("title").notNull(),
+    description: text("description").default("").notNull(),
+    formatSlug: text("format_slug").notNull(),
+    pageCount: integer("page_count").notNull(),
+    coverImageUrl: text("cover_image_url"),
+    status: text("status").default("draft").notNull(),
+    rightsWarrantyAcceptedAt: timestamp("rights_warranty_accepted_at", { withTimezone: true }),
+    rightsWarrantyVersion: text("rights_warranty_version"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    publicIdx: uniqueIndex("books_public_id_key").on(table.publicId),
+    creatorIdx: index("books_creator_idx").on(table.creatorId),
+  })
+);
+
+export const bookFiles = pgTable("book_files", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  bookId: uuid("book_id").notNull(),
+  kind: text("kind").notNull(),
+  storageKey: text("storage_key").notNull(),
+  byteSize: bigint("byte_size", { mode: "number" }),
+  checksum: text("checksum"),
+  pageCount: integer("page_count"),
+  uploadedAt: timestamp("uploaded_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const bookPrices = pgTable("book_prices", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  bookId: uuid("book_id").notNull(),
+  countryCode: text("country_code").notNull(),
+  retailMinor: money("retail_minor").notNull(),
+  currency: text("currency").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const creatorDomains = pgTable(
+  "creator_domains",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    creatorId: uuid("creator_id").notNull(),
+    domain: text("domain").notNull(),
+    status: text("status").default("pending_review").notNull(),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    reviewedNote: text("reviewed_note"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({ creatorIdx: index("creator_domains_creator_idx").on(table.creatorId) })
+);
+
+export const orders = pgTable(
+  "orders",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    publicId: text("public_id").notNull(),
+    statusToken: text("status_token").notNull(),
+    countryCode: text("country_code").notNull(),
+    currency: text("currency").notNull(),
+    buyerName: text("buyer_name").notNull(),
+    buyerEmail: text("buyer_email").notNull(),
+    buyerPhone: text("buyer_phone"),
+    address: jsonb("address").$type().default({}).notNull(),
+    region: text("region"),
+    status: text("status").default("pending_payment").notNull(),
+    // Frozen when the order is made. A cost table edited later must never
+    // change what somebody already paid.
+    retailMinor: money("retail_minor").default(0).notNull(),
+    deliveryMinor: money("delivery_minor").default(0).notNull(),
+    gatewayFeeMinor: money("gateway_fee_minor").default(0).notNull(),
+    platformFeeMinor: money("platform_fee_minor").default(0).notNull(),
+    printerCostMinor: money("printer_cost_minor").default(0).notNull(),
+    totalMinor: money("total_minor").default(0).notNull(),
+    paymentProvider: text("payment_provider"),
+    providerReference: text("provider_reference"),
+    printerId: uuid("printer_id"),
+    courier: text("courier"),
+    trackingNumber: text("tracking_number"),
+    deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+    inspectionEndsAt: timestamp("inspection_ends_at", { withTimezone: true }),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    publicIdx: uniqueIndex("orders_public_id_key").on(table.publicId),
+    tokenIdx: uniqueIndex("orders_status_token_key").on(table.statusToken),
+    statusIdx: index("orders_status_idx").on(table.status),
+    emailIdx: index("orders_buyer_email_idx").on(table.buyerEmail),
+  })
+);
+
+export const orderItems = pgTable(
+  "order_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orderId: uuid("order_id").notNull(),
+    bookId: uuid("book_id").notNull(),
+    quantity: integer("quantity").notNull(),
+    unitRetailMinor: money("unit_retail_minor").notNull(),
+    unitPrinterCostMinor: money("unit_printer_cost_minor").default(0).notNull(),
+    title: text("title").notNull(),
+    formatSlug: text("format_slug").notNull(),
+    pageCount: integer("page_count").notNull(),
+    creatorId: uuid("creator_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    orderIdx: index("order_items_order_idx").on(table.orderId),
+    creatorIdx: index("order_items_creator_idx").on(table.creatorId),
+  })
+);
+
+export const orderEvents = pgTable(
+  "order_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orderId: uuid("order_id").notNull(),
+    status: text("status").notNull(),
+    note: text("note"),
+    actor: text("actor").default("system").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({ orderIdx: index("order_events_order_idx").on(table.orderId, table.createdAt) })
+);
+
+export const defectClaims = pgTable(
+  "defect_claims",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orderId: uuid("order_id").notNull(),
+    description: text("description").notNull(),
+    photoKeys: jsonb("photo_keys").$type().default([]).notNull(),
+    status: text("status").default("open").notNull(),
+    resolutionNote: text("resolution_note"),
+    refundMinor: money("refund_minor"),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    resolvedBy: uuid("resolved_by"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({ orderIdx: index("defect_claims_order_idx").on(table.orderId) })
+);
+
+export const ledgerEntries = pgTable(
+  "ledger_entries",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orderId: uuid("order_id").notNull(),
+    party: text("party").notNull(),
+    partyUserId: uuid("party_user_id"),
+    partyPrinterId: uuid("party_printer_id"),
+    kind: text("kind").default("earning").notNull(),
+    // May be negative: a chargeback is an entry against the order, not an
+    // edit to the one it reverses.
+    amountMinor: money("amount_minor").notNull(),
+    currency: text("currency").notNull(),
+    status: text("status").default("held").notNull(),
+    settledAt: timestamp("settled_at", { withTimezone: true }),
+    settlementNote: text("settlement_note"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    orderIdx: index("ledger_order_idx").on(table.orderId),
+    owedIdx: index("ledger_owed_idx").on(table.party, table.status),
+    creatorIdx: index("ledger_creator_idx").on(table.partyUserId, table.status),
+  })
+);
+
+export const payoutAccounts = pgTable("payout_accounts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull(),
+  countryCode: text("country_code").notNull(),
+  accountName: text("account_name").notNull(),
+  accountNumber: text("account_number").notNull(),
+  bankName: text("bank_name").notNull(),
+  bankCode: text("bank_code"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const distributionWaitlist = pgTable(
+  "distribution_waitlist",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    email: text("email").notNull(),
+    countryCode: text("country_code").notNull(),
+    bookId: uuid("book_id"),
+    notifiedAt: timestamp("notified_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({ countryIdx: index("distribution_waitlist_country_idx").on(table.countryCode) })
+);
+
+export const distributionSettings = pgTable("distribution_settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
