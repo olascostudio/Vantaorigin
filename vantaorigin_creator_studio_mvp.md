@@ -173,13 +173,84 @@ Create tables with sensible indexes and foreign keys. Suggested entities:
 - Print file links expire, and files are not publicly reachable.
 - The demo store page can complete a test order end to end in Stripe and Paystack test modes.
 
-## 13. Items for the founder to provide
+## 13. What has to exist before development starts
 
-- Launch countries and the printers in each, with real single copy and 5 copy quotes.
-- Delivery rates and estimated days per region.
-- Platform fee percentage confirmation.
-- Final checkout and email wording, including the escrow and refund text from the T&C.
-- One demo book with print ready files, and a Paystack and Stripe test account.
+Rewritten 20 November 2026 after the research in
+`vantaorigin_distribution_research.md` and after mocking every screen.
+Each item carries a recommended answer where one can be reasoned to. A
+recommendation is not a decision: it is what I would pick and why, so that
+disagreeing is quick.
+
+### 13.1 Blockers, in order
+
+**1. Real printer quotes. Nothing else matters until these exist.**
+Phase 1 builds the data model and then the pricing engine, and the engine
+computes a floor from printer unit cost. No Nigerian per-unit price could be
+found publicly, at any quantity, for any of the three formats. A pricing
+engine cannot be tested against a number nobody has.
+
+Needed: **single-copy and five-copy prices, all three formats, two or three
+Lagos printers.** Five-copy is not optional any more because 15.1's tiers
+need a band rather than one value. Same again for the second country.
+
+**2. Decide how the money is held, before the ledger is built.**
+This spec takes payment into VantaOrigin's own account and pays out by hand.
+Stripe documents Connect for paying third-party sellers; Paystack documents
+subaccounts and splits. Neither documents what this spec describes. It is
+not a detail that can be retrofitted: a Connect design has **no "platform
+holds the money" ledger at all**, so section 8's ledger may be the wrong
+shape entirely.
+
+*Recommended, and it sidesteps the wait:* build the ledger as a record of
+**what each party is owed**, and keep **how it is settled** behind one
+module. Obligations are the same under either answer; only the settlement
+differs. That way the legal answer, whenever it lands, changes one file
+rather than the schema.
+
+**3. The licensing question, which is not a code problem.**
+Whether holding a customer's money pending delivery makes this a payment
+service in Nigeria. One secondary source says a PSSP may not hold customer
+funds at all. No Nigerian regulation specific to marketplace escrow was
+found. This needs counsel, it has a lead time, and it is the largest open
+risk in the project. Start it the same week as the printer quotes; the two
+run in parallel and everything else waits on them.
+
+**4. Real delivery rates**, in the shape 15.1 needs: a cost per parcel plus
+a cost per extra copy, not a flat rate multiplied by quantity. Every courier
+figure in the research came from undated blogs and must be confirmed in each
+app.
+
+**5. Accounts and a test subject:** Paystack and Stripe test accounts, and
+one demo book with print-ready files.
+
+### 13.2 Decisions only the founder can make
+
+**Platform fee.** 10% is exactly Gumroad's direct rate and the top of the
+market; Payhip's free tier is 5%.
+*Recommended:* **10%, but with no fixed per-order fee**, and revisit it the
+moment real printer costs land. The worked example in the mockups has the
+creator keeping about 45% of what the reader pays once printing, delivery
+and card fees come out. If real printing costs more than the placeholder,
+that share collapses and 10% stops being defensible. The fee is easy to
+lower later and very hard to raise.
+
+**Second launch country.**
+*Recommended:* **the United Kingdom.** Printers are findable there (Ingram,
+Lulu and Blurb all have UK capacity), Stripe covers GBP, there is a real
+diaspora audience for Nigerian creators, and it exercises the two-currency,
+two-provider path, which is the architectural risk worth proving early.
+Ghana and Kenya are closer to the mission but the research found neither a
+printer nor a quote, so they belong on the waitlist first.
+
+**Brand.**
+*Recommended:* **not a separate brand.** The sampled original identity is
+navy `#111628` with purple `#6a28a8`, and the right split is by surface, not
+by brand: the dark identity for public and marketing pages, warm paper for
+anything anybody works in. Creator Studio is a working surface, so it is
+warm paper and purple. See `vantaorigin_design_system.md`.
+
+**Checkout and email wording**, including the escrow and refund text from
+the T&C.
 
 ## 14. Legal and compliance flags (list these in the README)
 
@@ -259,3 +330,59 @@ So: this is the bookshop wholesale portal from §3's out-of-scope list, not a
 checkout feature. Revisit when a shop asks to stock something, which is the
 signal that demand exists. Until then, 15.2 gets most of the benefit with
 none of the risk.
+
+## 16. Gaps found while mocking, with recommended answers
+
+None of these are in the spec above. The first two can cost real money.
+
+**Chargebacks.** A reader disputes a card payment on a book already printed
+and delivered. On both providers that debits **your** balance, and the
+printer has already been paid for work they really did.
+*Recommended:* the platform absorbs it in the MVP, and the ledger records a
+chargeback entry against the order so it is visible rather than a mystery
+shortfall. The natural protection is the gap between an order completing and
+a payout going out: batch payouts, and net disputes off before paying.
+
+**A parcel that comes back.** Wrong address, nobody in, courier gives up. In
+Lagos this will happen most weeks.
+*Recommended:* a `returned` status. The reader chooses redelivery, paying
+delivery again, or a refund less delivery. The printer is paid either way,
+because they did the work. Needs a line in the T&C.
+
+**Cancelling before production.** Someone orders at 9pm and changes their
+mind at 9:05.
+*Recommended:* allow it while the order is `paid` with no printer assigned,
+full refund, no questions. Once it is `in_production`, no: paper has been
+used.
+
+**Nowhere to send a creator's money.** The payouts mockup has a row that
+cannot be paid because nothing in the product ever asks for an account.
+*Recommended:* collect it when they **set their first price**, not at
+signup. That is the moment money becomes real to them, and it keeps signup
+short.
+
+**One order can only hold one book.** The embed is per-book and the checkout
+buys that one book, so a reader wanting two pays delivery twice and checks
+out twice.
+*Recommended:* ship single-book for the MVP, but give orders **line items
+from day one** rather than a `book_id` and a `quantity` on the order itself.
+Retrofitting a basket into a flat order is painful, and 15.1's tiers already
+push in the same direction.
+
+**The emails.** Seven: receipt, in production, shipped, delivered with the
+48 hour window explained, claim received, claim resolved, payout sent. All
+transactional, and the class system for them already exists in the repo, so
+this is writing rather than engineering.
+
+**What a creator will ask for in week one:** how many people opened the
+checkout and did not buy. That number tells them the price is wrong.
+*Recommended:* one counter per book, incremented when the checkout opens.
+Cheap now, impossible to backfill later.
+
+**A printer has no screen of their own.** Admin downloads the files and
+sends them on by hand, which is fine at three orders a day and your whole
+evening at thirty.
+*Recommended:* invite-only accounts, the agreement read and accepted before
+an account exists, and a per-job page showing the files, the specs and the
+address. Mocked already. A printer never sees what anybody paid.
+
