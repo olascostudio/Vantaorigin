@@ -23,6 +23,7 @@ import characterCover from"../assets/creator/character-cover.svg";
 import BlogPanel from"../components/BlogPanel.jsx";
 import SuppressionPanel from"../components/SuppressionPanel";
 import AdminShell from"../components/AdminShell";
+import CostsAndRates from"../components/admin/CostsAndRates";
 import AnnouncementsPanel from"../components/AnnouncementsPanel";
 import { usePrivatePage } from"../data/pageMeta";
 
@@ -831,6 +832,7 @@ export default function Admin() {
     Announcements:"For things people cannot opt out of. Everything else belongs in the newsletter.",
     Newsletter:"Who is on the list, and how they got there.",
     Blocked:"Addresses nothing is sent to, and whether the sender is telling us anything.",
+    "Costs and rates":"What printing and delivery cost, and what a book can therefore be sold for.",
   };
 
   return (
@@ -849,6 +851,8 @@ export default function Admin() {
           {problem}
         </p>
       )}
+
+      {tab ==="Costs and rates" && <CostsAndRates />}
 
       {tab ==="Overview" && (
         <section>

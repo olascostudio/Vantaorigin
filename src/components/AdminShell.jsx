@@ -34,6 +34,9 @@ export const GROUPS = [
   { name: "Watching", items: ["Reports", "Creators", "Characters"] },
   { name: "Writing", items: ["Blog", "Letters", "Announcements"] },
   { name: "The list", items: ["Newsletter", "Blocked"] },
+  // Distribution. One item for now: the costs everything else is computed
+  // from, and the only place a printer's quote can be typed in.
+  { name: "Selling books", items: ["Costs and rates"] },
 ];
 
 const ALL = GROUPS.flatMap((g) => g.items);

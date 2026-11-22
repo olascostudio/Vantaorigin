@@ -8,6 +8,7 @@ import rateLimit from "@fastify/rate-limit";
 import { ZodError } from "zod";
 import { config, isProduction, placeholders } from "./config.js";
 import adminRoutes from "./routes/admin.js";
+import distributionAdminRoutes from "./routes/distribution-admin.js";
 import authRoutes from "./routes/auth.js";
 import blogRoutes from "./routes/blog.js";
 import blogPreviewRoutes from "./routes/blog-preview.js";
@@ -130,6 +131,7 @@ export async function buildApp() {
   await app.register(highlightRoutes);
   await app.register(newsletterRoutes);
   await app.register(newsletterAdminRoutes);
+  await app.register(distributionAdminRoutes);
   await app.register(preferenceRoutes);
   await app.register(previewRoutes);
   await app.register(creatorRoutes);

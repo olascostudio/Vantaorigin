@@ -86,3 +86,28 @@ export const liftSuppression = (email, note) =>
 // the webhook is set up at all, which is otherwise a question only a SQL
 // console can answer.
 export const loadWebhookEvents = () => api.get("/admin/webhooks/recent");
+
+// ---- Distribution: the costs the price floor is built from ----
+//
+// Admin only, like everything else here. These are the numbers a creator's
+// price is judged against, so a creator who could edit them could price
+// below cost.
+
+export const loadDistributionRates = () => api.get("/admin/distribution/rates");
+
+// What a quote would mean, before anybody saves it. Runs the real pricing
+// engine on the server, so what this screen shows and what the checkout
+// will charge cannot drift apart.
+export const previewPrice = (body) => api.post("/admin/distribution/preview", body);
+
+export const addPrinter = (body) => api.post("/admin/distribution/printers", body);
+
+// Saving the same printer, format and step again corrects it rather than
+// leaving two.
+export const savePrinterCost = (body) => api.post("/admin/distribution/printer-costs", body);
+
+export const addDeliveryRate = (body) => api.post("/admin/distribution/delivery-rates", body);
+export const saveDeliveryRate = (id, body) =>
+  api.patch(`/admin/distribution/delivery-rates/${id}`, body);
+
+export const saveDistributionSettings = (body) => api.patch("/admin/distribution/settings", body);
