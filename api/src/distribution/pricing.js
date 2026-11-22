@@ -53,7 +53,10 @@ export const GATEWAY_FEES = {
 // Always rounds up. A fee we have underestimated comes out of somebody's
 // share, and it should not be the creator's.
 export function gatewayFee(provider, totalMinor, table = GATEWAY_FEES) {
-  const rule = table[provider];
+  // Own properties only. A plain lookup finds "constructor" and "toString"
+  // on the prototype, and those sail past a truthiness check and return
+  // NaN instead of refusing.
+  const rule = Object.hasOwn(table, provider) ? table[provider] : null;
   if (!rule) throw new Error(`No gateway fee rule for ${provider}`);
   if (totalMinor <= 0) return 0;
 
@@ -68,10 +71,18 @@ export function gatewayFee(provider, totalMinor, table = GATEWAY_FEES) {
 
 // Printers quote in steps, so the band that applies is the highest one whose
 // min_quantity the order reaches. Ordering the rows is not assumed.
+//
+// Two bands can share a min_quantity: the unique key on printer_costs is per
+// printer, so two printers may quote the same format at the same step, and a
+// query keyed on format alone returns both in no particular order. Picking by
+// array order would make the price depend on how the rows happened to come
+// back. Ties go to the dearer band instead, which is the safe direction: a
+// floor that is slightly too high costs nobody money, and one that is too low
+// costs the creator every sale.
 export function bandFor(bands, quantity) {
-  const reachable = bands
-    .filter((band) => quantity >= band.minQuantity)
-    .sort((a, b) => b.minQuantity - a.minQuantity);
+  const reachable = (bands ?? [])
+    .filter((band) => Number.isFinite(band?.minQuantity) && quantity >= band.minQuantity)
+    .sort((a, b) => b.minQuantity - a.minQuantity || b.unitCostMinor - a.unitCostMinor);
   return reachable[0] ?? null;
 }
 
@@ -110,7 +121,13 @@ export function deliveryCost({ rate, quantity }) {
 // absorb it instead.
 export const DELIVERY_PAID_BY_READER = true;
 
-const MAX_PASSES = 12;
+// Generous, because each pass is three integer operations and the cost of
+// being wrong is an exception on a price that was perfectly computable. At
+// the default 10% platform fee the floor settles in six to eight passes;
+// twelve was enough for that and not enough for a founder who raises the fee
+// past about 29%, where a correct floor still exists and the old bound threw
+// anyway, blaming the fee rules for it.
+const MAX_PASSES = 256;
 
 // The floor is circular and has to be solved, not just added up.
 //
@@ -144,7 +161,15 @@ export function floorFor({
     retail = needed;
   }
 
-  throw new Error("The price floor did not settle: check the fee rules for a rate at or above 100%");
+  // Say what actually happened. The old message asserted a cause it had not
+  // checked, and was wrong for every fee under 100%: the real reason was
+  // almost always that the pass limit ran out on a floor that existed.
+  const combinedBps = platformFeeBps + (gatewayTable[provider]?.rateBps ?? 0);
+  const cause =
+    combinedBps >= 10000
+      ? `the platform fee and gateway rate together come to ${combinedBps} basis points, which is at or above 100%, so no price covers them`
+      : `it was still rising after ${MAX_PASSES} passes`;
+  throw new Error(`The price floor did not settle: ${cause}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -170,6 +195,19 @@ export function quote({
 }) {
   if (!Number.isInteger(quantity) || quantity < 1) {
     throw new Error("Quantity must be a whole number of at least one");
+  }
+
+  // The price gets the same scrutiny the quantity always had.
+  //
+  // Without this a string sails through: `retailMinor + delivery` becomes
+  // string concatenation, the total leaves as "950000150000", and the
+  // creator is credited several billion naira on a quote that reports
+  // itself sellable. NaN is quieter and worse, because every comparison
+  // against it is false, so `retailMinor < floor` says the price clears the
+  // floor. A bigint column read outside Drizzle's number mapping comes back
+  // as a string, so this is a real path and not a hypothetical one.
+  if (retailMinor !== null && (!Number.isInteger(retailMinor) || retailMinor < 0)) {
+    throw new Error("A price must be a whole number of minor units, and not negative");
   }
 
   const band = bandFor(bands, quantity);
@@ -210,6 +248,17 @@ export function quote({
   // never go missing or be invented.
   const creator = totalMinor - delivery - printing - gateway - platform;
 
+  // Whether the price works is measured, not deduced from "it is above the
+  // floor". Those are not the same thing, because the fees do not rise
+  // smoothly: Paystack waives its flat NGN 100 below NGN 2,500, so crossing
+  // that line adds NGN 100 to the fee in a single step while the floor stays
+  // where it was. On a cheap book there is a window a hundred naira wide,
+  // entirely above the floor, where a creator rounding their price up to a
+  // tidy NGN 2,000 would lose about NGN 99 on every copy sold. Two rounded
+  // fees ticking up on one extra kobo can do the same thing on a smaller
+  // scale. Asking what the creator is actually left with catches both.
+  const losesMoney = creator < 0;
+
   return {
     currency,
     quantity,
@@ -223,7 +272,8 @@ export function quote({
     platformFeeMinor: platform,
     creatorMinor: creator,
     belowFloor,
-    sellable: !belowFloor && isTrustworthy({ band, rate, provider, gatewayTable }),
+    losesMoney,
+    sellable: !belowFloor && !losesMoney && isTrustworthy({ band, rate, provider, gatewayTable }),
     trustworthy: isTrustworthy({ band, rate, provider, gatewayTable }),
     placeholders: placeholdersIn({ band, rate, provider, gatewayTable }),
   };
@@ -233,11 +283,29 @@ export function quote({
 // them may be shown, so the admin screens have something to work with, but it
 // is never sellable: a creator must not be able to put a book on sale against
 // a cost nobody has quoted.
+// Unverified unless proven otherwise.
+//
+// This read `band?.isPlaceholder` and so answered "not a placeholder" to a
+// missing row, a missing flag, and a row whose column arrived as the
+// database spells it, `is_placeholder`, rather than as Drizzle maps it. The
+// column is NOT NULL DEFAULT true precisely so that an unverified cost
+// cannot pass as verified, and the engine reading it was undoing that. The
+// one rule standing between a seeded guess and a creator selling at a loss
+// has to fail closed.
+const looksLikeAGuess = (row) => {
+  if (!row) return true;
+  if ("isPlaceholder" in row) return Boolean(row.isPlaceholder);
+  if ("is_placeholder" in row) return Boolean(row.is_placeholder);
+  return true;
+};
+
 export function placeholdersIn({ band, rate, provider, gatewayTable = GATEWAY_FEES }) {
   const found = [];
-  if (band?.isPlaceholder) found.push("printer cost");
-  if (rate?.isPlaceholder) found.push("delivery rate");
-  if (gatewayTable[provider] && !gatewayTable[provider].confirmed) found.push("gateway fee");
+  if (looksLikeAGuess(band)) found.push("printer cost");
+  if (looksLikeAGuess(rate)) found.push("delivery rate");
+  // A provider we hold no rule for is not a confirmed one.
+  const fee = Object.hasOwn(gatewayTable, provider) ? gatewayTable[provider] : null;
+  if (!fee?.confirmed) found.push("gateway fee");
   return found;
 }
 
@@ -246,16 +314,32 @@ export function isTrustworthy(parts) {
 }
 
 // Why a price was refused, in words a creator reads rather than a code.
+//
+// Every reason that applies, not just the first. A price can be both below
+// the floor and standing on a cost nobody quoted, and telling somebody only
+// to raise their price sends them to do a thing that will not help.
 export function whyNotSellable(result) {
   if (result.sellable) return null;
+  const reasons = [];
+
   if (result.belowFloor) {
-    return "This is below what the book costs to make and deliver, so every sale would lose money.";
+    reasons.push("This is below what the book costs to make and deliver, so every sale would lose money.");
+  } else if (result.losesMoney) {
+    // Above the floor and still short: a fee stepped up at this exact
+    // price. A few naira either way fixes it, which is worth saying.
+    reasons.push(
+      "At this exact price the card fee tips over a threshold and takes more than the book earns. A little higher or a little lower works."
+    );
   }
-  const missing = result.placeholders;
+
+  const missing = result.placeholders ?? [];
   if (missing.length) {
-    return `We cannot price this yet: the ${missing.join(" and the ")} ${
-      missing.length > 1 ? "are" : "is"
-    } a placeholder, not a real quote.`;
+    reasons.push(
+      `We cannot put this on sale yet: the ${missing.join(" and the ")} ${
+        missing.length > 1 ? "are" : "is"
+      } a placeholder, not a real quote.`
+    );
   }
-  return "This price cannot be used.";
+
+  return reasons.length ? reasons.join(" ") : "This price cannot be used.";
 }

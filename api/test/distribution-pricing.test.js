@@ -260,3 +260,171 @@ test("a quantity that is not a whole number above zero is refused", () => {
 test("a destination we have no rate for is an error, not free delivery", () => {
   assert.throws(() => quote({ ...base, rate: null, quantity: 1 }), /No delivery rate/);
 });
+
+// ---------------------------------------------------------------------------
+// Everything below came out of a review of the first version. Each test is a
+// hole somebody found, kept open so it cannot close again.
+// ---------------------------------------------------------------------------
+
+test("a price that is not a whole number of minor units is refused", () => {
+  // A bigint column read outside Drizzle's number mapping arrives as a
+  // string. Unchecked, adding it to delivery concatenated instead: the total
+  // left the engine as "950000150000" and the creator was credited billions
+  // on a quote that called itself sellable.
+  for (const retailMinor of ["950000", Number.NaN, Infinity, -1, 1.5]) {
+    assert.throws(
+      () => quote({ ...base, quantity: 1, retailMinor }),
+      /whole number of minor units/,
+      `retailMinor ${String(retailMinor)}`
+    );
+  }
+});
+
+test("a valid price still produces numbers, not strings", () => {
+  const q = quote({ ...base, quantity: 1, retailMinor: NAIRA(9500) });
+  assert.equal(typeof q.totalMinor, "number");
+  assert.equal(typeof q.creatorMinor, "number");
+});
+
+// The waiver cliff: Paystack waives its flat NGN 100 below NGN 2,500, so
+// crossing that line adds NGN 100 to the fee in one step while the floor
+// stays put. A creator rounding up to a tidy NGN 2,000 lost about NGN 99 a
+// copy, and the engine called it sellable because it only asked whether the
+// price was above the floor.
+const cheapBand = [
+  { minQuantity: 1, unitCostMinor: NAIRA(1762), packagingMinor: 0, perPageMinor: 0, isPlaceholder: false },
+];
+const nearby = { parcelCostMinor: NAIRA(500), extraCopyMinor: 0, estDaysMin: 1, estDaysMax: 2, isPlaceholder: false };
+
+test("a price above the floor that still loses money is not sellable", () => {
+  const onTheCliff = quote({
+    ...base,
+    bands: cheapBand,
+    rate: nearby,
+    quantity: 1,
+    retailMinor: NAIRA(2000),
+  });
+
+  assert.equal(onTheCliff.belowFloor, false, "it really is above the floor");
+  assert.ok(onTheCliff.creatorMinor < 0, "and the creator really does lose money");
+  assert.equal(onTheCliff.losesMoney, true);
+  assert.equal(onTheCliff.sellable, false, "so it must not be sellable");
+  assert.match(whyNotSellable(onTheCliff), /threshold/);
+});
+
+test("no sellable price ever leaves the creator out of pocket", () => {
+  // Swept across the cliff and past it, a kobo at a time.
+  let checked = 0;
+  for (let retail = NAIRA(1990); retail <= NAIRA(2200); retail += 1) {
+    const q = quote({ ...base, bands: cheapBand, rate: nearby, quantity: 1, retailMinor: retail });
+    if (q.sellable) {
+      assert.ok(q.creatorMinor >= 0, `sellable at ${retail} but the creator gets ${q.creatorMinor}`);
+    }
+    checked += 1;
+  }
+  assert.ok(checked > 20000, "the sweep actually ran");
+});
+
+// A floor that exists must be returned, not thrown over.
+test("a raised platform fee still gets a floor instead of an exception", () => {
+  for (const platformFeeBps of [2000, 2906, 3500, 5000, 7500]) {
+    const ask = quote({ ...base, quantity: 1, platformFeeBps });
+    assert.ok(ask.floorMinor > 0, `${platformFeeBps} bps has a floor`);
+
+    const priced = quote({ ...base, quantity: 1, platformFeeBps, retailMinor: ask.floorMinor });
+    assert.ok(priced.creatorMinor >= 0, `${platformFeeBps} bps floor is solvent`);
+  }
+});
+
+test("a fee that really cannot be covered says so accurately", () => {
+  const greedy = { all: { rateBps: 9500, fixedMinor: 0, waiveFixedUnderMinor: 0, capMinor: null, confirmed: true } };
+  assert.throws(
+    () => floorFor({ printing: NAIRA(1000), delivery: 0, provider: "all", platformFeeBps: 1000, gatewayTable: greedy }),
+    /at or above 100%/,
+    "it names the real cause rather than guessing at one"
+  );
+});
+
+// ---- failing closed ----
+
+test("a cost with no placeholder flag at all is treated as a guess", () => {
+  assert.deepEqual(placeholdersIn({}), ["printer cost", "delivery rate", "gateway fee"]);
+  assert.equal(isTrustworthy({}), false);
+  assert.equal(isTrustworthy({ band: {}, rate: {}, provider: "paystack" }), false);
+});
+
+test("the database spelling of the flag is understood", () => {
+  // Drizzle maps it to isPlaceholder; raw SQL hands back is_placeholder. A
+  // row that says it is a guess must be read as one either way.
+  const found = placeholdersIn({
+    band: { is_placeholder: true },
+    rate: { is_placeholder: false },
+    provider: "paystack",
+  });
+  assert.deepEqual(found, ["printer cost"]);
+});
+
+test("a provider we hold no rule for is never confirmed", () => {
+  assert.ok(placeholdersIn({ band: comicBands[0], rate: lagos, provider: "flutterwave" }).includes("gateway fee"));
+  assert.equal(isTrustworthy({ band: comicBands[0], rate: lagos, provider: "constructor" }), false);
+});
+
+test("a fee rule is never found on the prototype", () => {
+  for (const name of ["constructor", "toString", "hasOwnProperty"]) {
+    assert.throws(() => gatewayFee(name, NAIRA(1000)), /No gateway fee rule/, name);
+  }
+});
+
+test("both reasons are given when a price is bad in two ways at once", () => {
+  const guessed = [{ ...comicBands[0], isPlaceholder: true }];
+  const q = quote({ ...base, bands: guessed, quantity: 1, retailMinor: 1 });
+  const why = whyNotSellable(q);
+  assert.match(why, /below what the book costs/);
+  assert.match(why, /placeholder/);
+});
+
+// ---- bands ----
+
+test("two printers quoting the same step give the same answer either way round", () => {
+  const cheap = { minQuantity: 1, unitCostMinor: NAIRA(3200), packagingMinor: 0, perPageMinor: 0, isPlaceholder: false };
+  const dear = { minQuantity: 1, unitCostMinor: NAIRA(9999), packagingMinor: 0, perPageMinor: 0, isPlaceholder: false };
+
+  // Whichever order the rows arrive in, and the dearer one wins: a floor
+  // that is too high costs nobody, one that is too low costs every sale.
+  assert.equal(bandFor([cheap, dear], 3).unitCostMinor, NAIRA(9999));
+  assert.equal(bandFor([dear, cheap], 3).unitCostMinor, NAIRA(9999));
+});
+
+test("a band with no usable quantity is ignored rather than matched", () => {
+  assert.equal(bandFor([{ minQuantity: null, unitCostMinor: 1 }], 5), null);
+  assert.equal(bandFor([{ unitCostMinor: 1 }], 5), null);
+  assert.equal(bandFor(undefined, 5), null);
+});
+
+// ---- invariants the first suite left unguarded ----
+
+test("the per-copy floor, times the quantity, always covers the floor", () => {
+  // The checkout shows a per-copy price. Rounding it down would advertise a
+  // figure that does not add up to a sellable total.
+  for (let quantity = 1; quantity <= 40; quantity += 1) {
+    const q = quote({ ...base, quantity });
+    assert.ok(
+      q.perCopyFloorMinor * quantity >= q.floorMinor,
+      `quantity ${quantity}: ${q.perCopyFloorMinor} x ${quantity} is under ${q.floorMinor}`
+    );
+  }
+});
+
+test("the platform fee is rounded the same way wherever it is worked out", () => {
+  // floorFor and quote each compute it. If they disagree by a kobo, a price
+  // exactly at the floor stops being solvent.
+  for (const printing of [123457, 777711, 5003]) {
+    const bands = [
+      { minQuantity: 1, unitCostMinor: printing, packagingMinor: 0, perPageMinor: 0, isPlaceholder: false },
+    ];
+    const ask = quote({ ...base, bands, quantity: 1 });
+    const atFloor = quote({ ...base, bands, quantity: 1, retailMinor: ask.floorMinor });
+    assert.ok(atFloor.creatorMinor >= 0, `printing ${printing}: the floor is not solvent`);
+    assert.equal(atFloor.sellable, true);
+  }
+});
