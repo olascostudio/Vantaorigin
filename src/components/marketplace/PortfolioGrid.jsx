@@ -72,7 +72,7 @@ function Lightbox({ project, onClose }) {
   );
 }
 
-function Card({ project, onOpen }) {
+function Card({ project, onOpen, showAlbum }) {
   return (
     <li>
       <button
@@ -99,7 +99,14 @@ function Card({ project, onOpen }) {
         <div className="flex flex-1 flex-col gap-1 p-4">
           <p className="line-clamp-2 font-ui text-base font-bold text-white">{project.title}</p>
           <p className="font-ui text-sm text-accent">By: {project.artist}</p>
-          <p className="mt-auto pt-2 font-ui text-xs text-neutral-400">{project.album}</p>
+          {/* Only where it tells you something. Inside a category you
+              already know which one you are in, and a piece filed in
+              several albums would otherwise show one category name while
+              sitting under another, which reads as a mistake rather than
+              as the piece being in both. */}
+          {showAlbum && (
+            <p className="mt-auto pt-2 font-ui text-xs text-neutral-400">{project.album}</p>
+          )}
         </div>
       </button>
     </li>
@@ -126,9 +133,13 @@ export default function PortfolioGrid({ albumId, artist, query, albumUrl }) {
             project.description.toLowerCase().includes(term)
           );
         }
-        return (
-          (!albumId || project.albumId === albumId) && (!artist || project.artist === artist)
-        );
+        // Every album the piece is filed under, not just the first one the
+        // sync happened to see it in. A piece that sits in several albums on
+        // ArtStation belongs in all of them here too, and matching the home
+        // album alone is what left a category advertising work it did not
+        // show. albumId is the fallback for data synced before albumIds.
+        const homes = project.albumIds ?? [project.albumId];
+        return (!albumId || homes.includes(albumId)) && (!artist || project.artist === artist);
       }),
     [albumId, artist, searching, term]
   );
@@ -159,7 +170,7 @@ export default function PortfolioGrid({ albumId, artist, query, albumUrl }) {
 
       <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {projects.slice(0, visible).map((project) => (
-          <Card key={project.id} project={project} onOpen={setOpen} />
+          <Card key={project.id} project={project} onOpen={setOpen} showAlbum={!albumId || searching} />
         ))}
       </ul>
 

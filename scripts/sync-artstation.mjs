@@ -328,24 +328,37 @@ async function main() {
   if (!albums.length) throw new Error("No albums returned, leaving the existing file alone.");
 
   const projects = [];
-  const seen = new Set();
+  const byHash = new Map();
 
   for (const album of albums) {
     const raw = await fetchAlbumProjects(album);
-    album.count = raw.length;
 
     for (const project of raw) {
-      // a piece can sit in more than one album; first album wins as its home
-      if (seen.has(project.hash_id)) continue;
-      seen.add(project.hash_id);
+      // A piece can sit in more than one album on ArtStation, and it used to
+      // be kept only under the first one it turned up in. Everything it was
+      // also in simply lost it: Worldbuilding Assets shared all seven of its
+      // pieces with albums earlier in this loop, so it stored none of them
+      // and the sidebar still offered it, because the count came from what
+      // ArtStation returned rather than from what we kept. Clicking it
+      // showed an empty category.
+      //
+      // So a piece now remembers every album it is in, the way it is filed
+      // at the source. The first one stays its home for the label on its
+      // card, which still wants one name.
+      const already = byHash.get(project.hash_id);
+      if (already) {
+        if (!already.albumIds.includes(album.id)) already.albumIds.push(album.id);
+        continue;
+      }
 
       const previous = existing.get(project.hash_id);
       const rawCover = project.cover?.thumb_url || project.cover?.small_square_url || null;
-      projects.push({
+      const stored = {
         id: project.hash_id,
         title: decode(project.title),
         artist: artistFor(project.title),
         albumId: album.id,
+        albumIds: [album.id],
         album: album.title,
         description: decode((project.description || "").split("\n").filter(Boolean)[0] || ""),
         permalink: project.permalink,
@@ -357,8 +370,17 @@ async function main() {
         images: fullImages(images.get(project.hash_id), previous, rawCover),
         publishedAt: project.published_at,
         likes: project.likes_count,
-      });
+      };
+      byHash.set(project.hash_id, stored);
+      projects.push(stored);
     }
+  }
+
+  // Counted from what we actually kept, not from what ArtStation handed over.
+  // Those were the same number only while every piece lived in one album, and
+  // the gap between them was the empty category nobody could explain.
+  for (const album of albums) {
+    album.count = projects.filter((project) => project.albumIds.includes(album.id)).length;
   }
 
   projects.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));

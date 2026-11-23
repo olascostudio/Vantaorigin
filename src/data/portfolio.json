@@ -1,21 +1,14 @@
 {
   "source": "artstation:vantaoriginstudio",
   "profile": "https://www.artstation.com/vantaoriginstudio",
-  "syncedAt": "2026-11-23T02:51:40.982Z",
+  "syncedAt": "2026-11-23T21:41:42.895Z",
   "albums": [
-    {
-      "id": 0,
-      "title": "Latest Work",
-      "slug": "latest-work",
-      "url": "https://www.artstation.com/vantaoriginstudio",
-      "count": 8
-    },
     {
       "id": 15071145,
       "title": "2D Characters & Assets",
       "slug": "2d-characters-and-assets",
       "url": "https://www.artstation.com/vantaoriginstudio/albums/15071145",
-      "count": 38
+      "count": 49
     },
     {
       "id": 15071148,
@@ -36,28 +29,28 @@
       "title": "Book & Cover Design",
       "slug": "book-and-cover-design",
       "url": "https://www.artstation.com/vantaoriginstudio/albums/15071151",
-      "count": 16
+      "count": 17
     },
     {
       "id": 15071154,
       "title": "Cards & TCG Assets",
       "slug": "cards-and-tcg-assets",
       "url": "https://www.artstation.com/vantaoriginstudio/albums/15071154",
-      "count": 14
+      "count": 16
     },
     {
       "id": 15071155,
       "title": "Comics Art",
       "slug": "comics-art",
       "url": "https://www.artstation.com/vantaoriginstudio/albums/15071155",
-      "count": 15
+      "count": 21
     },
     {
       "id": 15071157,
       "title": "Worldbuilding Assets",
       "slug": "worldbuilding-assets",
       "url": "https://www.artstation.com/vantaoriginstudio/albums/15071157",
-      "count": 3
+      "count": 7
     },
     {
       "id": 15089205,
@@ -67,14 +60,18 @@
       "count": 6
     }
   ],
-  "totalCount": 106,
+  "totalCount": 110,
   "projects": [
     {
       "id": "Nradvq",
-      "title": "Comic art done for dhajooma, art  done by Vantaorigin studio. by Vantaorigin.com",
+      "title": "Comic art done for dhajooma, art  done by Vantaorigin studio.",
       "artist": "VantaOrigin Studio",
-      "albumId": 0,
-      "album": "Latest Work",
+      "albumId": 15071155,
+      "albumIds": [
+        15071155,
+        15071157
+      ],
+      "album": "Comics Art",
       "description": "",
       "permalink": "https://www.artstation.com/artwork/Nradvq",
       "cover": "https://cdna.artstation.com/p/assets/images/images/104/265/990/small_square/vantaorigin-com-photo-5773634243375337929-w.jpg?1795390133",
@@ -82,30 +79,38 @@
         "https://cdna.artstation.com/p/assets/images/images/104/265/990/large/vantaorigin-com-photo-5773634243375337929-w.jpg?1795390133",
         "https://cdnb.artstation.com/p/assets/images/images/104/265/993/large/vantaorigin-com-photo-5773634243375337911-y.jpg?1795390140"
       ],
-      "publishedAt": "2026-11-22T23:29:43.000Z",
+      "publishedAt": "2026-11-22T17:29:43.252-06:00",
       "likes": 0
     },
     {
       "id": "q0o1my",
-      "title": "Comic book lettering done by vantaorigin studio by Vantaorigin.com",
+      "title": "Comic book lettering done by vantaorigin studio",
       "artist": "VantaOrigin Studio",
-      "albumId": 0,
-      "album": "Latest Work",
+      "albumId": 15071155,
+      "albumIds": [
+        15071155,
+        15071157
+      ],
+      "album": "Comics Art",
       "description": "",
       "permalink": "https://www.artstation.com/artwork/q0o1my",
       "cover": "https://cdnb.artstation.com/p/assets/images/images/104/265/895/small_square/vantaorigin-com-letter1.jpg?1795389669",
       "images": [
         "https://cdnb.artstation.com/p/assets/images/images/104/265/895/large/vantaorigin-com-letter1.jpg?1795389669"
       ],
-      "publishedAt": "2026-11-22T23:22:16.000Z",
+      "publishedAt": "2026-11-22T17:22:16.006-06:00",
       "likes": 0
     },
     {
       "id": "Bawr49",
-      "title": "Comic page design and colored by vantaorigin studio, written and created by dhajooma by Vantaorigin.com",
+      "title": "Comic page design and colored by vantaorigin studio, written and created by dhajooma",
       "artist": "VantaOrigin Studio",
-      "albumId": 0,
-      "album": "Latest Work",
+      "albumId": 15071151,
+      "albumIds": [
+        15071151,
+        15071155
+      ],
+      "album": "Book & Cover Design",
       "description": "",
       "permalink": "https://www.artstation.com/artwork/Bawr49",
       "cover": "https://cdnb.artstation.com/p/assets/images/images/104/265/731/small_square/vantaorigin-com-photo-5773634243375337912-w.jpg?1795388986",
@@ -114,15 +119,20 @@
         "https://cdna.artstation.com/p/assets/images/images/104/265/732/large/vantaorigin-com-photo-5773634243375337917-w.jpg?1795388991",
         "https://cdna.artstation.com/p/assets/images/images/104/265/734/large/vantaorigin-com-photo-5773634243375337913-y.jpg?1795388995"
       ],
-      "publishedAt": "2026-11-22T23:10:54.000Z",
+      "publishedAt": "2026-11-22T17:10:54.302-06:00",
       "likes": 0
     },
     {
       "id": "Qxae0d",
-      "title": "Line art process of the song corps created and written by Lad Young, designed by Vantaorigin studio by Vantaorigin.com",
+      "title": "Line art process of the song corps created and written by Lad Young, designed by Vantaorigin studio",
       "artist": "VantaOrigin Studio",
-      "albumId": 0,
-      "album": "Latest Work",
+      "albumId": 15071145,
+      "albumIds": [
+        15071145,
+        15071154,
+        15071155
+      ],
+      "album": "2D Characters & Assets",
       "description": "",
       "permalink": "https://www.artstation.com/artwork/Qxae0d",
       "cover": "https://cdna.artstation.com/p/assets/images/images/104/265/688/small_square/vantaorigin-com-photo-5773634243375337926-w.jpg?1795388838",
@@ -134,15 +144,21 @@
         "https://cdna.artstation.com/p/assets/images/images/104/265/694/large/vantaorigin-com-photo-5773634243375337921-w.jpg?1795388850",
         "https://cdnb.artstation.com/p/assets/images/images/104/265/695/large/vantaorigin-com-photo-5773634243375337919-w.jpg?1795388853"
       ],
-      "publishedAt": "2026-11-22T23:08:51.000Z",
+      "publishedAt": "2026-11-22T17:08:51.808-06:00",
       "likes": 0
     },
     {
       "id": "Nrad0d",
-      "title": "colour process od the song corps wear, designed and colored by vantaorigin studio by Vantaorigin.com",
+      "title": "colour process od the song corps wear, designed and colored by vantaorigin studio",
       "artist": "VantaOrigin Studio",
-      "albumId": 0,
-      "album": "Latest Work",
+      "albumId": 15071145,
+      "albumIds": [
+        15071145,
+        15071154,
+        15071155,
+        15071157
+      ],
+      "album": "2D Characters & Assets",
       "description": "",
       "permalink": "https://www.artstation.com/artwork/Nrad0d",
       "cover": "https://cdnb.artstation.com/p/assets/images/images/104/265/655/small_square/vantaorigin-com-photo-5773634243375337915-w.jpg?1795388728",
@@ -151,31 +167,39 @@
         "https://cdna.artstation.com/p/assets/images/images/104/265/656/large/vantaorigin-com-photo-5773634243375337916-w.jpg?1795388731",
         "https://cdnb.artstation.com/p/assets/images/images/104/265/657/large/vantaorigin-com-photo-5773634243375337918-w.jpg?1795388735"
       ],
-      "publishedAt": "2026-11-22T23:06:34.000Z",
+      "publishedAt": "2026-11-22T17:06:34.030-06:00",
       "likes": 0
     },
     {
       "id": "vz9eOA",
-      "title": "A colored character by vantaorigin studio. by Vantaorigin.com",
+      "title": "A colored character by vantaorigin studio.",
       "artist": "VantaOrigin Studio",
-      "albumId": 0,
-      "album": "Latest Work",
-      "description": "",
+      "albumId": 15071145,
+      "albumIds": [
+        15071145,
+        15071155,
+        15071157
+      ],
+      "album": "2D Characters & Assets",
+      "description": "Thia was coloured by our pro colorist von okaba",
       "permalink": "https://www.artstation.com/artwork/vz9eOA",
       "cover": "https://cdnb.artstation.com/p/assets/images/images/104/265/517/small_square/vantaorigin-com-photo-5773634243375337881-w.jpg?1795387988",
       "images": [
         "https://cdnb.artstation.com/p/assets/images/images/104/265/517/large/vantaorigin-com-photo-5773634243375337881-w.jpg?1795387988"
       ],
-      "publishedAt": "2026-11-22T22:54:12.000Z",
+      "publishedAt": "2026-11-22T16:54:12.241-06:00",
       "likes": 0
     },
     {
       "id": "KR1lZx",
-      "title": "Furry Monter character sheet illustration for comic by Vantaorigin studio by Vantaorigin.com",
+      "title": "Furry Monter character sheet illustration for comic by Vantaorigin studio",
       "artist": "VantaOrigin Studio",
-      "albumId": 0,
-      "album": "Latest Work",
-      "description": "",
+      "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
+      "album": "2D Characters & Assets",
+      "description": "Here's goresair, a concept character made by ryan grace for his comic book series \"Goresair\"",
       "permalink": "https://www.artstation.com/artwork/KR1lZx",
       "cover": "https://cdna.artstation.com/p/assets/images/images/104/265/472/small_square/vantaorigin-com-photo-5773634243375337882-y.jpg?1795387839",
       "images": [
@@ -185,16 +209,19 @@
         "https://cdna.artstation.com/p/assets/images/images/104/265/478/large/vantaorigin-com-photo-5773634243375337879-y.jpg?1795387846",
         "https://cdnb.artstation.com/p/assets/images/images/104/265/481/large/vantaorigin-com-photo-5773634243375337877-w.jpg?1795387848"
       ],
-      "publishedAt": "2026-11-22T22:52:32.000Z",
+      "publishedAt": "2026-11-22T16:52:32.386-06:00",
       "likes": 0
     },
     {
       "id": "nd4nX6",
-      "title": "Character sketch for Goresair comic series by Vantaorigin Studio by Vantaorigin.com",
+      "title": "Character sketch for Goresair comic series by Vantaorigin Studio",
       "artist": "VantaOrigin Studio",
-      "albumId": 0,
-      "album": "Latest Work",
-      "description": "",
+      "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
+      "album": "2D Characters & Assets",
+      "description": "Character design made by Vantaorigin studio recently",
       "permalink": "https://www.artstation.com/artwork/nd4nX6",
       "cover": "https://cdna.artstation.com/p/assets/images/images/104/265/236/small_square/vantaorigin-com-photo-5773634243375337906-x.jpg?1795386795",
       "images": [
@@ -212,7 +239,7 @@
         "https://cdna.artstation.com/p/assets/images/images/104/265/256/large/vantaorigin-com-photo-5773634243375337905-y.jpg?1795386826",
         "https://cdna.artstation.com/p/assets/images/images/104/265/258/large/vantaorigin-com-photo-5773634243375337906-x-copy-copy.jpg?1795386828"
       ],
-      "publishedAt": "2026-11-22T22:35:26.000Z",
+      "publishedAt": "2026-11-22T16:35:26.667-06:00",
       "likes": 0
     },
     {
@@ -220,6 +247,9 @@
       "title": "Pngtuber Character illustration for Naomi Roe By Ola",
       "artist": "VantaOrigin Studio",
       "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
       "album": "2D Characters & Assets",
       "description": "Pngtuber Character illustration for Naomi Roe By Ola Oriola @Vantaorigin Studio.....",
       "permalink": "https://www.artstation.com/artwork/QxKxq8",
@@ -235,6 +265,9 @@
       "title": "Character Illustration And 2D Prop Design . Yan . VantaOrigin Studio",
       "artist": "Yan",
       "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
       "album": "2D Characters & Assets",
       "description": "Artist: Yan",
       "permalink": "https://www.artstation.com/artwork/Z0gOB8",
@@ -250,6 +283,9 @@
       "title": "Character Illustration And 2D Prop Design . Yan . VantaOrigin Studio",
       "artist": "Yan",
       "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
       "album": "2D Characters & Assets",
       "description": "Artist: Yan",
       "permalink": "https://www.artstation.com/artwork/dLJe6e",
@@ -265,6 +301,9 @@
       "title": "Character Illustration And 2D Prop Design . Yan . VantaOrigin Studio",
       "artist": "Yan",
       "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
       "album": "2D Characters & Assets",
       "description": "Artist: Yan",
       "permalink": "https://www.artstation.com/artwork/wOANK5",
@@ -280,6 +319,9 @@
       "title": "Character Illustration And 2D Prop Design . Yan . VantaOrigin Studio",
       "artist": "Yan",
       "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
       "album": "2D Characters & Assets",
       "description": "Artist: Yan",
       "permalink": "https://www.artstation.com/artwork/V8o10P",
@@ -295,6 +337,10 @@
       "title": "Character Art Done By Carlos Ibdrobo of VantaOrigin Studio",
       "artist": "Carlos Ibdrobo",
       "albumId": 15071145,
+      "albumIds": [
+        15071145,
+        15071151
+      ],
       "album": "2D Characters & Assets",
       "description": "Carlos Ibdrobo is a Senior Artist at VantaOrigin Studio, specializing in professional illustration and cover artwork for books, games, comics, and entertainment projects.",
       "permalink": "https://www.artstation.com/artwork/b0aVGg",
@@ -312,6 +358,10 @@
       "title": "Character/ Cover Art Done By Carlos Idrobo of Vantaorigin Studio",
       "artist": "Carlos Idrobo",
       "albumId": 15071145,
+      "albumIds": [
+        15071145,
+        15071151
+      ],
       "album": "2D Characters & Assets",
       "description": "Carlos Idrobo is a Senior Artist at VantaOrigin Studio, specializing in professional illustration and cover artwork for books, games, comics, and entertainment projects.",
       "permalink": "https://www.artstation.com/artwork/kw4Gkn",
@@ -330,6 +380,9 @@
       "title": "Comic/Cover Art Done By Xander Odulesi of VantaOrigin Studio",
       "artist": "Xander Odulesi",
       "albumId": 15071155,
+      "albumIds": [
+        15071155
+      ],
       "album": "Comics Art",
       "description": "Xander Odulesi is our seasoned comic artist and cover artist at VantaOrigin Studio, bringing stories to life through dynamic illustrations and compelling cover artwork.",
       "permalink": "https://www.artstation.com/artwork/lEV90k",
@@ -346,6 +399,9 @@
       "title": "Comic/Cover Art Done By Xander Odulesi of VantaOrigin Studio",
       "artist": "Xander Odulesi",
       "albumId": 15071155,
+      "albumIds": [
+        15071155
+      ],
       "album": "Comics Art",
       "description": "Xander Odulesi is our seasoned comic artist and cover artist at VantaOrigin Studio, bringing stories to life through dynamic illustrations and compelling cover artwork.",
       "permalink": "https://www.artstation.com/artwork/5e8KyA",
@@ -361,6 +417,9 @@
       "title": "Comic/Cover Art Done By Xander Odulesi of VantaOrigin Studio",
       "artist": "Xander Odulesi",
       "albumId": 15071155,
+      "albumIds": [
+        15071155
+      ],
       "album": "Comics Art",
       "description": "Xander Odulesi is our seasoned comic artist and cover artist at VantaOrigin Studio, bringing stories to life through dynamic illustrations and compelling cover artwork.",
       "permalink": "https://www.artstation.com/artwork/Nr5Zn5",
@@ -376,6 +435,9 @@
       "title": "Comic/Cover Art Done By Xander Odulesi of VantaOrigin Studio",
       "artist": "Xander Odulesi",
       "albumId": 15071155,
+      "albumIds": [
+        15071155
+      ],
       "album": "Comics Art",
       "description": "Xander Odulesi is our seasoned comic artist and cover artist at VantaOrigin Studio, bringing stories to life through dynamic illustrations and compelling cover artwork.",
       "permalink": "https://www.artstation.com/artwork/QxzW1x",
@@ -391,6 +453,9 @@
       "title": "Comic/Cover Art Done By Xander Odulesi of VantaOrigin Studio",
       "artist": "Xander Odulesi",
       "albumId": 15071155,
+      "albumIds": [
+        15071155
+      ],
       "album": "Comics Art",
       "description": "Xander Odulesi is our seasoned comic artist and cover artist at VantaOrigin Studio, bringing stories to life through dynamic illustrations and compelling cover artwork.",
       "permalink": "https://www.artstation.com/artwork/vz1ELE",
@@ -407,6 +472,9 @@
       "title": "Cover Art Done By Carlos Ibdrobo of VantaOrigin Studio",
       "artist": "Carlos Ibdrobo",
       "albumId": 15071151,
+      "albumIds": [
+        15071151
+      ],
       "album": "Book & Cover Design",
       "description": "Carlos Idrobo is a Senior Artist at VantaOrigin Studio, specializing in professional illustration and cover artwork for books, games, comics, and entertainment projects.",
       "permalink": "https://www.artstation.com/artwork/xdzBa1",
@@ -423,6 +491,9 @@
       "title": "Character Art Done By Meyimeyi of VantaOrigin Studio",
       "artist": "Meyimeyi",
       "albumId": 15071151,
+      "albumIds": [
+        15071151
+      ],
       "album": "Book & Cover Design",
       "description": "Meyimeyi is a talented character artist and cover designer at VantaOrigin Studio, known for creating expressive characters, striking cover illustrations, and high-quality digital artwork across a variety of genres.",
       "permalink": "https://www.artstation.com/artwork/zzA5aq",
@@ -437,8 +508,12 @@
       "id": "QxzWAB",
       "title": "Character Art Done By Meyimeyi of VantaOrigin Studio",
       "artist": "Meyimeyi",
-      "albumId": 15071151,
-      "album": "Book & Cover Design",
+      "albumId": 15071145,
+      "albumIds": [
+        15071145,
+        15071151
+      ],
+      "album": "2D Characters & Assets",
       "description": "Meyimeyi is a talented character artist and cover designer at VantaOrigin Studio, known for creating expressive characters, striking cover illustrations, and high-quality digital artwork across a variety of genres.",
       "permalink": "https://www.artstation.com/artwork/QxzWAB",
       "cover": "https://cdna.artstation.com/p/assets/images/images/100/659/090/small_square/vantaorigin-ent-meyimei.jpg?1783614044",
@@ -452,8 +527,12 @@
       "id": "1Lnw5q",
       "title": "Cover Art Done By Carlos Idrobo of VantaOrigin Studio",
       "artist": "Carlos Idrobo",
-      "albumId": 15071151,
-      "album": "Book & Cover Design",
+      "albumId": 15071145,
+      "albumIds": [
+        15071145,
+        15071151
+      ],
+      "album": "2D Characters & Assets",
       "description": "Carlos Idrobo is a Senior Artist at VantaOrigin Studio, specializing in professional illustration and cover artwork for books, games, comics, and entertainment projects.",
       "permalink": "https://www.artstation.com/artwork/1Lnw5q",
       "cover": "https://cdnb.artstation.com/p/assets/images/images/100/659/025/small_square/vantaorigin-ent-carlos-idrobo-resident.jpg?1783613882",
@@ -469,6 +548,9 @@
       "title": "Cover Art Done By Carlos Idrobo of VantaOrigin Studio",
       "artist": "Carlos Idrobo",
       "albumId": 15071151,
+      "albumIds": [
+        15071151
+      ],
       "album": "Book & Cover Design",
       "description": "Carlos Idrobo is a Senior Artist at VantaOrigin Studio, specializing in professional illustration and cover artwork for books, games, comics, and entertainment projects.",
       "permalink": "https://www.artstation.com/artwork/31owyg",
@@ -488,6 +570,9 @@
       "title": "Cover Art Done By Carlos Idrobo of Vantaorigin Studio",
       "artist": "Carlos Idrobo",
       "albumId": 15071151,
+      "albumIds": [
+        15071151
+      ],
       "album": "Book & Cover Design",
       "description": "Carlos Idrobo is a Senior Artist at VantaOrigin Studio, specializing in professional illustration and cover artwork for books, games, comics, and entertainment projects.",
       "permalink": "https://www.artstation.com/artwork/xdzB5R",
@@ -503,6 +588,9 @@
       "title": "Cover Art Done By Carlos Idrobo of Vantaorigin Studio",
       "artist": "Carlos Idrobo",
       "albumId": 15071151,
+      "albumIds": [
+        15071151
+      ],
       "album": "Book & Cover Design",
       "description": "Carlos Idrobo is a Senior Artist at VantaOrigin Studio, specializing in professional illustration and cover artwork for books, games, comics, and entertainment projects.",
       "permalink": "https://www.artstation.com/artwork/1LnwJG",
@@ -525,6 +613,9 @@
       "title": "Cover Art Done By Carlos Idrobo of Vantaorigin Studio",
       "artist": "Carlos Idrobo",
       "albumId": 15071151,
+      "albumIds": [
+        15071151
+      ],
       "album": "Book & Cover Design",
       "description": "Carlos Idrobo is a Senior Artist at VantaOrigin Studio, specializing in professional illustration and cover artwork for books, games, comics, and entertainment projects.",
       "permalink": "https://www.artstation.com/artwork/rzRO82",
@@ -544,6 +635,9 @@
       "title": "Cover Art Done By Carlos Idrobo of Vantaorigin Studio",
       "artist": "Carlos Idrobo",
       "albumId": 15071151,
+      "albumIds": [
+        15071151
+      ],
       "album": "Book & Cover Design",
       "description": "Carlos Idrobo is a Senior Artist at VantaOrigin Studio, specializing in professional illustration and cover artwork for books, games, comics, and entertainment projects.",
       "permalink": "https://www.artstation.com/artwork/V8dBm8",
@@ -560,6 +654,9 @@
       "title": "Cover Art Done By Carlos Idrobo of Vantaorigin Studio",
       "artist": "Carlos Idrobo",
       "albumId": 15071151,
+      "albumIds": [
+        15071151
+      ],
       "album": "Book & Cover Design",
       "description": "Carlos Idrobo is a Senior Artist at VantaOrigin Studio, specializing in professional illustration and cover artwork for books, games, comics, and entertainment projects.",
       "permalink": "https://www.artstation.com/artwork/vz1Eva",
@@ -579,6 +676,9 @@
       "title": "Book Cover And Character Illustration. Ola. Vantaorigin Studio",
       "artist": "Ola",
       "albumId": 15071151,
+      "albumIds": [
+        15071151
+      ],
       "album": "Book & Cover Design",
       "description": "Ola is one of the founding partners of Vantaorigin Studio",
       "permalink": "https://www.artstation.com/artwork/wO8EX5",
@@ -599,6 +699,9 @@
       "title": "Brand Identity And Graphic Design . Midegraphics . VantaOrigin Studio",
       "artist": "Midegraphics",
       "albumId": 15089205,
+      "albumIds": [
+        15089205
+      ],
       "album": "Brand And Infographics Design",
       "description": "Artist: MideGraphics",
       "permalink": "https://www.artstation.com/artwork/ndwez4",
@@ -614,6 +717,9 @@
       "title": "Brand Identity And Graphic Design . Midegraphics . VantaOrigin Studio",
       "artist": "Midegraphics",
       "albumId": 15089205,
+      "albumIds": [
+        15089205
+      ],
       "album": "Brand And Infographics Design",
       "description": "Artist: MideGraphics",
       "permalink": "https://www.artstation.com/artwork/31l4Xo",
@@ -629,6 +735,9 @@
       "title": "Brand Identity And Graphic Design . Midegraphics . VantaOrigin Studio",
       "artist": "Midegraphics",
       "albumId": 15089205,
+      "albumIds": [
+        15089205
+      ],
       "album": "Brand And Infographics Design",
       "description": "Artist: MideGraphics",
       "permalink": "https://www.artstation.com/artwork/8vWn3Q",
@@ -644,6 +753,9 @@
       "title": "Brand Identity And Graphic Design . Midegraphics . VantaOrigin Studio",
       "artist": "Midegraphics",
       "albumId": 15089205,
+      "albumIds": [
+        15089205
+      ],
       "album": "Brand And Infographics Design",
       "description": "Artist: MideGraphics",
       "permalink": "https://www.artstation.com/artwork/o0XRkL",
@@ -666,6 +778,9 @@
       "title": "Character Illustration And 2D Prop Design . Yan . VantaOrigin Studio",
       "artist": "Yan",
       "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
       "album": "2D Characters & Assets",
       "description": "Artist: Yan",
       "permalink": "https://www.artstation.com/artwork/XaeO2a",
@@ -681,6 +796,9 @@
       "title": "Character Illustration And 2D Prop Design . Yan . VantaOrigin Studio",
       "artist": "Yan",
       "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
       "album": "2D Characters & Assets",
       "description": "Artist: Yan",
       "permalink": "https://www.artstation.com/artwork/ayNOb2",
@@ -689,13 +807,16 @@
         "https://cdnb.artstation.com/p/assets/images/images/100/155/867/large/vantaorigin-ent-250599.webp?1782055152"
       ],
       "publishedAt": "2026-06-21T10:19:38.279-05:00",
-      "likes": 1
+      "likes": 0
     },
     {
       "id": "V8o14P",
       "title": "Character Illustration And 2D Prop Design . Yan . VantaOrigin Studio",
       "artist": "Yan",
       "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
       "album": "2D Characters & Assets",
       "description": "Artist: Yan",
       "permalink": "https://www.artstation.com/artwork/V8o14P",
@@ -711,6 +832,9 @@
       "title": "Comic Strips . Yan . Vantaorigin Studio",
       "artist": "Yan",
       "albumId": 15071155,
+      "albumIds": [
+        15071155
+      ],
       "album": "Comics Art",
       "description": "Artist: Yan",
       "permalink": "https://www.artstation.com/artwork/Z0gOX8",
@@ -726,6 +850,10 @@
       "title": "Card Game Character And Asset Illustration . Dizguyken . Vantaorigin Studio",
       "artist": "Dizguyken",
       "albumId": 15071145,
+      "albumIds": [
+        15071145,
+        15071154
+      ],
       "album": "2D Characters & Assets",
       "description": "Artist: Dizguyken",
       "permalink": "https://www.artstation.com/artwork/lE1DoG",
@@ -741,6 +869,9 @@
       "title": "Character Illustration And 2D Prop Design . Yan . VantaOrigin Studio",
       "artist": "Yan",
       "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
       "album": "2D Characters & Assets",
       "description": "Artist: Yan",
       "permalink": "https://www.artstation.com/artwork/Nrw48b",
@@ -756,6 +887,9 @@
       "title": "Character Illustration And 2D Prop Design . Yan . VantaOrigin Studio",
       "artist": "Yan",
       "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
       "album": "2D Characters & Assets",
       "description": "Artist: Yan",
       "permalink": "https://www.artstation.com/artwork/wOANqO",
@@ -771,6 +905,9 @@
       "title": "Character Illustration And 2D Prop Design . Yan . VantaOrigin Studio",
       "artist": "Yan",
       "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
       "album": "2D Characters & Assets",
       "description": "Artist: Yan",
       "permalink": "https://www.artstation.com/artwork/P4aqbo",
@@ -786,6 +923,9 @@
       "title": "Concept Character Illustration . Yan . Vantaorigin Studio",
       "artist": "Yan",
       "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
       "album": "2D Characters & Assets",
       "description": "Title: Character Illustration And 2D Prop Design . Yan . VantaOrigin Studio",
       "permalink": "https://www.artstation.com/artwork/ndwD1r",
@@ -801,6 +941,9 @@
       "title": "Character Illustration And 2D Prop Design . Yan . VantaOrigin Studio",
       "artist": "Yan",
       "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
       "album": "2D Characters & Assets",
       "description": "Artist: Yan",
       "permalink": "https://www.artstation.com/artwork/o0X9xk",
@@ -816,6 +959,9 @@
       "title": "Character Illustration And 2D Prop Design . Yan . VantaOrigin Studio",
       "artist": "Yan",
       "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
       "album": "2D Characters & Assets",
       "description": "Artist: Yan",
       "permalink": "https://www.artstation.com/artwork/AowkQX",
@@ -831,6 +977,9 @@
       "title": "Character Illustration And 2D Prop Design . Yan . VantaOrigin Studio",
       "artist": "Yan",
       "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
       "album": "2D Characters & Assets",
       "description": "Artist: Yan",
       "permalink": "https://www.artstation.com/artwork/G1Omka",
@@ -846,6 +995,9 @@
       "title": "Character Illustration And 2D Prop Design . Yan . VantaOrigin Studio",
       "artist": "Yan",
       "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
       "album": "2D Characters & Assets",
       "description": "Artist: Yan",
       "permalink": "https://www.artstation.com/artwork/wOAEOX",
@@ -861,6 +1013,9 @@
       "title": "Character Illustration And 2D Prop Design . Yan . VantaOrigin Studio",
       "artist": "Yan",
       "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
       "album": "2D Characters & Assets",
       "description": "Artist: Yan",
       "permalink": "https://www.artstation.com/artwork/b0XV0o",
@@ -876,6 +1031,9 @@
       "title": "Character Illustration And 2D Prop Design . Yan . VantaOrigin Studio",
       "artist": "Yan",
       "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
       "album": "2D Characters & Assets",
       "description": "Artist: Yan",
       "permalink": "https://www.artstation.com/artwork/lE19EY",
@@ -891,6 +1049,9 @@
       "title": "Concept Art And Character Illustration . Sangautier . Vantaorigin Studio",
       "artist": "Sangautier",
       "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
       "album": "2D Characters & Assets",
       "description": "Artist: Sangautier",
       "permalink": "https://www.artstation.com/artwork/QxmWX3",
@@ -907,6 +1068,9 @@
       "title": "Concept Art And Character Illustration . Sangautier . Vantaorigin Studio",
       "artist": "Sangautier",
       "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
       "album": "2D Characters & Assets",
       "description": "Artist: Sangautier",
       "permalink": "https://www.artstation.com/artwork/q0L2e2",
@@ -925,6 +1089,9 @@
       "title": "Concept Art And Character Illustration . Sangautier . Vantaorigin Studio",
       "artist": "Sangautier",
       "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
       "album": "2D Characters & Assets",
       "description": "Artist: Sangautier",
       "permalink": "https://www.artstation.com/artwork/2LlW8a",
@@ -941,6 +1108,9 @@
       "title": "2D Character Illustration . Jacob Ferrel . Vantaorigin Studio",
       "artist": "Jacob Ferrel",
       "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
       "album": "2D Characters & Assets",
       "description": "Artist: Jacob Farrel",
       "permalink": "https://www.artstation.com/artwork/gwg9gK",
@@ -957,6 +1127,9 @@
       "title": "2D Character Illustration . Jacob Ferrel . Vantaorigin Studio",
       "artist": "Jacob Ferrel",
       "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
       "album": "2D Characters & Assets",
       "description": "Artist: Jacob Farrel",
       "permalink": "https://www.artstation.com/artwork/KR61Nr",
@@ -975,6 +1148,9 @@
       "title": "2D Character Illustration . Jacob Ferrel . Vantaorigin Studio",
       "artist": "Jacob Ferrel",
       "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
       "album": "2D Characters & Assets",
       "description": "Artist: Jacob Farrel",
       "permalink": "https://www.artstation.com/artwork/XaePyY",
@@ -990,6 +1166,10 @@
       "title": "Map Art And Asset Illustration . Jacob Ferrel . Vantaorigin Studio",
       "artist": "Jacob Ferrel",
       "albumId": 15071154,
+      "albumIds": [
+        15071154,
+        15071157
+      ],
       "album": "Cards & TCG Assets",
       "description": "Artist: Jacob Farrel",
       "permalink": "https://www.artstation.com/artwork/41oaAk",
@@ -1008,6 +1188,10 @@
       "title": "World Map Art And Asset Illustration . Jacob Ferrel . Vantaorigin Studio",
       "artist": "Jacob Ferrel",
       "albumId": 15071154,
+      "albumIds": [
+        15071154,
+        15071157
+      ],
       "album": "Cards & TCG Assets",
       "description": "Artist: Jacob Farrel",
       "permalink": "https://www.artstation.com/artwork/2LlkJK",
@@ -1023,6 +1207,10 @@
       "title": "Game Art And Map Asset Illustration . Jacob Ferrel . Vantaorigin Studio",
       "artist": "Jacob Ferrel",
       "albumId": 15071154,
+      "albumIds": [
+        15071154,
+        15071157
+      ],
       "album": "Cards & TCG Assets",
       "description": "Artist: Jacob Farrel",
       "permalink": "https://www.artstation.com/artwork/xdAOGE",
@@ -1038,6 +1226,9 @@
       "title": "Game Art And Environment Illustration . Jacob Ferrel . Vantaorigin Studio",
       "artist": "Jacob Ferrel",
       "albumId": 15071154,
+      "albumIds": [
+        15071154
+      ],
       "album": "Cards & TCG Assets",
       "description": "Artist: Jacob Farrel",
       "permalink": "https://www.artstation.com/artwork/Y8LPkY",
@@ -1053,6 +1244,9 @@
       "title": "Game Art And Asset Illustration . Jacob Ferrel . Vantaorigin Studio",
       "artist": "Jacob Ferrel",
       "albumId": 15071154,
+      "albumIds": [
+        15071154
+      ],
       "album": "Cards & TCG Assets",
       "description": "Artist: Jacob Farrel",
       "permalink": "https://www.artstation.com/artwork/0aYzGV",
@@ -1068,6 +1262,9 @@
       "title": "Comic Art And Asset Illustration . Jacob Ferrel . Vantaorigin Studio",
       "artist": "Jacob Ferrel",
       "albumId": 15071155,
+      "albumIds": [
+        15071155
+      ],
       "album": "Comics Art",
       "description": "Artist: Jacob Farrel",
       "permalink": "https://www.artstation.com/artwork/yA0QzQ",
@@ -1083,6 +1280,9 @@
       "title": "Comic Art And Asset Illustration . Jacob Ferrel . Vantaorigin Studio",
       "artist": "Jacob Ferrel",
       "albumId": 15071155,
+      "albumIds": [
+        15071155
+      ],
       "album": "Comics Art",
       "description": "Artist: Jacob Farrel",
       "permalink": "https://www.artstation.com/artwork/41o9ml",
@@ -1098,6 +1298,9 @@
       "title": "Comic Art And Asset Illustration . Jacob Ferrel . Vantaorigin Studio",
       "artist": "Jacob Ferrel",
       "albumId": 15071155,
+      "albumIds": [
+        15071155
+      ],
       "album": "Comics Art",
       "description": "Artist: Jacob Farrel",
       "permalink": "https://www.artstation.com/artwork/gwg0E8",
@@ -1113,6 +1316,9 @@
       "title": "Comic Art And Asset Illustration . Jacob Ferrel . Vantaorigin Studio",
       "artist": "Jacob Ferrel",
       "albumId": 15071155,
+      "albumIds": [
+        15071155
+      ],
       "album": "Comics Art",
       "description": "Artist: Jacob Farrel",
       "permalink": "https://www.artstation.com/artwork/zzJPgd",
@@ -1128,6 +1334,10 @@
       "title": "Card Game Character And Asset Illustration . Dizguyken . Vantaorigin Studio",
       "artist": "Dizguyken",
       "albumId": 15071145,
+      "albumIds": [
+        15071145,
+        15071154
+      ],
       "album": "2D Characters & Assets",
       "description": "Artist: Dizguyken",
       "permalink": "https://www.artstation.com/artwork/o0XbLO",
@@ -1143,6 +1353,10 @@
       "title": "Card Game Character And Asset Illustration . Dizguyken . Vantaorigin Studio",
       "artist": "Dizguyken",
       "albumId": 15071145,
+      "albumIds": [
+        15071145,
+        15071154
+      ],
       "album": "2D Characters & Assets",
       "description": "Artist: Dizguyken",
       "permalink": "https://www.artstation.com/artwork/31l9OA",
@@ -1158,6 +1372,10 @@
       "title": "Card Game Character And Asset Illustration . Dizguyken . Vantaorigin Studio",
       "artist": "Dizguyken",
       "albumId": 15071145,
+      "albumIds": [
+        15071145,
+        15071154
+      ],
       "album": "2D Characters & Assets",
       "description": "Artist: Dizguyken",
       "permalink": "https://www.artstation.com/artwork/V8oJEn",
@@ -1173,6 +1391,9 @@
       "title": "Card Game Character And Asset Illustration . Dizguyken . Vantaorigin Studio",
       "artist": "Dizguyken",
       "albumId": 15071154,
+      "albumIds": [
+        15071154
+      ],
       "album": "Cards & TCG Assets",
       "description": "Artist: Dizguyken",
       "permalink": "https://www.artstation.com/artwork/G1Oe53",
@@ -1188,6 +1409,10 @@
       "title": "Card Game Character And Asset Illustration . Dizguyken . Vantaorigin Studio",
       "artist": "Dizguyken",
       "albumId": 15071145,
+      "albumIds": [
+        15071145,
+        15071154
+      ],
       "album": "2D Characters & Assets",
       "description": "Artist: Dizguyken",
       "permalink": "https://www.artstation.com/artwork/6vnNr5",
@@ -1203,6 +1428,9 @@
       "title": "Illustration For Game Purposes . Dizguyken . Vantaorigin Studio",
       "artist": "Dizguyken",
       "albumId": 15071154,
+      "albumIds": [
+        15071154
+      ],
       "album": "Cards & TCG Assets",
       "description": "Artist: Dizguyken",
       "permalink": "https://www.artstation.com/artwork/DYkvwG",
@@ -1218,6 +1446,9 @@
       "title": "Few Head Shot Samples . Dizguyken . Vantaorigin Studio",
       "artist": "Dizguyken",
       "albumId": 15071154,
+      "albumIds": [
+        15071154
+      ],
       "album": "Cards & TCG Assets",
       "description": "Artist: Dizguyken",
       "permalink": "https://www.artstation.com/artwork/La5RQr",
@@ -1233,6 +1464,9 @@
       "title": "Card Illustraion . Dizguyken . Vantaorigin Studio",
       "artist": "Dizguyken",
       "albumId": 15071154,
+      "albumIds": [
+        15071154
+      ],
       "album": "Cards & TCG Assets",
       "description": "Artist: Dizguyken",
       "permalink": "https://www.artstation.com/artwork/vbNNvD",
@@ -1248,6 +1482,9 @@
       "title": "3D Architecture Design . Bruno Diaz . Vantaorigin Studio",
       "artist": "Bruno Diaz",
       "albumId": 15071150,
+      "albumIds": [
+        15071150
+      ],
       "album": "2D&3D Prop Design",
       "description": "Artist: Bruno Diaz",
       "permalink": "https://www.artstation.com/artwork/a0KKl0",
@@ -1263,6 +1500,9 @@
       "title": "3D Low Poly Environment . Bruno Diaz . Vantaorigin Studio",
       "artist": "Bruno Diaz",
       "albumId": 15071150,
+      "albumIds": [
+        15071150
+      ],
       "album": "2D&3D Prop Design",
       "description": "Artist: Bruno Diaz",
       "permalink": "https://www.artstation.com/artwork/Ov22r8",
@@ -1278,6 +1518,9 @@
       "title": "3D Assets . Bruno Diaz . Vantaorigin Studio",
       "artist": "Bruno Diaz",
       "albumId": 15071150,
+      "albumIds": [
+        15071150
+      ],
       "album": "2D&3D Prop Design",
       "description": "Artist: Bruno Diaz",
       "permalink": "https://www.artstation.com/artwork/98vvdq",
@@ -1293,6 +1536,9 @@
       "title": "3D Cosplay Prop Design . Bruno Diaz . Vantaorigin Studio",
       "artist": "Bruno Diaz",
       "albumId": 15071150,
+      "albumIds": [
+        15071150
+      ],
       "album": "2D&3D Prop Design",
       "description": "Artist: Bruno Diaz",
       "permalink": "https://www.artstation.com/artwork/0l11xY",
@@ -1308,6 +1554,9 @@
       "title": "3D Sword Prop Design . Bruno Diaz . Vantaorigin Studio",
       "artist": "Bruno Diaz",
       "albumId": 15071150,
+      "albumIds": [
+        15071150
+      ],
       "album": "2D&3D Prop Design",
       "description": "Artist: Bruno Diaz",
       "permalink": "https://www.artstation.com/artwork/JryoAz",
@@ -1323,6 +1572,9 @@
       "title": "3D customized sword prop . Bruno Diaz . Vantaorigin Studio",
       "artist": "Bruno Diaz",
       "albumId": 15071150,
+      "albumIds": [
+        15071150
+      ],
       "album": "2D&3D Prop Design",
       "description": "Artist: Bruno Diaz",
       "permalink": "https://www.artstation.com/artwork/98vGWy",
@@ -1338,6 +1590,9 @@
       "title": "3D Architechural Design . Bruno Diaz . Vantaorigin Studios",
       "artist": "Bruno Diaz",
       "albumId": 15071148,
+      "albumIds": [
+        15071148
+      ],
       "album": "3D characters & Assets",
       "description": "Artist: Bruno Diaz",
       "permalink": "https://www.artstation.com/artwork/3ER65m",
@@ -1353,6 +1608,9 @@
       "title": "3D Movie Asset design . Bruno Diaz . Vantaorigin Studio",
       "artist": "Bruno Diaz",
       "albumId": 15071148,
+      "albumIds": [
+        15071148
+      ],
       "album": "3D characters & Assets",
       "description": "Artist: Bruno Diaz",
       "permalink": "https://www.artstation.com/artwork/8BQ2Jn",
@@ -1368,6 +1626,9 @@
       "title": "3D Car Design . Bruno Diaz . Vantaorigin Studio",
       "artist": "Bruno Diaz",
       "albumId": 15071148,
+      "albumIds": [
+        15071148
+      ],
       "album": "3D characters & Assets",
       "description": "Artist: Bruno Diaz",
       "permalink": "https://www.artstation.com/artwork/P6z8Q1",
@@ -1383,6 +1644,9 @@
       "title": "3D Prop Design . Bruno Diaz . Vantaorigin Studio",
       "artist": "Bruno Diaz",
       "albumId": 15071148,
+      "albumIds": [
+        15071148
+      ],
       "album": "3D characters & Assets",
       "description": "Artist: Bruno Diaz",
       "permalink": "https://www.artstation.com/artwork/AZ3VdV",
@@ -1398,6 +1662,9 @@
       "title": "3D Environment Design . Bruno Diaz . Vantaorigin Studio",
       "artist": "Bruno Diaz",
       "albumId": 15071148,
+      "albumIds": [
+        15071148
+      ],
       "album": "3D characters & Assets",
       "description": "Artist: Bruno Diaz",
       "permalink": "https://www.artstation.com/artwork/K3NXK9",
@@ -1413,6 +1680,9 @@
       "title": "3D Clothe Design . Bruno DIaz . Vantaorigin Studio",
       "artist": "Bruno DIaz",
       "albumId": 15071148,
+      "albumIds": [
+        15071148
+      ],
       "album": "3D characters & Assets",
       "description": "Artist: Bruno Diaz",
       "permalink": "https://www.artstation.com/artwork/Jryo2A",
@@ -1428,6 +1698,9 @@
       "title": "3D Stage Environment design . Bruno Diaz . Vantaorigin Studio",
       "artist": "Bruno Diaz",
       "albumId": 15071148,
+      "albumIds": [
+        15071148
+      ],
       "album": "3D characters & Assets",
       "description": "Artist: Bruno Diaz",
       "permalink": "https://www.artstation.com/artwork/5WmQLO",
@@ -1443,6 +1716,9 @@
       "title": "3D Monster Design . Bruno Diaz . Vantaorigin Studio",
       "artist": "Bruno Diaz",
       "albumId": 15071148,
+      "albumIds": [
+        15071148
+      ],
       "album": "3D characters & Assets",
       "description": "Artist: Bruno Diaz",
       "permalink": "https://www.artstation.com/artwork/gRZYaQ",
@@ -1458,6 +1734,9 @@
       "title": "3D Collectible Design And Print . Sir Lemile . Vantaorigin",
       "artist": "Sir Lemile",
       "albumId": 15071148,
+      "albumIds": [
+        15071148
+      ],
       "album": "3D characters & Assets",
       "description": "Artist: Sir Lemile",
       "permalink": "https://www.artstation.com/artwork/vbNnbD",
@@ -1473,6 +1752,9 @@
       "title": "3D monster Design . Sir Lemile . Vantaorigin Studio",
       "artist": "Sir Lemile",
       "albumId": 15071148,
+      "albumIds": [
+        15071148
+      ],
       "album": "3D characters & Assets",
       "description": "Artist: Sir Lemile",
       "permalink": "https://www.artstation.com/artwork/1NdKx2",
@@ -1488,6 +1770,9 @@
       "title": "3D head design . Sir Lemile . Vantaorigin Studio",
       "artist": "Sir Lemile",
       "albumId": 15071148,
+      "albumIds": [
+        15071148
+      ],
       "album": "3D characters & Assets",
       "description": "",
       "permalink": "https://www.artstation.com/artwork/Ov21m8",
@@ -1503,6 +1788,9 @@
       "title": "3d Character design . Sir Lemile . Vantaorigin Studio",
       "artist": "Sir Lemile",
       "albumId": 15071148,
+      "albumIds": [
+        15071148
+      ],
       "album": "3D characters & Assets",
       "description": "Artist: Sir Lemile",
       "permalink": "https://www.artstation.com/artwork/1NdK43",
@@ -1518,6 +1806,9 @@
       "title": "3D printable bust . sir lemile . Vantaorigin studio",
       "artist": "sir lemile",
       "albumId": 15071148,
+      "albumIds": [
+        15071148
+      ],
       "album": "3D characters & Assets",
       "description": "Artist: Sir Lemile",
       "permalink": "https://www.artstation.com/artwork/Bkxg3m",
@@ -1533,6 +1824,9 @@
       "title": "Stylized 3D Character . Vantaorigin Studio",
       "artist": "VantaOrigin Studio",
       "albumId": 15071148,
+      "albumIds": [
+        15071148
+      ],
       "album": "3D characters & Assets",
       "description": "Artist: PJArt",
       "permalink": "https://www.artstation.com/artwork/AZ3V9z",
@@ -1548,6 +1842,9 @@
       "title": "Yet another one from.the vantaverse",
       "artist": "VantaOrigin Studio",
       "albumId": 15071155,
+      "albumIds": [
+        15071155
+      ],
       "album": "Comics Art",
       "description": "",
       "permalink": "https://www.artstation.com/artwork/lGonVe",
@@ -1563,6 +1860,9 @@
       "title": "check last post",
       "artist": "VantaOrigin Studio",
       "albumId": 15071155,
+      "albumIds": [
+        15071155
+      ],
       "album": "Comics Art",
       "description": "",
       "permalink": "https://www.artstation.com/artwork/YG0JgY",
@@ -1578,6 +1878,10 @@
       "title": "from the vantaverse",
       "artist": "VantaOrigin Studio",
       "albumId": 15071145,
+      "albumIds": [
+        15071145,
+        15071151
+      ],
       "album": "2D Characters & Assets",
       "description": "",
       "permalink": "https://www.artstation.com/artwork/RKmAvW",
@@ -1593,6 +1897,9 @@
       "title": "lost pact page one from the vantaverse, written by William Edward Stone",
       "artist": "VantaOrigin Studio",
       "albumId": 15071155,
+      "albumIds": [
+        15071155
+      ],
       "album": "Comics Art",
       "description": "",
       "permalink": "https://www.artstation.com/artwork/8BqzeO",
@@ -1608,6 +1915,10 @@
       "title": "merch design gig gotten on fiverr",
       "artist": "VantaOrigin Studio",
       "albumId": 15071145,
+      "albumIds": [
+        15071145,
+        15089205
+      ],
       "album": "2D Characters & Assets",
       "description": "",
       "permalink": "https://www.artstation.com/artwork/RK4rDE",
@@ -1623,6 +1934,9 @@
       "title": "final rendered page from lost path comics",
       "artist": "VantaOrigin Studio",
       "albumId": 15071155,
+      "albumIds": [
+        15071155
+      ],
       "album": "Comics Art",
       "description": "",
       "permalink": "https://www.artstation.com/artwork/dymwaA",
@@ -1638,6 +1952,9 @@
       "title": "for Micheal Gibson on Fiverr, storyboard for animation",
       "artist": "VantaOrigin Studio",
       "albumId": 15071155,
+      "albumIds": [
+        15071155
+      ],
       "album": "Comics Art",
       "description": "",
       "permalink": "https://www.artstation.com/artwork/ZlYWDR",
@@ -1653,6 +1970,9 @@
       "title": "A logo design for an insurance company called find better",
       "artist": "VantaOrigin Studio",
       "albumId": 15089205,
+      "albumIds": [
+        15089205
+      ],
       "album": "Brand And Infographics Design",
       "description": "",
       "permalink": "https://www.artstation.com/artwork/rln4W2",
@@ -1664,10 +1984,68 @@
       "likes": 1
     },
     {
+      "id": "0lglP4",
+      "title": "obaalu and other 3 celestials of tge vanta universe",
+      "artist": "VantaOrigin Studio",
+      "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
+      "album": "2D Characters & Assets",
+      "description": "",
+      "permalink": "https://www.artstation.com/artwork/0lglP4",
+      "cover": "https://cdna.artstation.com/p/assets/images/images/090/267/402/small_square/olasco-studios-img-20250723-wa0001.jpg?1753390676",
+      "images": [
+        "https://cdna.artstation.com/p/assets/images/images/090/267/402/large/olasco-studios-img-20250723-wa0001.jpg?1753390676"
+      ],
+      "publishedAt": "2025-07-24T15:58:32.672-05:00",
+      "likes": 0
+    },
+    {
+      "id": "nJq6o6",
+      "title": "did I add this here?",
+      "artist": "VantaOrigin Studio",
+      "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
+      "album": "2D Characters & Assets",
+      "description": "",
+      "permalink": "https://www.artstation.com/artwork/nJq6o6",
+      "cover": "https://cdna.artstation.com/p/assets/images/images/089/847/864/small_square/olasco-studios-1750280249664.jpg?1752107580",
+      "images": [
+        "https://cdna.artstation.com/p/assets/images/images/089/847/864/large/olasco-studios-1750280249664.jpg?1752107580"
+      ],
+      "publishedAt": "2025-07-09T19:33:15.330-05:00",
+      "likes": 1
+    },
+    {
+      "id": "oJo6nW",
+      "title": "for William Edwards stone on Facebook",
+      "artist": "VantaOrigin Studio",
+      "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
+      "album": "2D Characters & Assets",
+      "description": "",
+      "permalink": "https://www.artstation.com/artwork/oJo6nW",
+      "cover": "https://cdna.artstation.com/p/assets/images/images/089/847/820/small_square/olasco-studios-img-20250702-wa0006.jpg?1752107437",
+      "images": [
+        "https://cdna.artstation.com/p/assets/images/images/089/847/820/large/olasco-studios-img-20250702-wa0006.jpg?1752107437"
+      ],
+      "publishedAt": "2025-07-09T19:31:05.608-05:00",
+      "likes": 0
+    },
+    {
       "id": "2B3Bme",
       "title": "paperback and ebook cover for Nellie from upwork",
       "artist": "VantaOrigin Studio",
       "albumId": 15071145,
+      "albumIds": [
+        15071145,
+        15071151
+      ],
       "album": "2D Characters & Assets",
       "description": "",
       "permalink": "https://www.artstation.com/artwork/2B3Bme",
@@ -1683,6 +2061,9 @@
       "title": "birthday chibi art",
       "artist": "VantaOrigin Studio",
       "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
       "album": "2D Characters & Assets",
       "description": "a friend messaged me on fiverr to help her draw a chibi art for her streamer friend coming birthday",
       "permalink": "https://www.artstation.com/artwork/Nqk3EN",
@@ -1698,6 +2079,10 @@
       "title": "At olascostudio, we handle revisions pretty well",
       "artist": "VantaOrigin Studio",
       "albumId": 15071145,
+      "albumIds": [
+        15071145,
+        15071151
+      ],
       "album": "2D Characters & Assets",
       "description": "",
       "permalink": "https://www.artstation.com/artwork/WX6mJJ",
@@ -1709,10 +2094,31 @@
       "likes": 1
     },
     {
+      "id": "5Wo6J8",
+      "title": "for my buddy, couch potato king on Facebook",
+      "artist": "VantaOrigin Studio",
+      "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
+      "album": "2D Characters & Assets",
+      "description": "",
+      "permalink": "https://www.artstation.com/artwork/5Wo6J8",
+      "cover": "https://cdna.artstation.com/p/assets/images/images/087/279/180/small_square/olasco-studios-male-anime-character.jpg?1745379501",
+      "images": [
+        "https://cdna.artstation.com/p/assets/images/images/087/279/180/large/olasco-studios-male-anime-character.jpg?1745379501"
+      ],
+      "publishedAt": "2025-04-22T22:39:09.928-05:00",
+      "likes": 0
+    },
+    {
       "id": "y4XNXJ",
       "title": "linearts (mistakes)",
       "artist": "VantaOrigin Studio",
       "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
       "album": "2D Characters & Assets",
       "description": "",
       "permalink": "https://www.artstation.com/artwork/y4XNXJ",
@@ -1728,6 +2134,9 @@
       "title": "pngtuber artwork done for Miss Naomi on fiverr",
       "artist": "VantaOrigin Studio",
       "albumId": 15071145,
+      "albumIds": [
+        15071145
+      ],
       "album": "2D Characters & Assets",
       "description": "",
       "permalink": "https://www.artstation.com/artwork/ZlzOoX",
