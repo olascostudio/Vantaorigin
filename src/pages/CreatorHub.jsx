@@ -115,15 +115,24 @@ function ProfileHeader() {
       {/* 290px is the height of the art at its full 1728px width. Held at
           290 on a 375px phone it becomes roughly 2:1 instead of 6:1, so it
           ate 36% of the screen and pushed the characters two screens down.
-          It now scales with the width it actually has. */}
-      <div className="relative h-[120px] overflow-hidden sm:h-[180px] lg:h-[290px]">
+          It now scales with the width it actually has.
+
+          Pulled up under the bar, which DashboardNav has made transparent
+          for exactly this: the logo and the banner share one 76px instead
+          of taking 76px each. The height is up a little from 120 because
+          76 of it is now spent under the bar, and the net is still less
+          than the two stacked. */}
+      <div className="relative -mt-[76px] h-[140px] overflow-hidden sm:h-[190px] lg:h-[290px]">
         <img src={settings.banner || bannerArt} alt="" className="size-full object-cover" />
 
         {/* The guidance only fits where there is room for it. On a phone
             this block was taller than the banner underneath it, so the art
             could never be seen at all; there it is one control in the
             corner instead. */}
-        <div className="absolute inset-0 hidden flex-col items-center justify-start gap-2 bg-black/25 pt-10 text-center lg:flex">
+        {/* pt clears the bar now sitting on this banner: at pt-10 the
+            heading ran from 111 to 143 against a bar ending at 147, so 36px
+            of it was behind the logo. */}
+        <div className="absolute inset-0 hidden flex-col items-center justify-start gap-2 bg-black/25 pt-[88px] text-center lg:flex">
           <p className="font-ui text-2xl font-bold text-white">Change banner image</p>
           <p className="font-ui text-base font-medium text-white">
             Recommended Dimension 1728 X 290pixels
@@ -608,7 +617,7 @@ export default function CreatorHub() {
 
   return (
     <div className="min-h-screen bg-[#1b2233]">
-      <DashboardNav active="Creators’ Hub" />
+      <DashboardNav active="Creators’ Hub" overBanner />
       <ProfileHeader />
 
       {/* Floating, so it is not in the scroll between the profile and the

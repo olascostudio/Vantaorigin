@@ -24,7 +24,12 @@ const LINKS = [
 //
 // Admin is asked once per page load, and only while signed in: an ordinary
 // creator gets false and never sees the link.
-export default function DashboardNav({ active = "Discover" }) {
+// overBanner: sit the bar on top of whatever the page puts underneath it,
+// instead of above it. The hub uses it so the logo and the profile banner
+// share the same 76px rather than taking 76px each, which on a phone was
+// most of the first screenful spent on chrome. The page opts in, because
+// this bar is also on nine pages that have no banner to sit on.
+export default function DashboardNav({ active = "Discover", overBanner = false }) {
   const [admin, setAdmin] = useState(false);
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
@@ -55,9 +60,33 @@ export default function DashboardNav({ active = "Discover" }) {
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
+  // The notice strips, which never overlap anything: a change to the terms
+  // or an unconfirmed address has to push the page down, not sit on top of
+  // it. When the bar is over a banner they go above the bar instead, which
+  // is where a site-wide notice usually lives anyway.
+  const strips = (
+    <>
+      <VerifyBanner />
+      {/* The terms changed and this person has not agreed to the new
+          wording. Above the beta notice: one is a change to the contract,
+          the other is a request for an opinion. */}
+      <TermsBanner />
+      {/* This bar is on the open pages as well as the workspace. The banner
+          takes itself off the private ones. */}
+      <BetaBanner />
+    </>
+  );
+
   return (
-    <header className="relative z-30 bg-black">
-      <div className="flex h-[76px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-12">
+    <header className={`relative z-30 ${overBanner ? "" : "bg-black"}`}>
+      {overBanner && strips}
+      <div
+        className={`flex h-[76px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-12 ${
+          // A scrim, because the logo and the menu button now sit on
+          // somebody's artwork and have to stay legible over all of it.
+          overBanner ? "bg-black/45" : ""
+        }`}
+      >
         <Link
           to={user ? "/discover" : "/"}
           className="flex shrink-0 items-center gap-2.5"
@@ -145,14 +174,7 @@ export default function DashboardNav({ active = "Discover" }) {
         </div>
       </div>
 
-      <VerifyBanner />
-      {/* The terms changed and this person has not agreed to the new
-          wording. Above the beta notice: one is a change to the contract,
-          the other is a request for an opinion. */}
-      <TermsBanner />
-      {/* This bar is on the open pages as well as the workspace. The banner
-          takes itself off the private ones. */}
-      <BetaBanner />
+      {!overBanner && strips}
 
       {/* Phones and tablets: the same links, folded away until asked for */}
       {open && (
