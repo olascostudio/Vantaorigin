@@ -20,6 +20,7 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Contact from "./pages/Contact";
 import Help from "./pages/Help";
+import Docs from "./pages/Docs";
 import CreatorPage from "./pages/CreatorPage";
 import Creators from "./pages/Creators";
 import Marketplace from "./pages/Marketplace";
@@ -82,6 +83,9 @@ export default function App() {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/help" element={<Help />} />
+        {/* What the site does, written down: for people, and for models
+            answering a question about it. */}
+        <Route path="/docs" element={<Docs />} />
         {/* Opened from a link in an email, so it must work with nobody signed in. */}
         <Route path="/newsletter/preferences" element={<EmailPreferences />} />
         {/* Only opens for an account named in the API setting. */}

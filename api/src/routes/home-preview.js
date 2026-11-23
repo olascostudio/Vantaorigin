@@ -12,6 +12,7 @@ import { desc, eq, sql } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { characters, users } from "../db/schema.js";
 import { SITE, escape, page, summarise } from "./preview.js";
+import { AREAS, AUDIENCE, ROADMAP, SUMMARY, UPDATED } from "../capabilities.js";
 
 const PITCH =
   "VantaOrigin is one address for the characters you make. Each character gets a card with " +
@@ -305,5 +306,103 @@ export default async function homePreviewRoutes(app) {
       .send(
         page({ title: "Request a project | VantaOrigin", description, canonical, jsonLd, body })
       );
+  });
+
+  // Everything the site does, as plain HTML.
+  //
+  // This is the half that does the work the page was asked for. A model
+  // answering "what can VantaOrigin do" does not run scripts, and neither do
+  // most crawlers on a first pass, so the React page at /docs would be five
+  // words in a title to them. The words have to be in the response.
+  //
+  // Headings and definition lists rather than prose: a feature has a name and
+  // a sentence, and saying so in the markup means it survives being read by
+  // something that cannot see the layout. The structured data repeats it in
+  // the form a search engine already knows how to show.
+  app.get("/preview/docs", async (request, reply) => {
+    const canonical = `${SITE}/docs`;
+    const description =
+      "Every feature VantaOrigin has today, grouped by area, and a roadmap saying what is being " +
+      "built, what is next, and what it is waiting on.";
+
+    const areas = AREAS.map(
+      (area) => `<section id="${escape(area.id)}">
+        <h2>${escape(area.name)}</h2>
+        <p>${escape(area.summary)}</p>
+        <dl>
+          ${area.features
+            .map(
+              (feature) =>
+                `<dt>${escape(feature.name)}</dt>\n          <dd>${escape(feature.detail)}</dd>`
+            )
+            .join("\n          ")}
+        </dl>
+      </section>`
+    ).join("\n      ");
+
+    const roadmap = ROADMAP.map(
+      (phase) => `<section>
+        <h3>${escape(phase.stage)}</h3>
+        <p>${escape(phase.detail)}</p>
+        <ul>
+          ${phase.items.map((item) => `<li>${escape(item)}</li>`).join("\n          ")}
+        </ul>
+      </section>`
+    ).join("\n      ");
+
+    const body = `<main>
+      <h1>What VantaOrigin does</h1>
+      <p>${escape(SUMMARY)}</p>
+      <p>${escape(AUDIENCE)}</p>
+      <p>Last updated ${escape(UPDATED)}. Everything under Live now is working today.</p>
+      ${areas}
+      <section id="roadmap">
+        <h2>Roadmap</h2>
+        <p>What is working, what is half built, and what is only decided.</p>
+        ${roadmap}
+      </section>
+    </main>`;
+
+    // Two things at once. ItemList is what the features are, and a search
+    // engine knows how to read it. The FAQ-shaped half is dropped on purpose:
+    // these are not questions, and marking them up as questions to win a
+    // richer result would be describing the page as something it is not.
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      url: canonical,
+      name: "What VantaOrigin does",
+      description,
+      dateModified: UPDATED,
+      isPartOf: { "@type": "WebSite", name: "VantaOrigin", url: SITE },
+      about: {
+        "@type": "SoftwareApplication",
+        name: "VantaOrigin",
+        applicationCategory: "Creative work management",
+        url: SITE,
+        description: SUMMARY,
+        offers: { "@type": "Offer", price: "0", priceCurrency: "NGN" },
+        featureList: AREAS.flatMap((area) =>
+          area.features.map((feature) => `${area.name}: ${feature.name}. ${feature.detail}`)
+        ),
+      },
+      mainEntity: {
+        "@type": "ItemList",
+        name: "VantaOrigin roadmap",
+        itemListElement: ROADMAP.flatMap((phase, stage) =>
+          phase.items.map((item, index) => ({
+            "@type": "ListItem",
+            position: stage * 100 + index + 1,
+            name: item,
+            description: `${phase.stage}: ${phase.detail}`,
+          }))
+        ),
+      },
+    };
+
+    return reply
+      .type("text/html; charset=utf-8")
+      .header("cache-control", "public, max-age=300, s-maxage=3600")
+      .send(page({ title: "What VantaOrigin does | VantaOrigin", description, canonical, jsonLd, body }));
   });
 }

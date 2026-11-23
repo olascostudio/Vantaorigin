@@ -253,3 +253,56 @@ test("the steps a crawler reads are the steps the page shows", async () => {
   const pitch = ask.body.match(/<p>(Tell us what[^<]+)<\/p>/)[1];
   assert.ok(jsx.includes(pitch), "the request page and the copy drawn for a crawler have drifted");
 });
+
+// The two copies of the capability list say the same thing.
+//
+// The API ships as a container built from api/ alone, so it cannot import
+// the app's own data file and keeps a copy instead. A copy is only safe while
+// something notices when it stops being one: a feature added to the page
+// people read and not to the one a crawler reads is worse than no page,
+// because the half that gets quoted elsewhere is the stale half.
+//
+// A byte comparison rather than a spot check of a few strings, because the
+// files are meant to be identical and anything less lets a changed sentence
+// through.
+test("the API's copy of the capability list has not drifted from the app's", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const mine = new URL("../src/capabilities.js", import.meta.url);
+  const theirs = new URL("../../src/data/capabilities.js", import.meta.url);
+
+  const [a, b] = await Promise.all([
+    readFile(mine, "utf8"),
+    readFile(theirs, "utf8"),
+  ]);
+
+  assert.equal(
+    a.replace(/\r\n/g, "\n"),
+    b.replace(/\r\n/g, "\n"),
+    "api/src/capabilities.js and src/data/capabilities.js differ. Edit the app's file, then copy it over."
+  );
+});
+
+test("the crawler gets the features and the roadmap as words, not a shell", async () => {
+  const res = await app.inject({ method: "GET", url: "/preview/docs" });
+  assert.equal(res.statusCode, 200);
+
+  const html = res.body;
+  const { AREAS, ROADMAP } = await import("../src/capabilities.js");
+
+  // Every area, every feature name, and every roadmap line is in the HTML.
+  for (const area of AREAS) {
+    assert.ok(html.includes(area.name), `missing area: ${area.name}`);
+    for (const feature of area.features) {
+      assert.ok(html.includes(feature.name), `missing feature: ${feature.name}`);
+    }
+  }
+  for (const phase of ROADMAP) {
+    assert.ok(html.includes(phase.stage), `missing roadmap stage: ${phase.stage}`);
+  }
+
+  // And it is marked up as what it is, so a reader that cannot see still
+  // knows which sentence belongs to which feature.
+  assert.ok(html.includes("<dt>"), "features are not a definition list");
+  assert.ok(html.includes('"@type":"SoftwareApplication"'), "no structured data about the product");
+  assert.ok(html.includes("featureList"), "the structured data does not list the features");
+});

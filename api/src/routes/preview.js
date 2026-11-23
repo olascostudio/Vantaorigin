@@ -643,6 +643,10 @@ export default async function previewRoutes(app) {
       { loc: `${SITE}/community`, priority: "0.5" },
       { loc: `${SITE}/help`, priority: "0.4" },
       { loc: `${SITE}/about`, priority: "0.4" },
+      // Above help and about, because it is the page that answers "what does
+      // this do" in full, and that is the question most often asked of a
+      // site nobody has used yet.
+      { loc: `${SITE}/docs`, priority: "0.6" },
       ...creators.map((creator) => ({
         loc: `${SITE}/creator/${creator.username.replace(/^@/, "")}`,
         lastmod: creator.updatedAt,
@@ -822,6 +826,9 @@ ${urls
       "",
       "## About this site",
       "",
+      // First, because it is the one page written to answer this exact
+      // question in full, and a model that reads one link should read it.
+      `- [Everything it does](${SITE}/docs): every feature, by area, and a roadmap saying what is built, what is next, and what it is waiting on.`,
       `- [What VantaOrigin is](${SITE}/about): a home for the characters a creator makes, grouped by project and shared from one page.`,
       `- [How to use it](${SITE}/help): making a character, publishing it, sharing your page.`,
       `- [Discover](${SITE}/discover): every character creators have published.`,

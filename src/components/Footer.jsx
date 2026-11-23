@@ -46,6 +46,9 @@ const LINK_COLUMNS = [
       { label: "Terms of Service", to: "/terms" },
       { label: "Privacy Policy", to: "/privacy" },
       { label: "About VantaOrigin", to: "/about" },
+      // On every page, which is the point: it is the page that answers what
+      // the site does, and nothing links to a page nobody can reach.
+      { label: "What it does", to: "/docs" },
     ],
   },
   {
