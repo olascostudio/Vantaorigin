@@ -7,6 +7,7 @@ import JoinPrompt, { useJoinPrompt } from "../components/JoinPrompt.jsx";
 import SubscribeButton from "../components/SubscribeButton.jsx";
 import { useAuth } from "../data/AuthContext.jsx";
 import { usePageMeta } from "../data/pageMeta";
+import LightningDivider from "../components/LightningDivider";
 import logoMark from "../assets/landing/hero/logo-mark.svg";
 import logoWordmark from "../assets/landing/hero/logo-wordmark.svg";
 import characterCover from "../assets/creator/character-cover.svg";
@@ -65,18 +66,26 @@ function PostView({ post, onClose }) {
 
 function CharacterTile({ character }) {
   return (
+    // The hub's card: an outer shell and a gold frame around the artwork
+    // inside it. The flat tile this used to be was recognisably a different
+    // product from the page the creator had just been editing, and the gold
+    // line is the single thing that makes the two read as one place.
     <Link
       to={`/character/${character.slug || character.id}`}
-      className="group overflow-hidden rounded-2xl border border-white/10 bg-[#222b3c] transition-colors hover:border-white/30"
+      className="group flex flex-col rounded-2xl border border-white/10 p-2.5 transition-colors hover:border-white/30 sm:p-3"
     >
-      <Art
-        src={character.coverUrl || characterCover}
-        alt={character.name}
-        loading="lazy"
-        className="aspect-[3/4] w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-      />
-      <div className="p-2.5 sm:p-3">
-        <p className="truncate font-ui text-sm font-bold text-white">{character.name}</p>
+      <div className="flex flex-1 flex-col rounded-xl border-[1.5px] border-[#f5af32] p-2 sm:p-3">
+        <div className="overflow-hidden rounded-lg">
+          <Art
+            src={character.coverUrl || characterCover}
+            alt={character.name}
+            loading="lazy"
+            className="aspect-[3/4] w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+          />
+        </div>
+        <p className="mt-2 truncate font-ui text-sm font-bold text-white sm:mt-3 sm:text-base">
+          {character.name}
+        </p>
         {character.tagline && (
           <p className="truncate font-ui text-xs text-neutral-400">{character.tagline}</p>
         )}
@@ -94,8 +103,11 @@ function CharacterTile({ character }) {
 // group of cards reads like a selection state or a stray debug border. The
 // heading and the space between sections separate them perfectly well.
 function CategoryGroup({ name, characters }) {
+  // Five across once the page widens. At three in a 680px column the tiles
+  // were 210px wide on a 1440px screen, which is a phone's idea of a card
+  // shown to somebody who has room for a shelf of them.
   const tiles = (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
       {characters.map((character) => (
         <CharacterTile key={character.id} character={character} />
       ))}
@@ -210,10 +222,23 @@ export default function CreatorPage() {
 
   return (
     <div className="min-h-screen bg-background pb-16">
-      <div className="mx-auto max-w-[680px]">
+      {/* Built to the hub's proportions on purpose.
+
+          This page and the hub are the same place seen from two sides, and
+          this one was a 680px column with 380px of nothing either side of it
+          on a 1440px screen, which read as a plainer cousin rather than as
+          the thing the creator had just been looking at. The banner now runs
+          the full width the way the hub's does, and what follows sits in the
+          hub's own container. The text blocks keep their own caps, because a
+          line of prose 1000px wide is harder to read, not easier. */}
+      <div>
         {/* Banner, with the profile picture sitting over its lower edge */}
         <div className="relative">
-          <div className="h-[130px] overflow-hidden sm:h-[180px] sm:rounded-b-3xl">
+          {/* The hub's heights. Held at 180px this became a letterbox slit
+              across a wide screen, and since people upload ordinary pictures
+              rather than 1728x290 banners, object-cover was throwing most of
+              the image away. */}
+          <div className="h-[140px] overflow-hidden sm:h-[190px] lg:h-[290px]">
             {creator.bannerUrl ? (
               <Art src={creator.bannerUrl} alt="" className="size-full object-cover" />
             ) : (
@@ -289,8 +314,10 @@ export default function CreatorPage() {
           )}
         </header>
 
-        {/* The small divide between the two kinds of thing */}
-        <div className="mt-7 px-5">
+        {/* The small divide between the two kinds of thing. The hub
+            container from here down, so the shelf of characters is the width
+            it is in the hub rather than a column in the middle. */}
+        <div className="mx-auto mt-7 max-w-[1620px] px-6 lg:px-12">
           <div className="mx-auto flex w-fit gap-1 rounded-full bg-white/5 p-1">
             {["Characters", "Highlights"].map((name) => (
               <button
@@ -311,7 +338,12 @@ export default function CreatorPage() {
           </div>
         </div>
 
-        <main className="mt-6 px-5">
+        {/* The hub puts this between the tabs and the work. It is the one
+            piece of decoration the place has, and leaving it off here was
+            most of why the two did not look related. */}
+        <LightningDivider />
+
+        <main className="mx-auto max-w-[1620px] px-6 lg:px-12">
           {showing.length === 0 && (
             <p className="rounded-2xl border border-dashed border-white/15 px-6 py-12 text-center font-ui text-base text-neutral-400">
               {tab === "Characters"
