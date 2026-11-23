@@ -61,10 +61,18 @@ export default function TermsBanner() {
 
   return (
     <div role="region" aria-label="Terms update" className="border-b border-white/10 bg-[#2c2410]">
-      <div className="mx-auto flex max-w-[1368px] flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6">
+      <div className="mx-auto flex max-w-[1368px] flex-col gap-2 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6 sm:py-3">
         <p className="font-ui text-sm leading-relaxed text-[#ffd98a]">
           <span className="font-bold">The terms have changed.</span>{" "}
-          {terms.version.summary || "The wording that governs your account has been updated."}{" "}
+          {/* The summary runs to four lines on a phone, which made this bar
+              187px, 23% of the screen, to deliver one notice. Below sm the
+              headline says what happened and the link gives the terms
+              themselves, which are the part that actually governs the
+              account and are one tap away either way. The banner is
+              persistent until accepted, so nobody gets one chance at it. */}
+          <span className="hidden sm:inline">
+            {terms.version.summary || "The wording that governs your account has been updated."}{" "}
+          </span>
           <Link
             to={terms.version.url || "/terms"}
             className="font-bold underline underline-offset-2 hover:text-white"
