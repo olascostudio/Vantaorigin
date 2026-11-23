@@ -1,8 +1,15 @@
 {
   "source": "artstation:vantaoriginstudio",
   "profile": "https://www.artstation.com/vantaoriginstudio",
-  "syncedAt": "2026-09-28T12:12:56.600Z",
+  "syncedAt": "2026-11-23T02:51:40.982Z",
   "albums": [
+    {
+      "id": 0,
+      "title": "Latest Work",
+      "slug": "latest-work",
+      "url": "https://www.artstation.com/vantaoriginstudio",
+      "count": 8
+    },
     {
       "id": 15071145,
       "title": "2D Characters & Assets",
@@ -60,8 +67,154 @@
       "count": 6
     }
   ],
-  "totalCount": 98,
+  "totalCount": 106,
   "projects": [
+    {
+      "id": "Nradvq",
+      "title": "Comic art done for dhajooma, art  done by Vantaorigin studio. by Vantaorigin.com",
+      "artist": "VantaOrigin Studio",
+      "albumId": 0,
+      "album": "Latest Work",
+      "description": "",
+      "permalink": "https://www.artstation.com/artwork/Nradvq",
+      "cover": "https://cdna.artstation.com/p/assets/images/images/104/265/990/small_square/vantaorigin-com-photo-5773634243375337929-w.jpg?1795390133",
+      "images": [
+        "https://cdna.artstation.com/p/assets/images/images/104/265/990/large/vantaorigin-com-photo-5773634243375337929-w.jpg?1795390133",
+        "https://cdnb.artstation.com/p/assets/images/images/104/265/993/large/vantaorigin-com-photo-5773634243375337911-y.jpg?1795390140"
+      ],
+      "publishedAt": "2026-11-22T23:29:43.000Z",
+      "likes": 0
+    },
+    {
+      "id": "q0o1my",
+      "title": "Comic book lettering done by vantaorigin studio by Vantaorigin.com",
+      "artist": "VantaOrigin Studio",
+      "albumId": 0,
+      "album": "Latest Work",
+      "description": "",
+      "permalink": "https://www.artstation.com/artwork/q0o1my",
+      "cover": "https://cdnb.artstation.com/p/assets/images/images/104/265/895/small_square/vantaorigin-com-letter1.jpg?1795389669",
+      "images": [
+        "https://cdnb.artstation.com/p/assets/images/images/104/265/895/large/vantaorigin-com-letter1.jpg?1795389669"
+      ],
+      "publishedAt": "2026-11-22T23:22:16.000Z",
+      "likes": 0
+    },
+    {
+      "id": "Bawr49",
+      "title": "Comic page design and colored by vantaorigin studio, written and created by dhajooma by Vantaorigin.com",
+      "artist": "VantaOrigin Studio",
+      "albumId": 0,
+      "album": "Latest Work",
+      "description": "",
+      "permalink": "https://www.artstation.com/artwork/Bawr49",
+      "cover": "https://cdnb.artstation.com/p/assets/images/images/104/265/731/small_square/vantaorigin-com-photo-5773634243375337912-w.jpg?1795388986",
+      "images": [
+        "https://cdnb.artstation.com/p/assets/images/images/104/265/731/large/vantaorigin-com-photo-5773634243375337912-w.jpg?1795388986",
+        "https://cdna.artstation.com/p/assets/images/images/104/265/732/large/vantaorigin-com-photo-5773634243375337917-w.jpg?1795388991",
+        "https://cdna.artstation.com/p/assets/images/images/104/265/734/large/vantaorigin-com-photo-5773634243375337913-y.jpg?1795388995"
+      ],
+      "publishedAt": "2026-11-22T23:10:54.000Z",
+      "likes": 0
+    },
+    {
+      "id": "Qxae0d",
+      "title": "Line art process of the song corps created and written by Lad Young, designed by Vantaorigin studio by Vantaorigin.com",
+      "artist": "VantaOrigin Studio",
+      "albumId": 0,
+      "album": "Latest Work",
+      "description": "",
+      "permalink": "https://www.artstation.com/artwork/Qxae0d",
+      "cover": "https://cdna.artstation.com/p/assets/images/images/104/265/688/small_square/vantaorigin-com-photo-5773634243375337926-w.jpg?1795388838",
+      "images": [
+        "https://cdna.artstation.com/p/assets/images/images/104/265/688/large/vantaorigin-com-photo-5773634243375337926-w.jpg?1795388838",
+        "https://cdnb.artstation.com/p/assets/images/images/104/265/689/large/vantaorigin-com-photo-5773634243375337923-w.jpg?1795388841",
+        "https://cdna.artstation.com/p/assets/images/images/104/265/690/large/vantaorigin-com-photo-5773634243375337924-y.jpg?1795388844",
+        "https://cdnb.artstation.com/p/assets/images/images/104/265/693/large/vantaorigin-com-photo-5773634243375337925-w.jpg?1795388846",
+        "https://cdna.artstation.com/p/assets/images/images/104/265/694/large/vantaorigin-com-photo-5773634243375337921-w.jpg?1795388850",
+        "https://cdnb.artstation.com/p/assets/images/images/104/265/695/large/vantaorigin-com-photo-5773634243375337919-w.jpg?1795388853"
+      ],
+      "publishedAt": "2026-11-22T23:08:51.000Z",
+      "likes": 0
+    },
+    {
+      "id": "Nrad0d",
+      "title": "colour process od the song corps wear, designed and colored by vantaorigin studio by Vantaorigin.com",
+      "artist": "VantaOrigin Studio",
+      "albumId": 0,
+      "album": "Latest Work",
+      "description": "",
+      "permalink": "https://www.artstation.com/artwork/Nrad0d",
+      "cover": "https://cdnb.artstation.com/p/assets/images/images/104/265/655/small_square/vantaorigin-com-photo-5773634243375337915-w.jpg?1795388728",
+      "images": [
+        "https://cdnb.artstation.com/p/assets/images/images/104/265/655/large/vantaorigin-com-photo-5773634243375337915-w.jpg?1795388728",
+        "https://cdna.artstation.com/p/assets/images/images/104/265/656/large/vantaorigin-com-photo-5773634243375337916-w.jpg?1795388731",
+        "https://cdnb.artstation.com/p/assets/images/images/104/265/657/large/vantaorigin-com-photo-5773634243375337918-w.jpg?1795388735"
+      ],
+      "publishedAt": "2026-11-22T23:06:34.000Z",
+      "likes": 0
+    },
+    {
+      "id": "vz9eOA",
+      "title": "A colored character by vantaorigin studio. by Vantaorigin.com",
+      "artist": "VantaOrigin Studio",
+      "albumId": 0,
+      "album": "Latest Work",
+      "description": "",
+      "permalink": "https://www.artstation.com/artwork/vz9eOA",
+      "cover": "https://cdnb.artstation.com/p/assets/images/images/104/265/517/small_square/vantaorigin-com-photo-5773634243375337881-w.jpg?1795387988",
+      "images": [
+        "https://cdnb.artstation.com/p/assets/images/images/104/265/517/large/vantaorigin-com-photo-5773634243375337881-w.jpg?1795387988"
+      ],
+      "publishedAt": "2026-11-22T22:54:12.000Z",
+      "likes": 0
+    },
+    {
+      "id": "KR1lZx",
+      "title": "Furry Monter character sheet illustration for comic by Vantaorigin studio by Vantaorigin.com",
+      "artist": "VantaOrigin Studio",
+      "albumId": 0,
+      "album": "Latest Work",
+      "description": "",
+      "permalink": "https://www.artstation.com/artwork/KR1lZx",
+      "cover": "https://cdna.artstation.com/p/assets/images/images/104/265/472/small_square/vantaorigin-com-photo-5773634243375337882-y.jpg?1795387839",
+      "images": [
+        "https://cdna.artstation.com/p/assets/images/images/104/265/472/large/vantaorigin-com-photo-5773634243375337882-y.jpg?1795387839",
+        "https://cdnb.artstation.com/p/assets/images/images/104/265/475/large/vantaorigin-com-photo-5773634243375337880-y.jpg?1795387841",
+        "https://cdna.artstation.com/p/assets/images/images/104/265/476/large/vantaorigin-com-photo-5773634243375337878-w.jpg?1795387844",
+        "https://cdna.artstation.com/p/assets/images/images/104/265/478/large/vantaorigin-com-photo-5773634243375337879-y.jpg?1795387846",
+        "https://cdnb.artstation.com/p/assets/images/images/104/265/481/large/vantaorigin-com-photo-5773634243375337877-w.jpg?1795387848"
+      ],
+      "publishedAt": "2026-11-22T22:52:32.000Z",
+      "likes": 0
+    },
+    {
+      "id": "nd4nX6",
+      "title": "Character sketch for Goresair comic series by Vantaorigin Studio by Vantaorigin.com",
+      "artist": "VantaOrigin Studio",
+      "albumId": 0,
+      "album": "Latest Work",
+      "description": "",
+      "permalink": "https://www.artstation.com/artwork/nd4nX6",
+      "cover": "https://cdna.artstation.com/p/assets/images/images/104/265/236/small_square/vantaorigin-com-photo-5773634243375337906-x.jpg?1795386795",
+      "images": [
+        "https://cdna.artstation.com/p/assets/images/images/104/265/236/large/vantaorigin-com-photo-5773634243375337906-x.jpg?1795386795",
+        "https://cdnb.artstation.com/p/assets/images/images/104/265/237/large/vantaorigin-com-photo-5773634243375337908-y.jpg?1795386797",
+        "https://cdna.artstation.com/p/assets/images/images/104/265/238/large/vantaorigin-com-photo-5773634243375337909-y.jpg?1795386799",
+        "https://cdnb.artstation.com/p/assets/images/images/104/265/239/large/vantaorigin-com-photo-5773634243375337905-y-1.jpg?1795386801",
+        "https://cdna.artstation.com/p/assets/images/images/104/265/240/large/vantaorigin-com-photo-5773634243375337907-y.jpg?1795386803",
+        "https://cdna.artstation.com/p/assets/images/images/104/265/242/large/vantaorigin-com-photo-5773634243375337910-y.jpg?1795386805",
+        "https://cdnb.artstation.com/p/assets/images/images/104/265/243/large/vantaorigin-com-photo-5773634243375337897-x.jpg?1795386807",
+        "https://cdna.artstation.com/p/assets/images/images/104/265/246/large/vantaorigin-com-photo-5773634243375337898-x.jpg?1795386809",
+        "https://cdna.artstation.com/p/assets/images/images/104/265/248/large/vantaorigin-com-photo-5773634243375337899-y.jpg?1795386812",
+        "https://cdnb.artstation.com/p/assets/images/images/104/265/249/large/vantaorigin-com-photo-5773634243375337900-y.jpg?1795386814",
+        "https://cdnb.artstation.com/p/assets/images/images/104/265/251/large/vantaorigin-com-photo-5773634243375337901-y.jpg?1795386816",
+        "https://cdna.artstation.com/p/assets/images/images/104/265/256/large/vantaorigin-com-photo-5773634243375337905-y.jpg?1795386826",
+        "https://cdna.artstation.com/p/assets/images/images/104/265/258/large/vantaorigin-com-photo-5773634243375337906-x-copy-copy.jpg?1795386828"
+      ],
+      "publishedAt": "2026-11-22T22:35:26.000Z",
+      "likes": 0
+    },
     {
       "id": "QxKxq8",
       "title": "Pngtuber Character illustration for Naomi Roe By Ola",
