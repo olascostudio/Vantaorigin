@@ -158,22 +158,16 @@ function ProfileHeader() {
         </Link>
       </div>
 
-      <div className="relative flex flex-col items-center px-6 pt-12 sm:pt-6 lg:pt-0">
-        {settings.avatar ? (
-          <img
-            src={settings.avatar}
-            alt={fullName || "Your avatar"}
-            className="-mt-[46px] size-[92px] rounded-full object-cover ring-4 ring-[#1b2233]"
-          />
-        ) : (
-          <span className="-mt-[46px] flex size-[92px] items-center justify-center rounded-full bg-[#2f3a4f] ring-4 ring-[#1b2233]">
-            <svg viewBox="0 0 24 24" className="size-12 text-[#55648a]" fill="currentColor" aria-hidden="true">
-              <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5z" />
-            </svg>
-          </span>
-        )}
+      {/* No portrait here. This is the owner's own dashboard and the bar
+          above already carries their avatar, which since the bar moved onto
+          the banner sat a few pixels from a 92px copy of itself. The public
+          page keeps its big one: there the face is the point, and the small
+          one in the bar belongs to whoever is visiting, not to the creator.
 
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-4">
+          Stacked rather than side by side: name, then handle, then the two
+          buttons, then the bio. */}
+      <div className="relative flex flex-col items-center px-6 pt-5">
+        <div className="flex flex-col items-center gap-3">
           <div className="text-center">
             <h1 className="font-ui text-2xl font-bold text-white">
               {fullName || "Add your name"}
@@ -182,12 +176,14 @@ function ProfileHeader() {
           </div>
           <div className="flex items-center gap-3">
             <Link
+              data-tour="hub-edit"
               to="/settings/personal"
               className="rounded-full bg-[#2f86e8] px-5 py-1.5 font-ui text-sm font-bold text-white hover:opacity-90"
             >
               Edit
             </Link>
             <button
+              data-tour="hub-share"
               type="button"
               onClick={async () => setShared(await copyPageLink(settings.username))}
               className="rounded-full bg-[#a855f7] px-5 py-1.5 font-ui text-sm font-bold text-white hover:opacity-90"
@@ -649,6 +645,7 @@ export default function CreatorHub() {
               Your page
             </p>
             <Link
+              data-tour="hub-view-page"
               to={`/creator/${String(toSettings(user).username || "").replace(/^@+/, "")}`}
               className="flex items-center gap-2 rounded-full border border-white/25 px-4 py-2 font-ui text-sm font-bold text-white transition hover:bg-white/10 sm:px-7 sm:py-2.5 sm:text-lg"
             >
@@ -665,6 +662,7 @@ export default function CreatorHub() {
               Your audience
             </p>
             <Link
+              data-tour="hub-subscribers"
               to="/creators-hub/subscribers"
               className="block rounded-full bg-[#2f86e8] px-4 py-2 text-center font-ui text-sm font-bold text-white hover:opacity-90 sm:px-7 sm:py-2.5 sm:text-lg"
             >
@@ -713,6 +711,7 @@ export default function CreatorHub() {
             <div className="flex items-center justify-between gap-4">
               <h2 className="font-ui text-3xl font-bold text-white sm:text-[42px]">My Characters</h2>
               <button
+                data-tour="hub-add-category"
                 type="button"
                 onClick={() => setAddingCategory(true)}
                 className="ml-auto shrink-0 rounded-lg bg-primary px-4 py-2 font-ui text-sm font-bold text-white transition-opacity hover:opacity-90 sm:px-5 sm:py-2.5 sm:text-base"
