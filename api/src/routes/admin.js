@@ -335,7 +335,7 @@ export default async function adminRoutes(app) {
   // Nothing is sent. Somebody added here is on the list and will get the next
   // letter, but they are not welcomed as though they had just signed up:
   // these are addresses that were already ours.
-  app.post("/admin/newsletter/import", { preHandler: requireAdmin() }, async (request, reply) => {
+  app.post("/admin/newsletter/import", { preHandler: requireAdmin(), bodyLimit: 4 * 1024 * 1024 }, async (request, reply) => {
     const { text } = z
       .object({ text: z.string().max(2_000_000) })
       .parse(request.body ?? {});

@@ -13,6 +13,27 @@ import { confirmLink, subscribeQuietly, unsubscribeLink } from "../newsletter.js
 // production, where EMAIL_DRIVER is "resend".
 const devCode = (code) => (config.EMAIL_DRIVER === "console" ? { devCode: code } : {});
 
+// Guessing a password should be slow.
+//
+// These routes had only the app-wide limit, 120 requests a minute, which is
+// 120 guesses a minute and about 172,000 a day from one address. Argon2id
+// makes each guess expensive for us and no cheaper for somebody working
+// through a list of passwords leaked from somewhere else, which is how
+// accounts are actually taken: the hashing protects the stored password, not
+// the login form.
+//
+// Ten a minute is far more than a person who has forgotten which password
+// they used, and far less than a list is worth working through. Signing up
+// and asking for a reset are limited too: both send mail to an address the
+// sender chooses, so an open one is a way to post mail in our name.
+//
+// Lifted in tests, which sign in repeatedly on purpose.
+const SLOW = (max, timeWindow) =>
+  config.NODE_ENV === "test" ? {} : { config: { rateLimit: { max, timeWindow } } };
+
+const GUESSING = SLOW(10, "1 minute");
+const SENDING_MAIL = SLOW(5, "10 minutes");
+
 // A rejected email must never take down the request that triggered it: the
 // account still exists, and the code can be asked for again.
 async function trySend(app, message) {
@@ -55,7 +76,7 @@ const signUpBody = credentials.extend({
 });
 
 export default async function authRoutes(app) {
-  app.post("/auth/signup", async (request, reply) => {
+  app.post("/auth/signup", SENDING_MAIL, async (request, reply) => {
     const body = signUpBody.parse(request.body);
     const email = body.email.toLowerCase();
     const username = body.username.startsWith("@") ? body.username : `@${body.username}`;
@@ -150,7 +171,7 @@ export default async function authRoutes(app) {
     return reply.code(201).send({ user: publicUser(user), emailSent: sent, ...devCode(code) });
   });
 
-  app.post("/auth/signin", async (request, reply) => {
+  app.post("/auth/signin", GUESSING, async (request, reply) => {
     const body = credentials.parse(request.body);
     const [user] = await db
       .select()
@@ -220,7 +241,7 @@ export default async function authRoutes(app) {
     return { ...devCode(code), ok: true };
   });
 
-  app.post("/auth/forgot-password", async (request) => {
+  app.post("/auth/forgot-password", SENDING_MAIL, async (request) => {
     const { email } = z.object({ email: z.string().email() }).parse(request.body);
     const [user] = await db
       .select()
@@ -250,7 +271,7 @@ export default async function authRoutes(app) {
 
   // Step one of a reset: is this code right? Checked but not used up, so the
   // next screen can set the new password.
-  app.post("/auth/check-reset-code", async (request, reply) => {
+  app.post("/auth/check-reset-code", GUESSING, async (request, reply) => {
     const { email, code } = z
       .object({ email: z.string().email(), code: z.string().length(4) })
       .parse(request.body);
@@ -270,7 +291,7 @@ export default async function authRoutes(app) {
   });
 
   // Step two: the code is used up here.
-  app.post("/auth/reset-password", async (request, reply) => {
+  app.post("/auth/reset-password", GUESSING, async (request, reply) => {
     const { email, code, password } = z
       .object({ email: z.string().email(), code: z.string().length(4), password: z.string().min(8) })
       .parse(request.body);

@@ -13,6 +13,17 @@ import { confirmSubscriptionEmail } from "../emails/templates.js";
 
 const SITE = (config.SITE_URL || "https://www.vantaorigin.com").replace(/\/$/, "");
 
+// Subscribing sends a confirmation to whatever address was typed, so this is
+// a way to post mail in our name to somebody who never asked for it. Under
+// the app-wide limit alone that was 120 a minute from one address: enough to
+// bury a stranger's inbox, and enough to get the sending domain marked as a
+// spammer, which costs every real subscriber their mail. Double opt-in stops
+// the list being poisoned, not the sending.
+//
+// Lifted in tests, which subscribe repeatedly on purpose.
+const SENDING_MAIL =
+  config.NODE_ENV === "test" ? {} : { config: { rateLimit: { max: 5, timeWindow: "10 minutes" } } };
+
 const page = (heading, words) => `<!doctype html>
 <html lang="en">
   <head>
@@ -54,7 +65,7 @@ export default async function newsletterRoutes(app) {
     }
   );
 
-  app.post("/newsletter/subscribe", async (request, reply) => {
+  app.post("/newsletter/subscribe", SENDING_MAIL, async (request, reply) => {
     const { email } = z.object({ email: z.string().email() }).parse(request.body);
     const result = await subscribe(email, "footer");
 

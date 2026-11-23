@@ -32,8 +32,20 @@ services:
         sync: false
 
       # Lets Vercel preview deployments talk to the API too.
+      #
+      # Both of these are needed together. ".vercel.app" alone is a public
+      # suffix: it matched every site anybody has ever deployed to Vercel,
+      # and each one was answered with Access-Control-Allow-Credentials:
+      # true, which with a SameSite=None session cookie is a cross-site read
+      # of a signed-in person's data. The prefix narrows it to this
+      # project's own previews.
+      #
+      # Tighter still, if preview deploys ever stop being worth it: delete
+      # both of these and put the exact preview origins in APP_ORIGIN.
       - key: ALLOWED_ORIGIN_SUFFIXES
         value: .vercel.app
+      - key: ALLOWED_ORIGIN_PREFIXES
+        value: vantaorigin
 
       # The API and the front end are on different domains, so the session
       # cookie must be SameSite=None.

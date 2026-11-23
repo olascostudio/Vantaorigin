@@ -20,7 +20,16 @@ const schema = z.object({
   // comma separated.
   APP_ORIGIN: z.string().default("http://localhost:5173"),
   // Lets preview deployments through, e.g. ".vercel.app".
+  //
+  // A suffix on its own is not enough, and ALLOWED_ORIGIN_PREFIXES below is
+  // required alongside it: ".vercel.app" is a public suffix, so matching on
+  // it alone trusts every site anybody has ever deployed to Vercel. With
+  // credentials on and SameSite=None, that is a working cross-site read of
+  // a signed-in person's data.
   ALLOWED_ORIGIN_SUFFIXES: z.string().optional(),
+  // What a preview host for THIS project starts with, e.g. "vantaorigin".
+  // Narrows the suffix above to this project's own deployments.
+  ALLOWED_ORIGIN_PREFIXES: z.string().optional(),
   COOKIE_DOMAIN: z.string().optional(),
   // The API and the front end sit on different domains in production, so the
   // session cookie has to be SameSite=None (which also forces Secure).

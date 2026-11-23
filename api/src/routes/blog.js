@@ -24,6 +24,18 @@ import {
 
 const PAGE_SIZE = 12;
 
+// A post is allowed 400,000 characters, and the app-wide body ceiling is one
+// megabyte. Those agree only while every character is one byte: in a script
+// that takes three, such as CJK, a post at the length the schema permits
+// weighs 1.2MB and was refused before validation ever ran, with a message
+// naming no field and no real limit. The cap bit at about 349,500
+// characters, 87% of what the schema offers.
+//
+// Six bytes per character is the worst JSON can do (an escaped control
+// character), so this clears the declared maximum in any script, while every
+// other route keeps the tighter ceiling.
+const LONG_BODY = 3 * 1024 * 1024;
+
 const postBody = z.object({
   title: z.string().min(1).max(160),
   slug: z.string().max(80).optional(),
@@ -193,7 +205,7 @@ export default async function blogRoutes(app) {
     return { post: toPost(row, writers.get(row.authorId)) };
   });
 
-  app.post("/admin/blog", { preHandler: requireAdmin() }, async (request, reply) => {
+  app.post("/admin/blog", { preHandler: requireAdmin(), bodyLimit: LONG_BODY }, async (request, reply) => {
     const parsed = postBody.safeParse(request.body);
     if (!parsed.success) return reply.code(400).send({ error: "Check the fields and try again" });
     const input = parsed.data;
@@ -237,7 +249,7 @@ export default async function blogRoutes(app) {
     return reply.code(201).send({ post: toPost(row, request.user) });
   });
 
-  app.patch("/admin/blog/:id", { preHandler: requireAdmin() }, async (request, reply) => {
+  app.patch("/admin/blog/:id", { preHandler: requireAdmin(), bodyLimit: LONG_BODY }, async (request, reply) => {
     const parsed = postBody.partial().safeParse(request.body);
     if (!parsed.success) return reply.code(400).send({ error: "Check the fields and try again" });
     const input = parsed.data;
