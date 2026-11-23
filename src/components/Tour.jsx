@@ -13,7 +13,6 @@
 // and the line are enough to say which control is being described.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../data/AuthContext.jsx";
 import { STEPS, firstStepOn, rememberTourSeen, seenTour } from "../data/tour";
 
 // How long to wait for a step's control to turn up after navigating. The
@@ -23,6 +22,9 @@ import { STEPS, firstStepOn, rememberTourSeen, seenTour } from "../data/tour";
 const WAIT_MS = 6000;
 const POLL_MS = 100;
 
+// Where the walk offers itself: the page somebody lands on after signing up.
+const HOME = "/creators-hub";
+
 const findTarget = (key) => document.querySelector(`[data-tour="${key}"]`);
 
 // The card is 320px on anything wider than a phone, and a full width sheet
@@ -31,7 +33,6 @@ const CARD_W = 320;
 const GAP = 14;
 
 export default function Tour() {
-  const { user } = useAuth();
   const { pathname } = useLocation();
   const navigate = useNavigate();
 
@@ -44,21 +45,17 @@ export default function Tour() {
 
   const anchor = useRef(null);
 
-  // Offer the walk once, to somebody signed in who has not been offered it.
+  // Offer the walk once, on the hub.
+  //
+  // The hub is where somebody lands after signing up, and it is behind
+  // RequireAuth, so being on it is already proof of an account: this does
+  // not need to ask the auth context, and so does not make every page that
+  // renders the router depend on a provider being above it. It asks the
+  // route instead, which it already has.
   useEffect(() => {
-    if (!user || seenTour()) return;
+    if (pathname !== HOME || seenTour()) return;
     setStatus((was) => (was === "idle" ? "inviting" : was));
-  }, [user]);
-
-  // Signing out mid-walk ends it rather than leaving a card pointing at a
-  // page that is no longer there.
-  useEffect(() => {
-    if (!user) {
-      setStatus("idle");
-      anchor.current = null;
-      setRect(null);
-    }
-  }, [user]);
+  }, [pathname]);
 
   useEffect(() => {
     const onResize = () => setNarrow(window.innerWidth < 640);

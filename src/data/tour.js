@@ -76,11 +76,18 @@ export const STEPS = [
     blurb: "Everyone who followed you. Let us go and look.",
   },
   {
-    target: "subscribers-write",
+    // Not the "Write to your subscribers" heading, which lives in the
+    // Editor tab: that tab is marked Soon and is not the one this page
+    // opens on, so the tour waited six seconds for a control that is never
+    // on screen and then skipped the step. These figures always are.
+    target: "subscribers-figures",
     path: "/creators-hub/subscribers",
-    name: "Write to your subscribers",
+    // Not "Subscribers": that is the step before, which is the button that
+    // brings you here, and two steps running under one name reads as the
+    // tour having stalled.
+    name: "Your subscribers",
     blurb:
-      "Sends one message to everyone who followed you. They asked to hear from you, so this is the way to tell them you have made something.",
+      "How many people followed you, how many this week, and how many left. They gave you an address so you could write to them about your work.",
   },
   {
     target: "settings-tabs",

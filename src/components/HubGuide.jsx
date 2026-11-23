@@ -11,6 +11,7 @@
 // but also made the panel a progress meter, and progress was never the
 // question being asked. The question is what the buttons are for.
 import { useState } from "react";
+import { seenTour } from "../data/tour";
 
 const DISMISSED = "vantaorigin.hub-guide.hidden";
 
@@ -63,7 +64,11 @@ const CONTROLS = [
 export default function HubGuide() {
   const [gone, setGone] = useState(hidden);
 
-  if (gone) return null;
+  // The tour says the same things, one control at a time and pointing at
+  // each. While it is still on offer this would be a second card saying so
+  // over the top of it, so this waits until the tour has been taken or
+  // turned down and then stays as the reference you can reopen.
+  if (gone || !seenTour()) return null;
 
   return (
     // Fixed, so it costs the page no height. Full width inside a gutter on a

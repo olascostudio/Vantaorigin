@@ -492,7 +492,10 @@ export default function Settings() {
 
       <div className="mx-auto flex max-w-[1680px] flex-col gap-8 px-4 py-8 lg:flex-row lg:px-12">
         <nav aria-label="Settings" className="w-full shrink-0 lg:w-[290px]">
+          {/* The tour points here rather than at the tab list below, which
+              is behind menuOpen and so is not always on the page. */}
           <button
+            data-tour="settings-tabs"
             type="button"
             onClick={() => setMenuOpen((v) => !v)}
             aria-expanded={menuOpen}

@@ -525,7 +525,7 @@ export default function CreatorDashboard() {
           {tab === "Overview" &&
             (overview ? (
               <div className="flex flex-col gap-4">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div data-tour="subscribers-figures" className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <Figure label="Subscribers" value={overview.total} />
                   <Figure label="New this week" value={overview.thisWeek} />
                   <Figure

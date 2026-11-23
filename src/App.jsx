@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import Footer from "./components/Footer";
 import RequireAuth from "./components/RequireAuth.jsx";
+import Tour from "./components/Tour.jsx";
 import RequireAdmin from "./components/RequireAdmin.jsx";
 import Landing from "./pages/Landing";
 import Blog from "./pages/Blog";
@@ -125,6 +126,13 @@ export default function App() {
       </Routes>
       {/* Shared across every route so it stays consistent site-wide */}
       <Footer />
+
+      {/* Outside Routes, because the walk crosses pages: it navigates
+          itself from the hub to the subscribers page to settings, and a
+          tour unmounted by the navigation it just performed would be a
+          tour of one screen. It renders nothing unless somebody is signed
+          in and has not been offered it before. */}
+      <Tour />
     </div>
   );
 }
