@@ -89,6 +89,18 @@ export default function Tour() {
       return undefined;
     }
 
+    // A step with nothing to point at. Making a character happens in two
+    // stages and the second is not on the page while the first is being
+    // filled in, so a step about it would wait its six seconds for a
+    // control that cannot be there yet and then skip itself. These say
+    // what happens next instead, and show at once with no ring and no
+    // line, because there is nothing honest to draw one to.
+    if (step.anchorless) {
+      anchor.current = null;
+      setRect(null);
+      return undefined;
+    }
+
     let cancelled = false;
     let waited = 0;
     anchor.current = null;

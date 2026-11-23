@@ -92,6 +92,7 @@ function IdentityStep({ identity, setIdentity, onNext }) {
             <path d="M14 3v5h5M9 13h6M9 17h6" />
           </svg>
           <input
+            data-tour="create-identity"
             id="identity"
             value={identity}
             onChange={(event) => setIdentity(event.target.value)}
@@ -102,6 +103,7 @@ function IdentityStep({ identity, setIdentity, onNext }) {
 
         <div className="mt-8 flex justify-center">
           <button
+            data-tour="create-go"
             type="button"
             onClick={onNext}
             className="flex items-center gap-3 rounded-full bg-[#2f86e8] px-10 py-3.5 font-ui text-lg font-bold text-white transition-opacity hover:opacity-90"

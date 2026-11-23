@@ -69,6 +69,42 @@ export const STEPS = [
     blurb:
       "Groups your characters, so a visitor can tell one project from another. A character does not need one to exist.",
   },
+  // Making a character, which is the thing the hub is for and the one job
+  // somebody has to get through before any of the rest matters.
+  {
+    target: "hub-new-character",
+    path: "/creators-hub",
+    name: "Add Character",
+    blurb:
+      "The empty slot at the end of a row. This is where a character starts, and it is the one thing worth doing before you share your page. Let us walk through it.",
+  },
+  {
+    target: "create-identity",
+    path: "/creators-hub/character/new",
+    name: "Who are they?",
+    blurb:
+      "A name is enough to begin. Not the whole backstory, not yet: just what you would call them if somebody asked.",
+  },
+  {
+    target: "create-go",
+    path: "/creators-hub/character/new",
+    name: "Let's Go",
+    blurb: "Takes you to the second half, where the rest of them gets filled in.",
+  },
+  {
+    anchorless: true,
+    path: "/creators-hub/character/new",
+    name: "The rest of them",
+    blurb:
+      "Next come their name as it should read, where they are from, which project they belong to, a line that sums them up, and a picture. Only the name is required. Everything else can wait until you feel like writing it.",
+  },
+  {
+    anchorless: true,
+    path: "/creators-hub/character/new",
+    name: "Then publish",
+    blurb:
+      "A character stays private until you publish it, including on your own link, so nobody sees a half-finished one. Publish when you are ready and it appears on your page.",
+  },
   {
     target: "hub-subscribers",
     path: "/creators-hub",

@@ -274,6 +274,7 @@ function CharacterCard({ character, onEdit, onView, onDelete }) {
 function AddCharacterSlot({ categoryId }) {
   return (
     <Link
+      data-tour="hub-new-character"
       to={`/creators-hub/character/new?category=${categoryId}`}
       className="group flex min-h-[280px] w-[180px] shrink-0 snap-start flex-col rounded-2xl border border-dashed border-white/20 p-2.5 transition-colors hover:border-[#a855f7] sm:min-h-[340px] sm:w-[250px] sm:p-3"
     >
