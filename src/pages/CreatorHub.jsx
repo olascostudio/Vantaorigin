@@ -25,7 +25,6 @@ import { Skeleton } from "../components/Loading.jsx";
 import arrowUpRight from "../assets/landing/worlds/arrow-up-right.svg";
 import profilePic from "../assets/creator/profile.webp";
 import { usePrivatePage } from "../data/pageMeta";
-import HubGuide from "../components/HubGuide";
 import LightningDivider from "../components/LightningDivider";
 
 // Clans were a third tab here, permanently disabled and labelled "Not
@@ -562,10 +561,6 @@ export default function CreatorHub() {
     <div className="min-h-screen bg-[#1b2233]">
       <DashboardNav active="Creators’ Hub" overBanner />
       <ProfileHeader />
-
-      {/* Floating, so it is not in the scroll between the profile and the
-          characters the way the checklist was. */}
-      <HubGuide />
 
       <div className="mt-10 border-t border-white/10" />
 
