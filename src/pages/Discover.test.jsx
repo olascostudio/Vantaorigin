@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 // What a card has to do when somebody points at it.
@@ -14,8 +14,10 @@ import { MemoryRouter } from "react-router-dom";
 vi.mock("../data/pageMeta", () => ({ usePageMeta: () => {} }));
 vi.mock("../components/DashboardNav", () => ({ default: () => null }));
 vi.mock("../data/character", () => ({ loadPublicCharacters: vi.fn() }));
+vi.mock("../data/creators", () => ({ loadPublicCreators: vi.fn(async () => []) }));
 
 const { loadPublicCharacters } = await import("../data/character");
+const { loadPublicCreators } = await import("../data/creators");
 const { default: Discover } = await import("./Discover.jsx");
 
 const published = [
@@ -60,13 +62,43 @@ describe("Discover", () => {
     );
   });
 
-  it("offers the creators page to somebody who wants the people", async () => {
+  // A line in the hero used to point at /creators for anybody after the
+  // people rather than the characters. The search box already reads creator
+  // names, so the answer to that question is to type it, and a creator now
+  // comes back as a result of its own rather than only as a pile of their
+  // work. The browse page still exists and is still linked from the footer.
+  it("answers a search for a person with the person, not just their work", async () => {
+    loadPublicCreators.mockResolvedValue([
+      {
+        username: "@Heartline",
+        handle: "Heartline",
+        name: "Heartline",
+        bio: "Draws comics.",
+        avatarUrl: null,
+        published: 2,
+        characters: [],
+      },
+    ]);
+
     render(<Discover />, { wrapper: MemoryRouter });
     await screen.findAllByTestId("character-card");
 
-    expect(screen.getByRole("link", { name: "Browse creators" })).toHaveAttribute(
+    const box = screen.getByPlaceholderText(/Search/i);
+    fireEvent.change(box, { target: { value: "heartline" } });
+    fireEvent.submit(box.closest("form"));
+
+    const card = await screen.findByTestId("creator-card");
+    expect(within(card).getByText("@Heartline")).toBeInTheDocument();
+    expect(within(card).getByRole("link", { name: /See their page/i })).toHaveAttribute(
       "href",
-      "/creators"
+      "/creator/Heartline"
     );
+  });
+
+  it("no longer signposts the browse page from the hero", async () => {
+    render(<Discover />, { wrapper: MemoryRouter });
+    await screen.findAllByTestId("character-card");
+
+    expect(screen.queryByRole("link", { name: "Browse creators" })).toBeNull();
   });
 });

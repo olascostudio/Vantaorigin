@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import { loadPublicCharacters } from "../data/character";
+import { loadPublicCreators } from "../data/creators";
 import { Art, Skeleton } from "../components/Loading.jsx";
 import characterCover from "../assets/creator/character-cover.svg";
 import heroArt from "../assets/auth/banner.webp";
@@ -34,6 +35,64 @@ async function publicCharacters() {
 // pressing one finds something. Invented names found nothing at all.
 const hintsFrom = (characters) =>
   [...new Set(characters.flatMap((c) => [c.title?.split(" · ")[0], c.author].filter(Boolean)))].slice(0, 6);
+
+// A creator, in the shape of a result.
+//
+// Searching a creator's name used to return their characters and no sign of
+// the person, which answered a question nobody asked: somebody typing a name
+// is usually looking for whoever made the work, not one thing they made. The
+// same footprint as a character card, so a mixed set of results still lines
+// up, and plainly a person rather than a character: a face, a handle, and
+// how much there is to look at.
+function CreatorCard({ creator }) {
+  const initial = (creator.name || creator.handle || "?").replace("@", "").charAt(0).toUpperCase();
+
+  return (
+    <article
+      className="relative flex w-[360px] shrink-0 flex-col gap-[18px] overflow-hidden rounded-[25px] border-[1.667px] border-[#4ea1ff]/60 bg-black/40 p-4 transition-colors hover:bg-black/60 sm:w-[500px] sm:p-[25px]"
+      data-testid="creator-card"
+    >
+      <div className="flex items-center gap-4">
+        {creator.avatarUrl ? (
+          <Art
+            src={creator.avatarUrl}
+            alt=""
+            loading="lazy"
+            className="size-[72px] shrink-0 rounded-full object-cover"
+          />
+        ) : (
+          <span className="flex size-[72px] shrink-0 items-center justify-center rounded-full bg-[#2f3a4f] font-ui text-2xl font-bold text-[#8aa0c8]">
+            {initial}
+          </span>
+        )}
+        <div className="min-w-0">
+          <p className="truncate font-ui text-xl font-bold text-white sm:text-2xl">
+            {creator.name || creator.username}
+          </p>
+          <p className="truncate font-ui text-base font-bold text-[#4ea1ff]">{creator.username}</p>
+        </div>
+      </div>
+
+      {creator.bio && (
+        <p className="line-clamp-3 font-ui text-base leading-relaxed text-neutral-300">
+          {creator.bio}
+        </p>
+      )}
+
+      <div className="mt-auto flex items-center justify-between gap-4">
+        <span className="font-ui text-sm text-neutral-400">
+          {creator.published} {creator.published === 1 ? "character" : "characters"}
+        </span>
+        <Link
+          to={`/creator/${creator.handle}`}
+          className="rounded-full bg-[#2f86e8] px-5 py-2 font-ui text-sm font-bold text-white transition-opacity hover:opacity-90"
+        >
+          See their page
+        </Link>
+      </div>
+    </article>
+  );
+}
 
 function CharacterCard({ title, author, colour, art, overlay, excerpt, to = "/character" }) {
   return (
@@ -314,13 +373,39 @@ export default function Discover() {
     };
   }, []);
 
+  // The people, for the search. Loaded alongside the characters rather than
+  // behind a link, because "find me this creator" and "find me this
+  // character" are the same question asked of the same box.
+  const [creators, setCreators] = useState([]);
+  useEffect(() => {
+    let cancelled = false;
+    loadPublicCreators()
+      .then((rows) => !cancelled && setCreators(rows))
+      // A search that cannot list the people still searches the characters.
+      .catch(() => !cancelled && setCreators([]));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const results = useMemo(() => {
     const term = submitted.trim().toLowerCase();
     if (!term) return null;
-    return (characters || []).filter((c) =>
+
+    const matched = (characters || []).filter((c) =>
       [c.title, c.author, c.searchText].filter(Boolean).join(" ").toLowerCase().includes(term)
     );
-  }, [submitted, characters]);
+
+    // Matched on who they are, not on what they have made: a character whose
+    // name happens to contain the term is already in the list above, and
+    // putting their creator there too for the same word would be answering
+    // twice.
+    const people = creators.filter((creator) =>
+      [creator.name, creator.username, creator.handle].filter(Boolean).join(" ").toLowerCase().includes(term)
+    );
+
+    return { characters: matched, creators: people };
+  }, [submitted, characters, creators]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -338,16 +423,13 @@ export default function Discover() {
             Characters published by creators on VantaOrigin: their art, their stories, and the
             people who made them. Every one has a page of its own.
           </p>
-          <p className="mx-auto mt-4 text-center font-ui text-lg text-neutral-300">
-            Looking for the people rather than the characters?{" "}
-            {/* White, not the accent: over the hero photograph the accent
-                measures as low as 3.5:1, and where it passes depends on how
-                the image happens to crop. */}
-            <Link to="/creators" className="font-medium text-white underline underline-offset-4">
-              Browse creators
-            </Link>
-            .
-          </p>
+          {/* A line here used to point at /creators for anybody looking for
+              the people rather than the characters. The search below already
+              reads creator names, so the answer to that question is to type
+              it: creators now come back as results of their own, above the
+              characters. The browse page is still there and still in the
+              sitemap, it just does not need a signpost on top of a search
+              box that does the same job. */}
 
           <form
             className="relative mx-auto mt-12 w-full max-w-[762px]"
@@ -410,11 +492,18 @@ export default function Discover() {
         <div className="relative pb-20">
           {results ? (
             <div className="flex flex-wrap justify-center gap-[30px] px-6" data-testid="results">
-              {results.length > 0 ? (
-                results.map((character) => <CharacterCard key={character.id} {...character} />)
-              ) : (
+              {/* People first. Somebody who typed a name is usually after
+                  whoever made the work rather than one thing they made, and
+                  there are far fewer of them, so they do not bury anything. */}
+              {results.creators.map((creator) => (
+                <CreatorCard key={creator.username} creator={creator} />
+              ))}
+              {results.characters.map((character) => (
+                <CharacterCard key={character.id} {...character} />
+              ))}
+              {results.creators.length === 0 && results.characters.length === 0 && (
                 <p className="font-ui text-lg text-neutral-300">
-                  No characters match “{submitted}”.
+                  Nothing matches “{submitted}”.
                 </p>
               )}
             </div>
