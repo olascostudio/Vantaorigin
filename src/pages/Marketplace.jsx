@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
-import { ALBUMS, artistsIn } from "../data/marketplace";
+import { ALBUMS } from "../data/marketplace";
 import PortfolioGrid from "../components/marketplace/PortfolioGrid";
+import StudioPromise from "../components/marketplace/StudioPromise";
 import heroArt from "../assets/auth/banner.webp";
 import stripePink from "../assets/marketplace/stripe-pink.svg";
 import bandBlue1 from "../assets/marketplace/band-blue-1.svg";
@@ -134,18 +135,11 @@ export default function Marketplace() {
   });
 
   const [activeId, setActiveId] = useState(ALBUMS[0]?.id ?? null);
-  const [artist, setArtist] = useState(null);
   const [query, setQuery] = useState("");
 
   const album = ALBUMS.find((item) => item.id === activeId) ?? ALBUMS[0];
 
-  // Chips are the artists with work in this album, busiest first.
-  const artists = useMemo(() => (album ? artistsIn(album.id) : []), [album]);
-
-  const selectAlbum = (id) => {
-    setActiveId(id);
-    setArtist(null);
-  };
+  const selectAlbum = (id) => setActiveId(id);
 
   return (
     <div className="min-h-screen bg-[#1b2233]">
@@ -158,7 +152,12 @@ export default function Marketplace() {
           <Sidebar activeId={album?.id} onSelect={selectAlbum} />
         </div>
 
-        <section className="min-h-[620px] flex-1 rounded-2xl bg-[#222c40] lg:rounded-none">
+        {/* min-w-0 because this is a flex item, and a flex item sizes to its
+            content unless told otherwise. The promise strip below is one
+            long row several thousand pixels wide, which stretched this
+            section to match and left the page relying on the app root's
+            overflow-x-hidden to cover it up. */}
+        <section className="min-h-[620px] min-w-0 flex-1 rounded-2xl bg-[#222c40] lg:rounded-none">
           <div className="flex flex-col gap-4 border-b border-white/10 p-5 lg:flex-row lg:items-center lg:gap-8">
             <h3 className="font-ui text-lg font-bold text-white lg:w-[220px]">{album?.title}</h3>
 
@@ -178,7 +177,7 @@ export default function Marketplace() {
                 to="/marketplace/project-request"
                 className="rounded-lg bg-primary px-6 py-2.5 font-ui text-base font-bold text-white underline hover:opacity-90"
               >
-                Project Request
+                Create Brief
               </Link>
               <Link
                 to="/marketplace/how-it-works"
@@ -189,50 +188,14 @@ export default function Marketplace() {
             </div>
           </div>
 
-          {/* Chips: the artists behind this album's work */}
-          <div className="scrollbar-none flex gap-4 overflow-x-auto p-5">
-            <button
-              type="button"
-              onClick={() => setArtist(null)}
-              aria-pressed={artist === null}
-              className={`shrink-0 rounded-full px-6 py-3 font-ui text-base transition-colors ${
-                artist === null
-                  ? "bg-gradient-to-r from-[#7b3fe4] to-[#c2185b] font-bold text-white"
-                  : "bg-[#2b3547] text-white hover:bg-[#333f56]"
-              }`}
-            >
-              All artists{" "}
-              <span className={artist === null ? "text-white/80" : "text-neutral-400"}>
-                {album?.count ?? 0}
-              </span>
-            </button>
+          {/* Where the artist chips were. They let somebody filter the work
+              by the name of whoever made it, which is a freelance
+              marketplace's shape: it teaches a client to ask for a person
+              rather than to brief the studio, and the studio is who carries
+              the work and the agreement. */}
+          <StudioPromise />
 
-            {artists.map(({ name, count }) => (
-              <button
-                key={name}
-                type="button"
-                onClick={() => setArtist(name)}
-                aria-pressed={artist === name}
-                className={`shrink-0 rounded-full px-6 py-3 font-ui text-base transition-colors ${
-                  artist === name
-                    ? "bg-gradient-to-r from-[#7b3fe4] to-[#c2185b] font-bold text-white"
-                    : "bg-[#2b3547] text-white hover:bg-[#333f56]"
-                }`}
-              >
-                {name}{" "}
-                <span className={artist === name ? "text-white/80" : "text-neutral-400"}>
-                  {count}
-                </span>
-              </button>
-            ))}
-          </div>
-
-          <PortfolioGrid
-            albumId={album?.id}
-            artist={artist}
-            query={query}
-            albumUrl={album?.url}
-          />
+          <PortfolioGrid albumId={album?.id} query={query} albumUrl={album?.url} />
         </section>
       </div>
 

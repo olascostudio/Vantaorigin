@@ -7,19 +7,10 @@ export const ALBUMS = portfolio.albums || [];
 export const PROJECTS = portfolio.projects || [];
 export const lastSyncedAt = portfolio.syncedAt;
 
-// Artists represented inside one album, most work first, used for the chips.
-export const artistsIn = (albumId) => {
-  const counts = PROJECTS.filter((project) => project.albumId === albumId).reduce(
-    (totals, project) => {
-      totals[project.artist] = (totals[project.artist] || 0) + 1;
-      return totals;
-    },
-    {}
-  );
-  return Object.entries(counts)
-    .sort((a, b) => b[1] - a[1])
-    .map(([name, count]) => ({ name, count }));
-};
+// artistsIn counted the artists inside an album for the chip row above the
+// grid. The chips are gone, and nothing else asked the question, so it went
+// with them rather than sitting here as an export with no callers. The
+// artist is still on each project, which is what the search reads.
 
 export const HOW_IT_WORKS = [
   {

@@ -151,7 +151,7 @@ const SECTIONS = [
       {
         q: "How do I request a service?",
         a: [
-          "Browse the Marketplace, then use Project Request to tell us about your project. It opens a form where you describe what you need.",
+          "Browse the Marketplace, then use Create Brief to tell us about your project. It opens a form where you describe what you need.",
           "We follow up by email to agree scope, timing and price before any work starts.",
         ],
       },
