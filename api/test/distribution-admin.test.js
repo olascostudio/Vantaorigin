@@ -347,3 +347,98 @@ test("a delivery window that runs backwards is refused", async () => {
   assert.equal(res.statusCode, 400);
   assert.match(res.json().error, /shorter than/);
 });
+
+// ---- a quote that is only a guess, and one that stops being real ----
+//
+// The screen's checkbox defaults to unticked for a band nobody has quoted,
+// so this is now the common first save, and nothing covered it. The second
+// case is the one that matters: a date saying when a price was quoted, left
+// behind on a row that says it was never quoted, is the exact question this
+// table exists to answer being answered both ways at once.
+
+test("a band saved as a guess carries no quote date", async () => {
+  const res = await app.inject({
+    method: "POST",
+    url: "/admin/distribution/printer-costs",
+    headers: { cookie: admin },
+    payload: {
+      printerId,
+      formatSlug: "pb-6x9-bw",
+      minQuantity: 1,
+      unitCostMinor: "300000",
+      isPlaceholder: true,
+    },
+  });
+
+  assert.equal(res.statusCode, 201);
+  assert.equal(res.json().isPlaceholder, true);
+  assert.equal(res.json().quotedAt, null, "a guess was never quoted");
+});
+
+test("demoting a real quote back to a guess clears the date it was quoted", async () => {
+  const save = (isPlaceholder) =>
+    app
+      .inject({
+        method: "POST",
+        url: "/admin/distribution/printer-costs",
+        headers: { cookie: admin },
+        payload: {
+          printerId,
+          formatSlug: "pb-55x85-bw",
+          minQuantity: 1,
+          unitCostMinor: "280000",
+          isPlaceholder,
+        },
+      })
+      .then((r) => r.json());
+
+  const real = await save(false);
+  assert.equal(real.isPlaceholder, false);
+  assert.ok(real.quotedAt, "a real quote records when it was given");
+
+  const demoted = await save(true);
+  assert.equal(demoted.isPlaceholder, true);
+  assert.equal(
+    demoted.quotedAt,
+    null,
+    "a row cannot say it is a guess and still carry a quote date"
+  );
+});
+
+test("the engine says who pays delivery, so a screen need not assume it", async () => {
+  const q = await app
+    .inject({
+      method: "POST",
+      url: "/admin/distribution/preview",
+      headers: { cookie: admin },
+      payload: { formatSlug: "comic-6625x1025", countryCode: "NG", pageCount: 32, quantity: 1 },
+    })
+    .then((r) => r.json());
+
+  // Without this the only way to know whether the reader's bill is the floor
+  // or the floor plus delivery is to guess, and guessing wrong counts
+  // delivery twice.
+  assert.equal(q.deliveryPaidByReader, true);
+
+  const priced = await app
+    .inject({
+      method: "POST",
+      url: "/admin/distribution/preview",
+      headers: { cookie: admin },
+      payload: {
+        formatSlug: "comic-6625x1025",
+        countryCode: "NG",
+        pageCount: 32,
+        quantity: 1,
+        retailMinor: "600000",
+      },
+    })
+    .then((r) => r.json());
+
+  assert.equal(priced.deliveryPaidByReader, true);
+  assert.equal(
+    priced.totalMinor,
+    priced.retailMinor + priced.deliveryMinor,
+    "the reader's bill is the price plus delivery in this regime"
+  );
+});

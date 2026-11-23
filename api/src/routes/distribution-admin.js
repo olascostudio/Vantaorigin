@@ -222,8 +222,13 @@ export default async function distributionAdminRoutes(app) {
       )
       .limit(1);
 
+    // A quote date belongs to a real quote and to nothing else. Setting it
+    // without ever clearing it left rows saying both things at once: a band
+    // marked a placeholder, carrying the date it was quoted on, which is the
+    // one question this table exists to answer.
     const values = { ...body.data, updatedAt: new Date() };
     if (body.data.isPlaceholder === false) values.quotedAt = new Date();
+    if (body.data.isPlaceholder === true) values.quotedAt = null;
 
     if (existing) {
       const [updated] = await db

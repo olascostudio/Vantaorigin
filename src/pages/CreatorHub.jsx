@@ -35,7 +35,7 @@ import streak3 from "../assets/creator/streak-3.svg";
 import streak4 from "../assets/creator/streak-4.svg";
 import streak5 from "../assets/creator/streak-5.svg";
 import { usePrivatePage } from "../data/pageMeta";
-import GettingStarted from "../components/GettingStarted";
+import HubGuide from "../components/HubGuide";
 
 // Clans were a third tab here, permanently disabled and labelled "Not
 // available in v1". A feature that does not exist should not be taking a
@@ -61,16 +61,26 @@ function LightningDivider() {
   ];
 
   return (
-    <div aria-hidden="true" className="relative h-[150px] overflow-hidden">
+    // 150px of decoration sat between the tabs and the characters at every
+    // width. On a phone that is 18% of the screen of ornament directly
+    // above the thing somebody opened the page to see, so here it scales
+    // too. The desktop figures are the originals, untouched.
+    <div aria-hidden="true" className="relative h-[78px] overflow-hidden sm:h-[120px] lg:h-[150px]">
       {bolts.map(({ src, left }) => (
-        <img key={left} src={src} alt="" className="absolute top-3 h-12 w-[54px] max-w-none" style={{ left }} />
+        <img
+          key={left}
+          src={src}
+          alt=""
+          className="absolute top-1.5 h-7 w-[32px] max-w-none sm:top-2 sm:h-10 sm:w-[44px] lg:top-3 lg:h-12 lg:w-[54px]"
+          style={{ left }}
+        />
       ))}
       {streaks.map(({ src, left }) => (
         <img
           key={left}
           src={src}
           alt=""
-          className="absolute top-[88px] h-[30px] w-[120px] max-w-none"
+          className="absolute top-[46px] h-[18px] w-[70px] max-w-none sm:top-[70px] sm:h-[24px] sm:w-[96px] lg:top-[88px] lg:h-[30px] lg:w-[120px]"
           style={{ left }}
         />
       ))}
@@ -102,9 +112,18 @@ function ProfileHeader() {
 
   return (
     <>
-      <div className="relative h-[290px] overflow-hidden">
+      {/* 290px is the height of the art at its full 1728px width. Held at
+          290 on a 375px phone it becomes roughly 2:1 instead of 6:1, so it
+          ate 36% of the screen and pushed the characters two screens down.
+          It now scales with the width it actually has. */}
+      <div className="relative h-[120px] overflow-hidden sm:h-[180px] lg:h-[290px]">
         <img src={settings.banner || bannerArt} alt="" className="size-full object-cover" />
-        <div className="absolute inset-0 flex flex-col items-center justify-start gap-2 bg-black/25 pt-10 text-center">
+
+        {/* The guidance only fits where there is room for it. On a phone
+            this block was taller than the banner underneath it, so the art
+            could never be seen at all; there it is one control in the
+            corner instead. */}
+        <div className="absolute inset-0 hidden flex-col items-center justify-start gap-2 bg-black/25 pt-10 text-center lg:flex">
           <p className="font-ui text-2xl font-bold text-white">Change banner image</p>
           <p className="font-ui text-base font-medium text-white">
             Recommended Dimension 1728 X 290pixels
@@ -121,6 +140,13 @@ function ProfileHeader() {
             </Link>
           </div>
         </div>
+
+        <Link
+          to="/settings/profile"
+          className="absolute bottom-2 right-2 rounded-full bg-black/60 px-3.5 py-2 font-ui text-xs font-bold text-white backdrop-blur-sm transition-colors hover:bg-black/80 lg:hidden"
+        >
+          Edit banner
+        </Link>
       </div>
 
       <div className="relative flex flex-col items-center px-6 pt-12 sm:pt-6 lg:pt-0">
@@ -529,8 +555,6 @@ export default function CreatorHub() {
   usePrivatePage();
   const navigate = useNavigate();
   const { user } = useAuth();
-  // Said after copying the page link from the checklist below.
-  const [copied, setCopied] = useState("");
   // The creator's categories and the characters filed under them.
   const [library, setLibrary] = useState({ categories: [], characters: [] });
   const [libraryLoading, setLibraryLoading] = useState(true);
@@ -587,12 +611,9 @@ export default function CreatorHub() {
       <DashboardNav active="Creators’ Hub" />
       <ProfileHeader />
 
-      <GettingStarted
-        settings={toSettings(user)}
-        characters={library.characters}
-        copied={copied}
-        onShare={async () => setCopied(await copyPageLink(toSettings(user).username))}
-      />
+      {/* Floating, so it is not in the scroll between the profile and the
+          characters the way the checklist was. */}
+      <HubGuide />
 
       <div className="mt-10 border-t border-white/10" />
 
@@ -605,17 +626,22 @@ export default function CreatorHub() {
             tabs, buttons and a separate settings route with no single place
             that showed what existed, which is most of why nobody found
             Highlights. */}
+        {/* On a phone the three group headings turned three buttons into
+            three stacked blocks, 318px of it. As chips the three come to
+            478px of text and padding against 312px of room at 360px, so they
+            take two rows rather than one, which is about 84px. The headings
+            earn their space on a wide screen and only there. */}
         <nav
           aria-label="Your hub"
-          className="flex flex-wrap items-start justify-center gap-x-10 gap-y-6 py-6"
+          className="flex flex-wrap items-start justify-center gap-x-3 gap-y-3 py-4 sm:gap-x-10 sm:gap-y-6 sm:py-6"
         >
           <div>
-            <p className="mb-2 text-center font-ui text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-400">
+            <p className="mb-2 hidden text-center font-ui text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-400 sm:block">
               Your page
             </p>
             <Link
               to={`/creator/${String(toSettings(user).username || "").replace(/^@+/, "")}`}
-              className="flex items-center gap-2 rounded-full border border-white/25 px-7 py-2.5 font-ui text-lg font-bold text-white transition hover:bg-white/10"
+              className="flex items-center gap-2 rounded-full border border-white/25 px-4 py-2 font-ui text-sm font-bold text-white transition hover:bg-white/10 sm:px-7 sm:py-2.5 sm:text-lg"
             >
               View your page
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -626,22 +652,22 @@ export default function CreatorHub() {
           </div>
 
           <div>
-            <p className="mb-2 text-center font-ui text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-400">
+            <p className="mb-2 hidden text-center font-ui text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-400 sm:block">
               Your audience
             </p>
             <Link
               to="/creators-hub/subscribers"
-              className="block rounded-full bg-[#2f86e8] px-7 py-2.5 text-center font-ui text-lg font-bold text-white hover:opacity-90"
+              className="block rounded-full bg-[#2f86e8] px-4 py-2 text-center font-ui text-sm font-bold text-white hover:opacity-90 sm:px-7 sm:py-2.5 sm:text-lg"
             >
               Subscribers
             </Link>
           </div>
 
           <div>
-            <p className="mb-2 text-center font-ui text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-400">
+            <p className="mb-2 hidden text-center font-ui text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-400 sm:block">
               Selling
             </p>
-            <span className="block rounded-full border border-dashed border-white/20 px-7 py-2.5 text-center font-ui text-lg font-bold text-neutral-400">
+            <span className="block rounded-full border border-dashed border-white/20 px-4 py-2 text-center font-ui text-sm font-bold text-neutral-400 sm:px-7 sm:py-2.5 sm:text-lg">
               Creator Studio, soon
             </span>
           </div>

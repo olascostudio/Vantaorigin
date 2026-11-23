@@ -36,12 +36,25 @@ export function toMinor(typed) {
 export const fromMinor = (minor) =>
   typeof minor === "number" ? (minor / 100).toFixed(2).replace(/\.00$/, "") : "";
 
-const money = (minor, currency) =>
-  typeof minor === "number"
-    ? `${currency === "NGN" ? "₦" : currency === "GBP" ? "£" : ""}${Math.round(
-        minor / 100
-      ).toLocaleString()}`
-    : "—";
+// Rounding to whole units threw away real money and made the figures stop
+// agreeing with each other. A GBP parcel of 290 minor units is GBP 2.90 and
+// was shown as "3", losing the pence on the very screen where they are
+// typed; and because each figure rounded on its own, a floor of 3810.75
+// beside a delivery of 1500.50 displayed as 3,811 and 1,501 over a total of
+// 5,311, which reads as arithmetic that does not work. So: whole amounts
+// stay whole, and anything with a fraction shows it.
+//
+// Number, and finite: typeof NaN is "number", so the old guard let NaN
+// through and printed a currency symbol in front of it.
+const money = (minor, currency) => {
+  if (typeof minor !== "number" || !Number.isFinite(minor)) return "—";
+  const symbol = currency === "NGN" ? "₦" : currency === "GBP" ? "£" : "";
+  const units = minor / 100;
+  return `${symbol}${units.toLocaleString(undefined, {
+    minimumFractionDigits: Number.isInteger(units) ? 0 : 2,
+    maximumFractionDigits: 2,
+  })}`;
+};
 
 const FIELD =
   "w-full box-border min-h-[40px] rounded-lg border border-[#908a7e] bg-white px-3 py-2 font-ui text-sm text-[#1b2233] outline-none focus:border-[#6a28a8] focus:outline focus:outline-2 focus:outline-[#6a28a8] focus:outline-offset-[-1px]";
@@ -137,6 +150,22 @@ export default function CostsAndRates() {
   const nothingQuoted = data.printerCosts.length === 0;
   const currencyOf = (code) => data.countries.find((c) => c.code === code)?.currency ?? "";
 
+  // What the reader's card is charged. With a price typed the engine has
+  // already totalled it, so use that figure: taking the floor's in both
+  // cases printed the cheapest possible bill beside the breakdown of a
+  // dearer one. With no price, the bill at the floor depends on who pays
+  // delivery, which the engine now says rather than leaving us to assume:
+  // where the reader pays it the bill is the floor plus delivery, and where
+  // the floor absorbs it the bill is the floor alone, and adding delivery
+  // there would charge it twice.
+  const readerPays = !preview
+    ? null
+    : typeof preview.totalMinor === "number"
+      ? preview.totalMinor
+      : preview.deliveryPaidByReader === false
+        ? preview.floorMinor
+        : preview.floorMinor + preview.deliveryMinor;
+
   return (
     <div className="flex flex-col gap-6">
       {problem && (
@@ -230,11 +259,31 @@ export default function CostsAndRates() {
               <p className={`mt-1 font-ui text-xs ${MUTED}`}>
                 {money(preview.perCopyFloorMinor, preview.currency)} a copy at {preview.quantity}
               </p>
+              {/* The floor is the book on its own. Delivery is added to the
+                  reader's bill rather than taken out of it, so without this
+                  line the printing and delivery figures sitting beside the
+                  floor look like they overshoot it: 3,450 and 1,500 under a
+                  floor of 4,037 reads as broken arithmetic when it is not. */}
+              {Number.isFinite(readerPays) && (
+                <p className={`mt-3 border-t border-[#e6e8ec] pt-3 font-ui text-xs ${MUTED}`}>
+                  A reader pays{" "}
+                  <span className={`font-semibold tabular-nums ${INK}`}>
+                    {money(readerPays, preview.currency)}
+                  </span>{" "}
+                  {/* The same test the figure above was chosen by, so the
+                      wording cannot end up describing the other one. */}
+                  {typeof preview.totalMinor === "number"
+                    ? "at the price you typed"
+                    : "at that floor"}
+                  ,
+                  delivery included.
+                </p>
+              )}
             </div>
 
             <div className="min-w-0 flex-[2_1_280px] rounded-lg bg-[#f6f7f9] p-5">
               <Row label="Printing" value={money(preview.printingMinor, preview.currency)} />
-              <Row label="Delivery" value={money(preview.deliveryMinor, preview.currency)} />
+              <Row label="Delivery, paid on top" value={money(preview.deliveryMinor, preview.currency)} />
               {preview.retailMinor !== undefined && (
                 <>
                   <Row label="Card fee" value={money(preview.gatewayFeeMinor, preview.currency)} />
@@ -271,12 +320,33 @@ function PrinterCosts({ data, run, currencyOf }) {
     minQuantity: 1,
     unitCost: "",
     packaging: "",
-    real: true,
+    // null means nobody has touched the box, so it answers for itself below.
+    // A fixed default cannot be right for both cases: false is the safe
+    // start for a band that does not exist yet, because a guess saved as a
+    // real quote is silent and unblocks selling at a price that need not
+    // cover cost, while a real quote saved as a placeholder only keeps a
+    // book off sale and makes the banner shout. But this form is an upsert,
+    // so a fixed false also demoted an already quoted band every time
+    // somebody corrected a typo on it.
+    real: null,
   };
   const [band, setBand] = useState(blank);
 
   const nameOf = (id) => data.printers.find((p) => p.id === id)?.name ?? "Unknown";
   const countryOf = (id) => data.printers.find((p) => p.id === id)?.countryCode ?? "";
+
+  // The row this form would overwrite, if there is one. Saving the same
+  // printer, format and step corrects that row rather than adding a second.
+  const existing = data.printerCosts.find(
+    (row) =>
+      row.printerId === band.printerId &&
+      row.formatSlug === band.formatSlug &&
+      Number(row.minQuantity) === Number(band.minQuantity)
+  );
+
+  // Untouched, the box says what the band it is about to overwrite says, and
+  // unticked when there is nothing there yet.
+  const real = band.real === null ? Boolean(existing) && !existing.isPlaceholder : band.real;
 
   return (
     <section className={`${CARD} p-6`} aria-label="What a printer charges">
@@ -337,10 +407,20 @@ function PrinterCosts({ data, run, currencyOf }) {
                 minQuantity: Number(band.minQuantity),
                 unitCostMinor,
                 ...(toMinor(band.packaging) ? { packagingMinor: toMinor(band.packaging) } : {}),
-                isPlaceholder: !band.real,
+                isPlaceholder: !real,
               }),
             "Saved. The floor above has moved."
-          ).then(() => setBand({ ...blank, printerId: band.printerId, formatSlug: band.formatSlug }));
+          ).then(() =>
+            // minQuantity too, so the form still points at the band just
+            // saved, and real back to null so it reads that band's own state
+            // rather than carrying the last tick onto a different row.
+            setBand({
+              ...blank,
+              printerId: band.printerId,
+              formatSlug: band.formatSlug,
+              minQuantity: band.minQuantity,
+            })
+          );
         }}
       >
         <div className="min-w-0 flex-[2_1_180px]">
@@ -373,12 +453,12 @@ function PrinterCosts({ data, run, currencyOf }) {
             onChange={(e) => setBand({ ...band, packaging: e.target.value })} />
         </div>
         <label className="flex min-h-[40px] flex-[1_1_190px] items-center gap-2 font-ui text-sm text-[#39435a]">
-          <input type="checkbox" className="size-4 accent-[#6a28a8]" checked={band.real}
+          <input type="checkbox" className="size-4 accent-[#6a28a8]" checked={real}
             onChange={(e) => setBand({ ...band, real: e.target.checked })} />
           A real quote, not a guess
         </label>
         <button type="submit" className={BTN} disabled={!data.printers.length || !toMinor(band.unitCost)}>
-          Save this cost
+          {existing ? "Correct this cost" : "Save this cost"}
         </button>
       </form>
 
@@ -419,7 +499,8 @@ function DeliveryRates({ data, run, currencyOf }) {
     estDaysMin: 2,
     estDaysMax: 4,
     courier: "",
-    real: true,
+    // Unticked, for the same reason as a printer's quote.
+    real: false,
   };
   const [adding, setAdding] = useState(blank);
 

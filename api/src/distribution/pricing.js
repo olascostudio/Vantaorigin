@@ -232,6 +232,12 @@ export function quote({
       deliveryMinor: delivery,
       floorMinor: floor,
       perCopyFloorMinor: Math.ceil(floor / quantity),
+      // Said out loud, because the two regimes give the same shaped answer
+      // with different meanings: when the reader pays, their bill is the
+      // floor plus delivery, and when the floor absorbs it, their bill is
+      // the floor alone. A caller that cannot tell them apart has to guess,
+      // and guessing wrong double counts delivery.
+      deliveryPaidByReader,
       trustworthy: isTrustworthy({ band, rate, provider, gatewayTable }),
       placeholders: placeholdersIn({ band, rate, provider, gatewayTable }),
     };
@@ -268,6 +274,7 @@ export function quote({
     perCopyFloorMinor: Math.ceil(floor / quantity),
     retailMinor,
     totalMinor,
+    deliveryPaidByReader,
     gatewayFeeMinor: gateway,
     platformFeeMinor: platform,
     creatorMinor: creator,
