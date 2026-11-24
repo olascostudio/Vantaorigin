@@ -11,6 +11,7 @@ import adminRoutes from "./routes/admin.js";
 import distributionAdminRoutes from "./routes/distribution-admin.js";
 import bookRoutes from "./routes/books.js";
 import authRoutes from "./routes/auth.js";
+import checkoutRoutes from "./routes/checkout.js";
 import blogRoutes from "./routes/blog.js";
 import blogPreviewRoutes from "./routes/blog-preview.js";
 import homePreviewRoutes from "./routes/home-preview.js";
@@ -266,6 +267,7 @@ export async function buildApp() {
   await app.register(newsletterAdminRoutes);
   await app.register(distributionAdminRoutes);
   await app.register(bookRoutes);
+  await app.register(checkoutRoutes);
   await app.register(preferenceRoutes);
   await app.register(previewRoutes);
   await app.register(creatorRoutes);

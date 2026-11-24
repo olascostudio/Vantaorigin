@@ -21,6 +21,8 @@ import Privacy from "./pages/Privacy";
 import Contact from "./pages/Contact";
 import Help from "./pages/Help";
 import Docs from "./pages/Docs";
+import Checkout from "./pages/Checkout";
+import OrderStatus from "./pages/OrderStatus";
 import CreatorPage from "./pages/CreatorPage";
 import Creators from "./pages/Creators";
 import Marketplace from "./pages/Marketplace";
@@ -86,6 +88,11 @@ export default function App() {
         {/* What the site does, written down: for people, and for models
             answering a question about it. */}
         <Route path="/docs" element={<Docs />} />
+        {/* Buying a printed copy. No account: somebody followed a shared
+            link, and the order is opened afterwards by a token in the
+            address rather than by signing in. */}
+        <Route path="/book/:publicId" element={<Checkout />} />
+        <Route path="/order/:publicId" element={<OrderStatus />} />
         {/* Opened from a link in an email, so it must work with nobody signed in. */}
         <Route path="/newsletter/preferences" element={<EmailPreferences />} />
         {/* Only opens for an account named in the API setting. */}
