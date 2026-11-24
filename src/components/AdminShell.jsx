@@ -68,6 +68,35 @@ function Item({ name, active, count, onPick }) {
   );
 }
 
+// The way back out of the admin.
+//
+// Both of these used to sit in the sidebar alone, and the sidebar is
+// hidden below lg. So on a phone the admin had no link to anywhere outside
+// the admin: the logo was gone, "Back to your hub" was gone, and the drawer
+// held nothing but the section list. The only way out was the browser's own
+// back button. They now appear wherever the navigation does.
+//
+// Spelled out rather than left to the logo. A mark at the top of a sidebar
+// is a brand, and people do not read it as a door.
+function WayOut() {
+  return (
+    <div className="mt-8 flex flex-col gap-1 border-t border-[#e6e8ec] pt-5">
+      <Link
+        to="/creators-hub"
+        className={`rounded-xl px-3 py-2 font-ui text-sm font-medium ${BODY} hover:bg-[#eef0f4] hover:text-[#1b2233]`}
+      >
+        Back to your hub
+      </Link>
+      <Link
+        to="/"
+        className={`rounded-xl px-3 py-2 font-ui text-sm font-medium ${BODY} hover:bg-[#eef0f4] hover:text-[#1b2233]`}
+      >
+        VantaOrigin home
+      </Link>
+    </div>
+  );
+}
+
 function Nav({ tab, onPick, counts }) {
   return (
     <nav aria-label="Admin sections" className="flex flex-col gap-6">
@@ -114,12 +143,7 @@ export default function AdminShell({ tab, onPick, counts, title, intro, children
             <span className={`font-ui text-base font-bold ${INK}`}>VantaOrigin</span>
           </Link>
           <Nav tab={tab} onPick={pick} counts={counts} />
-          <Link
-            to="/creators-hub"
-            className={`mt-8 block px-3 font-ui text-sm ${MUTED} hover:text-[#1b2233]`}
-          >
-            Back to your hub
-          </Link>
+          <WayOut />
         </aside>
 
         <div className="min-w-0 flex-1">
@@ -127,6 +151,15 @@ export default function AdminShell({ tab, onPick, counts, title, intro, children
               to somewhere else. */}
           <header className="sticky top-0 z-20 border-b border-[#e6e8ec] bg-[#f6f7f9]/95 px-5 py-4 backdrop-blur sm:px-8">
             <div className="flex items-center gap-3">
+              {/* One tap out, without having to guess that the way home is
+                  inside a drawer labelled Sections. */}
+              <Link
+                to="/creators-hub"
+                aria-label="Back to your hub"
+                className="flex shrink-0 items-center rounded-md border border-[#e6e8ec] bg-white px-2.5 py-2 lg:hidden"
+              >
+                <img src={logoMark} alt="" className="h-5 w-auto" aria-hidden="true" />
+              </Link>
               <button
                 type="button"
                 onClick={() => setOpen(true)}
@@ -170,6 +203,7 @@ export default function AdminShell({ tab, onPick, counts, title, intro, children
               </button>
             </div>
             <Nav tab={tab} onPick={pick} counts={counts} />
+            <WayOut />
           </div>
         </div>
       )}
