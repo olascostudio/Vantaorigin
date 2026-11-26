@@ -13,12 +13,21 @@ import { loadOrder, money } from "../data/checkout";
 
 // What each state means, in a sentence, rather than a word somebody has to
 // work out. "pending_payment" tells a buyer nothing.
+// Every one of these is a status the database actually allows, taken from
+// 0032 rather than invented: an earlier version of this list had
+// "with_printer", which no order can ever be, so that row would have shown
+// the fallback forever and nobody would have noticed.
 const PLAIN = {
   pending_payment: ["Waiting for payment", "Nothing has been charged yet."],
   paid: ["Paid", "We are sending it to the printer."],
-  with_printer: ["Being printed", "Your copy is being made."],
+  in_production: ["Being printed", "Your copy is being made to order."],
   shipped: ["On its way", "It has left the printer."],
-  delivered: ["Delivered", "Let us know if anything is wrong with it."],
+  delivered: ["Delivered", "Tell us within 48 hours if anything is wrong with it."],
+  inspection_window: ["Delivered", "Tell us within 48 hours if anything is wrong with it."],
+  completed: ["Complete", "Thank you. We hope it was worth the wait."],
+  disputed: ["We are looking into it", "Somebody will be in touch about this order."],
+  returned: ["Returned", "We have it back."],
+  refunded: ["Refunded", "The money is on its way back to you."],
   cancelled: ["Cancelled", "If you were charged, the refund is on its way."],
 };
 

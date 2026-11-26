@@ -23,6 +23,9 @@ import Help from "./pages/Help";
 import Docs from "./pages/Docs";
 import Checkout from "./pages/Checkout";
 import OrderStatus from "./pages/OrderStatus";
+import PrintInvite from "./pages/PrintInvite";
+import PrintPortal from "./pages/PrintPortal";
+import Studio from "./pages/Studio";
 import CreatorPage from "./pages/CreatorPage";
 import Creators from "./pages/Creators";
 import Marketplace from "./pages/Marketplace";
@@ -93,6 +96,14 @@ export default function App() {
             address rather than by signing in. */}
         <Route path="/book/:publicId" element={<Checkout />} />
         <Route path="/order/:publicId" element={<OrderStatus />} />
+        {/* The print partner. Reached by an invitation and nothing else:
+            an account made the ordinary way is not a printer account. */}
+        <Route path="/print/invite/:token" element={<PrintInvite />} />
+        <Route path="/print" element={<RequireAuth><PrintPortal /></RequireAuth>} />
+        {/* Live, and not open. Linked only from the bottom of the admin,
+            and admin behind that link too, because a door whose only
+            protection is that nobody was told about it is not protected. */}
+        <Route path="/studio" element={<RequireAdmin><Studio /></RequireAdmin>} />
         {/* Opened from a link in an email, so it must work with nobody signed in. */}
         <Route path="/newsletter/preferences" element={<EmailPreferences />} />
         {/* Only opens for an account named in the API setting. */}

@@ -177,7 +177,43 @@ export default function AdminShell({ tab, onPick, counts, title, intro, children
             </div>
           </header>
 
-          <main className="px-5 pb-20 pt-6 sm:px-8">{children}</main>
+          <main className="px-5 pt-6 sm:px-8">{children}</main>
+
+          {/* Creator Studio, under everything.
+
+              Distribution works but is not open: nothing a creator can
+              reach points at it, and this is the only way in. Below the
+              page rather than in the sidebar, because it is not one of the
+              admin's sections, it is the door to the next thing. */}
+          <div className="px-5 pb-20 pt-10 sm:px-8">
+            <Link
+              to="/studio"
+              className="flex items-center gap-4 rounded-2xl border border-[#d9c7ef] bg-[#f4effc] px-5 py-5 transition-colors hover:border-[#a855f7] hover:bg-[#eee6fa]"
+            >
+              <img src={logoMark} alt="" className="h-9 w-auto shrink-0" aria-hidden="true" />
+              <span className="min-w-0">
+                <span className={`block font-ui text-base font-bold ${INK}`}>
+                  Creator Studio
+                </span>
+                <span className={`mt-0.5 block font-ui text-sm ${MUTED}`}>
+                  Selling printed books. Working, not open yet: the pricing engine, a creator's
+                  books, the checkout and the printer's portal.
+                </span>
+              </span>
+              <svg
+                viewBox="0 0 24 24"
+                className="ml-auto hidden size-5 shrink-0 text-[#6a28a8] sm:block"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
+            </Link>
+          </div>
         </div>
       </div>
 

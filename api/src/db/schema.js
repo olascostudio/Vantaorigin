@@ -933,3 +933,43 @@ export const distributionSettings = pgTable("distribution_settings", {
   value: text("value").notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+// Letting a print partner in, and only by invitation. See 0035.
+export const printerInvites = pgTable(
+  "printer_invites",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    printerId: uuid("printer_id").notNull(),
+    email: text("email").notNull(),
+    // sha256, the way a session token is kept, so this table cannot be read
+    // as a set of working invitations.
+    tokenHash: text("token_hash").notNull(),
+    agreementVersion: text("agreement_version").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+    acceptedBy: uuid("accepted_by"),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    tokenIdx: uniqueIndex("printer_invites_token_key").on(table.tokenHash),
+    printerIdx: index("printer_invites_printer_idx").on(table.printerId),
+  })
+);
+
+// Who may act for a printer. A shop is a place with staff.
+export const printerUsers = pgTable(
+  "printer_users",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    printerId: uuid("printer_id").notNull(),
+    userId: uuid("user_id").notNull(),
+    agreementVersion: text("agreement_version").notNull(),
+    agreedAt: timestamp("agreed_at", { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    pairIdx: uniqueIndex("printer_users_pair_key").on(table.printerId, table.userId),
+    userIdx: index("printer_users_user_idx").on(table.userId),
+  })
+);
