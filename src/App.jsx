@@ -26,6 +26,8 @@ import OrderStatus from "./pages/OrderStatus";
 import PrintInvite from "./pages/PrintInvite";
 import PrintPortal from "./pages/PrintPortal";
 import Studio from "./pages/Studio";
+import StudioBooks from "./pages/StudioBooks";
+import StudioBook from "./pages/StudioBook";
 import CreatorPage from "./pages/CreatorPage";
 import Creators from "./pages/Creators";
 import Marketplace from "./pages/Marketplace";
@@ -104,6 +106,8 @@ export default function App() {
             and admin behind that link too, because a door whose only
             protection is that nobody was told about it is not protected. */}
         <Route path="/studio" element={<RequireAdmin><Studio /></RequireAdmin>} />
+        <Route path="/studio/books" element={<RequireAdmin><StudioBooks /></RequireAdmin>} />
+        <Route path="/studio/books/:publicId" element={<RequireAdmin><StudioBook /></RequireAdmin>} />
         {/* Opened from a link in an email, so it must work with nobody signed in. */}
         <Route path="/newsletter/preferences" element={<EmailPreferences />} />
         {/* Only opens for an account named in the API setting. */}

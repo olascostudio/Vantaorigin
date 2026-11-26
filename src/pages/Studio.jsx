@@ -41,7 +41,9 @@ const PIECES = [
     name: "A creator's books",
     state: "working",
     detail:
-      "Create a book, check it suits its format, see what it would earn, set a price that covers its costs, sign the rights warranty. API only: no screen yet.",
+      "Create a book, check it suits its format, see what it would earn, set a price that covers its costs, sign the rights warranty.",
+    to: "/studio/books",
+    linkLabel: "Open your books",
   },
   {
     name: "The checkout",
