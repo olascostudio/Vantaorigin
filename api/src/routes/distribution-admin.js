@@ -315,4 +315,46 @@ export default async function distributionAdminRoutes(app) {
       inspectionWindowHours: Number(map.inspection_window_hours ?? 48),
     };
   });
+
+  // Opening a country for selling, and closing one.
+  //
+  // The countries ship disabled, which is the right default: a creator
+  // pricing into somewhere we cannot deliver to is being set up to fail.
+  // But nothing could open one, so the only way a country became sellable
+  // was a hand written UPDATE, and a step that can only be done in SQL is a
+  // step missing from the product.
+  app.patch("/admin/distribution/countries/:code", { preHandler: requireAdmin() }, async (request, reply) => {
+    const body = z.object({ enabled: z.boolean() }).safeParse(request.body ?? {});
+    if (!body.success) return reply.code(400).send({ error: "Say whether it is open or not" });
+
+    const [place] = await db
+      .select()
+      .from(countries)
+      .where(eq(countries.code, request.params.code))
+      .limit(1);
+    if (!place) return reply.code(404).send({ error: `We have no country ${request.params.code}` });
+
+    // Opening one with no way to deliver there would put a price on a book
+    // nobody can send. Closing is always allowed, because we may need to
+    // stop selling somewhere in a hurry.
+    if (body.data.enabled) {
+      const rates = await db
+        .select()
+        .from(deliveryRates)
+        .where(eq(deliveryRates.countryCode, place.code));
+      if (!rates.length) {
+        return reply
+          .code(409)
+          .send({ error: `Add a delivery rate for ${place.name} before opening it for selling.` });
+      }
+    }
+
+    const [updated] = await db
+      .update(countries)
+      .set({ enabled: body.data.enabled })
+      .where(eq(countries.code, place.code))
+      .returning();
+
+    return updated;
+  });
 }

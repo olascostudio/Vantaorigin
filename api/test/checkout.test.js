@@ -58,6 +58,13 @@ before(async () => {
   await db.update(schema.users).set({ emailVerifiedAt: new Date() });
   await db.update(schema.countries).set({ enabled: true });
 
+  // The creator is in the studio: Distribution is invitation only, and a
+  // book cannot be made without that.
+  const everyone = await db.select().from(schema.users);
+  for (const person of everyone) {
+    await db.insert(schema.studioMembers).values({ userId: person.id }).onConflictDoNothing();
+  }
+
   // Real costs, so a real book can be priced against them.
   const printer = await post("/admin/distribution/printers", admin, {
     name: "Printfactory",

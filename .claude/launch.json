@@ -23,7 +23,7 @@
       "cwd": "api",
       "port": 8080,
       "env": {
-        "DATABASE_URL": "pglite://.pglite-dev",
+        "DATABASE_URL": "pglite://.pglite-dev2",
         "NODE_ENV": "test",
         "EMAIL_DRIVER": "console",
         "ADMIN_EMAILS": "boss@vantaorigin.test",

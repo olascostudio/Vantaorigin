@@ -25,7 +25,7 @@ import {
   distributionSettings,
   printerCosts,
 } from "../db/schema.js";
-import { authenticate } from "../auth/auth.js";
+import { requireStudio } from "./studio.js";
 import { quote } from "../distribution/pricing.js";
 
 // Short, unguessable, and readable aloud. It appears in the address of a
@@ -122,7 +122,10 @@ async function priceFor({ book, place, retailMinor = null }) {
 }
 
 export default async function bookRoutes(app) {
-  const signedIn = { preHandler: authenticate() };
+  // Studio members and admins, not every signed in account: Distribution is
+  // not open, and a book made by somebody who was never invited is a book
+  // nobody has talked to about printing.
+  const signedIn = { preHandler: requireStudio() };
 
   // Everything this creator has made, newest first, with what each one is
   // priced at. The list is the screen, so it carries enough to draw it.
@@ -371,5 +374,77 @@ export default async function bookRoutes(app) {
       .returning();
 
     return { ...updated, rightsAccepted: true };
+  });
+  // Putting it on sale, and taking it off.
+  //
+  // The step that did not exist. A book could be made, priced and signed for
+  // and then had nowhere to go: nothing moved it out of draft, so the only
+  // book on sale anywhere got there by hand in SQL. Drawing the creator flow
+  // out as a sequence is what made the hole obvious.
+  //
+  // Both conditions are checked here rather than trusted from the screen.
+  // A price that covers costs and a signed warranty are the two things
+  // standing between us and selling somebody else work at a loss.
+  app.post("/me/books/:publicId/publish", signedIn, async (request, reply) => {
+    const book = await mine(request.params.publicId, request.user.id);
+    if (!book) return reply.code(404).send({ error: "No such book" });
+
+    if (!book.rightsWarrantyAcceptedAt) {
+      return reply
+        .code(409)
+        .send({ error: "Tell us the work is yours to sell before it goes on sale." });
+    }
+
+    const prices = await db.select().from(bookPrices).where(eq(bookPrices.bookId, book.id));
+    if (!prices.length) {
+      return reply.code(409).send({ error: "Set a price in at least one country first." });
+    }
+
+    // Still priced above cost today. A price saved last week against a
+    // printer quote that has since gone up is not a price we can sell at.
+    const places = await db.select().from(countries).where(eq(countries.enabled, true));
+    const checks = await Promise.all(
+      prices.map(async (price) => {
+        const place = places.find((row) => row.code === price.countryCode);
+        if (!place) return { code: price.countryCode, problem: "not open for selling" };
+        const priced = await priceFor({ book, place, retailMinor: price.retailMinor });
+        if (priced.unavailable) return { code: place.code, problem: priced.unavailable };
+        if (priced.belowFloor || priced.losesMoney) {
+          return { code: place.code, problem: "no longer covers what the book costs" };
+        }
+        return null;
+      })
+    );
+
+    const wrong = checks.filter(Boolean);
+    if (wrong.length) {
+      return reply.code(409).send({
+        error: `Not ready: ${wrong.map((row) => `${row.code} ${row.problem}`).join(", ")}.`,
+      });
+    }
+
+    const [updated] = await db
+      .update(books)
+      .set({ status: "on_sale", updatedAt: new Date() })
+      .where(eq(books.id, book.id))
+      .returning();
+
+    return { ...updated, prices, rightsAccepted: true };
+  });
+
+  app.post("/me/books/:publicId/unpublish", signedIn, async (request, reply) => {
+    const book = await mine(request.params.publicId, request.user.id);
+    if (!book) return reply.code(404).send({ error: "No such book" });
+
+    const [updated] = await db
+      .update(books)
+      .set({ status: "draft", updatedAt: new Date() })
+      .where(eq(books.id, book.id))
+      .returning();
+
+    const prices = await db.select().from(bookPrices).where(eq(bookPrices.bookId, book.id));
+    // Orders already placed are untouched: somebody who bought it still
+    // gets it. Taking a book off sale stops the next sale, not the last one.
+    return { ...updated, prices, rightsAccepted: Boolean(updated.rightsWarrantyAcceptedAt) };
   });
 }

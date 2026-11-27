@@ -442,3 +442,63 @@ test("the engine says who pays delivery, so a screen need not assume it", async 
     "the reader's bill is the price plus delivery in this regime"
   );
 });
+
+// ---- opening a country ----
+//
+// The countries ship disabled, and until now nothing could open one: the
+// only way a country became sellable was a hand written UPDATE. A step that
+// can only be done in SQL is a step missing from the product.
+
+test("a country cannot be opened before we can deliver there", async () => {
+  // GB has no delivery rate in this suite until the test below adds one.
+  const res = await app.inject({
+    method: "PATCH",
+    url: "/admin/distribution/countries/GB",
+    headers: { cookie: admin },
+    payload: { enabled: true },
+  });
+
+  assert.equal(res.statusCode, 409);
+  assert.match(res.json().error, /delivery rate/);
+});
+
+test("with a rate in place a country opens, and can be closed again", async () => {
+  // NG got its rate earlier in this file.
+  const open = await app.inject({
+    method: "PATCH",
+    url: "/admin/distribution/countries/NG",
+    headers: { cookie: admin },
+    payload: { enabled: true },
+  });
+  assert.equal(open.statusCode, 200);
+  assert.equal(open.json().enabled, true);
+
+  // Closing is always allowed: we may need to stop selling somewhere in a
+  // hurry, and that must not depend on the state of a rate table.
+  const shut = await app.inject({
+    method: "PATCH",
+    url: "/admin/distribution/countries/NG",
+    headers: { cookie: admin },
+    payload: { enabled: false },
+  });
+  assert.equal(shut.statusCode, 200);
+  assert.equal(shut.json().enabled, false);
+
+  // Put it back for anything that runs after this.
+  await app.inject({
+    method: "PATCH",
+    url: "/admin/distribution/countries/NG",
+    headers: { cookie: admin },
+    payload: { enabled: true },
+  });
+});
+
+test("only an admin can open a country", async () => {
+  const res = await app.inject({
+    method: "PATCH",
+    url: "/admin/distribution/countries/NG",
+    headers: { cookie: ordinary },
+    payload: { enabled: true },
+  });
+  assert.notEqual(res.statusCode, 200);
+});

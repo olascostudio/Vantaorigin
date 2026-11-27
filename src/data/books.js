@@ -45,3 +45,13 @@ export function money(minor, currency) {
     maximumFractionDigits: 2,
   })}`;
 }
+
+export const publishBook = (publicId) =>
+  api.post(`/me/books/${encodeURIComponent(publicId)}/publish`, {});
+
+export const unpublishBook = (publicId) =>
+  api.post(`/me/books/${encodeURIComponent(publicId)}/unpublish`, {});
+
+// Where a reader buys it. The thing a creator shares, so it is built in one
+// place rather than assembled by whoever happens to need it.
+export const buyLink = (publicId) => `${window.location.origin}/book/${publicId}`;

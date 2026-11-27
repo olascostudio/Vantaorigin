@@ -973,3 +973,35 @@ export const printerUsers = pgTable(
     userIdx: index("printer_users_user_idx").on(table.userId),
   })
 );
+
+// Letting a creator into Creator Studio, by invitation. See 0036.
+export const studioInvites = pgTable(
+  "studio_invites",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    email: text("email").notNull(),
+    note: text("note"),
+    tokenHash: text("token_hash").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+    acceptedBy: uuid("accepted_by"),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    tokenIdx: uniqueIndex("studio_invites_token_key").on(table.tokenHash),
+  })
+);
+
+export const studioMembers = pgTable(
+  "studio_members",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull(),
+    invitedEmail: text("invited_email"),
+    joinedAt: timestamp("joined_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdx: uniqueIndex("studio_members_user_key").on(table.userId),
+  })
+);

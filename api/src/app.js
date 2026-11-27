@@ -13,6 +13,7 @@ import bookRoutes from "./routes/books.js";
 import authRoutes from "./routes/auth.js";
 import checkoutRoutes from "./routes/checkout.js";
 import printerRoutes from "./routes/printer.js";
+import studioRoutes from "./routes/studio.js";
 import blogRoutes from "./routes/blog.js";
 import blogPreviewRoutes from "./routes/blog-preview.js";
 import homePreviewRoutes from "./routes/home-preview.js";
@@ -270,6 +271,7 @@ export async function buildApp() {
   await app.register(bookRoutes);
   await app.register(checkoutRoutes);
   await app.register(printerRoutes);
+  await app.register(studioRoutes);
   await app.register(preferenceRoutes);
   await app.register(previewRoutes);
   await app.register(creatorRoutes);

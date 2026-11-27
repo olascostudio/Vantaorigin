@@ -28,6 +28,8 @@ import PrintPortal from "./pages/PrintPortal";
 import Studio from "./pages/Studio";
 import StudioBooks from "./pages/StudioBooks";
 import StudioBook from "./pages/StudioBook";
+import StudioInvite from "./pages/StudioInvite";
+import RequireStudio from "./components/RequireStudio.jsx";
 import CreatorPage from "./pages/CreatorPage";
 import Creators from "./pages/Creators";
 import Marketplace from "./pages/Marketplace";
@@ -105,9 +107,13 @@ export default function App() {
         {/* Live, and not open. Linked only from the bottom of the admin,
             and admin behind that link too, because a door whose only
             protection is that nobody was told about it is not protected. */}
+        <Route path="/studio/invite/:token" element={<StudioInvite />} />
         <Route path="/studio" element={<RequireAdmin><Studio /></RequireAdmin>} />
-        <Route path="/studio/books" element={<RequireAdmin><StudioBooks /></RequireAdmin>} />
-        <Route path="/studio/books/:publicId" element={<RequireAdmin><StudioBook /></RequireAdmin>} />
+        <Route path="/studio/books" element={<RequireAuth><RequireStudio><StudioBooks /></RequireStudio></RequireAuth>} />
+        <Route
+          path="/studio/books/:publicId"
+          element={<RequireAuth><RequireStudio><StudioBook /></RequireStudio></RequireAuth>}
+        />
         {/* Opened from a link in an email, so it must work with nobody signed in. */}
         <Route path="/newsletter/preferences" element={<EmailPreferences />} />
         {/* Only opens for an account named in the API setting. */}

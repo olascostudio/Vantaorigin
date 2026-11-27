@@ -53,6 +53,16 @@ before(async () => {
   creator = await signUp("creator@vantaorigin.test", "acreator");
   other = await signUp("other@vantaorigin.test", "anothercreator");
   await db.update(schema.users).set({ emailVerifiedAt: new Date() });
+
+  // Both creators are let into the studio. Distribution is invitation only,
+  // and without this every test below would pass for the wrong reason: a
+  // 404 because they were never invited rather than because the book is
+  // somebody else s.
+  const everyone = await db.select().from(schema.users);
+  for (const person of everyone) {
+    if (person.email === "boss@vantaorigin.test") continue;
+    await db.insert(schema.studioMembers).values({ userId: person.id }).onConflictDoNothing();
+  }
 });
 
 after(async () => {
@@ -389,4 +399,125 @@ test("a book that is no longer a draft cannot be deleted out from under a buyer"
   });
   assert.equal(res.statusCode, 409);
   assert.match(res.json().error, /Take it off sale/);
+});
+
+// ---- putting it on sale ----
+//
+// The step that did not exist: a book could be made, priced and signed for
+// and then had nowhere to go. Both conditions are checked on the server,
+// because they are what stands between us and selling somebody else's work
+// at a loss, and a screen is not where that belongs.
+
+test("a book with no price cannot go on sale", async () => {
+  const fresh = await post("/me/books", creator, {
+    title: "Unpriced",
+    formatSlug: "pb-6x9-bw",
+    pageCount: 80,
+  }).then((r) => r.json());
+
+  // Signed first, so the price is the only thing missing and the refusal
+  // is about the price. The rights check runs before it, which is the right
+  // order and not the one this test first assumed.
+  await post(`/me/books/${fresh.publicId}/rights`, creator, {
+    accepted: true,
+    version: RIGHTS_WARRANTY_VERSION,
+  });
+
+  const res = await post(`/me/books/${fresh.publicId}/publish`, creator, {});
+  assert.equal(res.statusCode, 409);
+  assert.match(res.json().error, /Set a price/);
+});
+
+test("a book nobody has signed for cannot go on sale", async () => {
+  const fresh = await post("/me/books", creator, {
+    title: "Unsigned",
+    formatSlug: "pb-6x9-bw",
+    pageCount: 90,
+  }).then((r) => r.json());
+
+  const quoted = await app
+    .inject({ method: "GET", url: `/me/books/${fresh.publicId}/quote`, headers: { cookie: creator } })
+    .then((r) => r.json());
+  const ng = quoted.countries.find((c) => c.countryCode === "NG");
+
+  await app.inject({
+    method: "PUT",
+    url: `/me/books/${fresh.publicId}/price`,
+    headers: { cookie: creator },
+    payload: { countryCode: "NG", retailMinor: String(ng.floorMinor + 100000) },
+  });
+
+  const res = await post(`/me/books/${fresh.publicId}/publish`, creator, {});
+  assert.equal(res.statusCode, 409);
+  assert.match(res.json().error, /yours to sell/);
+});
+
+test("priced and signed for, it goes on sale and can be taken off again", async () => {
+  const fresh = await post("/me/books", creator, {
+    title: "Ready",
+    formatSlug: "pb-6x9-bw",
+    pageCount: 100,
+  }).then((r) => r.json());
+
+  const quoted = await app
+    .inject({ method: "GET", url: `/me/books/${fresh.publicId}/quote`, headers: { cookie: creator } })
+    .then((r) => r.json());
+  const ng = quoted.countries.find((c) => c.countryCode === "NG");
+
+  await app.inject({
+    method: "PUT",
+    url: `/me/books/${fresh.publicId}/price`,
+    headers: { cookie: creator },
+    payload: { countryCode: "NG", retailMinor: String(ng.floorMinor + 200000) },
+  });
+  await post(`/me/books/${fresh.publicId}/rights`, creator, {
+    accepted: true,
+    version: RIGHTS_WARRANTY_VERSION,
+  });
+
+  const live = await post(`/me/books/${fresh.publicId}/publish`, creator, {});
+  assert.equal(live.statusCode, 200);
+  assert.equal(live.json().status, "on_sale");
+
+  // And a reader can now see it, which is the whole point of the step.
+  const seen = await app.inject({ method: "GET", url: `/public/books/${fresh.publicId}` });
+  assert.equal(seen.statusCode, 200);
+
+  const off = await post(`/me/books/${fresh.publicId}/unpublish`, creator, {});
+  assert.equal(off.statusCode, 200);
+  assert.equal(off.json().status, "draft");
+
+  const gone = await app.inject({ method: "GET", url: `/public/books/${fresh.publicId}` });
+  assert.equal(gone.statusCode, 404, "off sale means a reader cannot reach it");
+});
+
+test("one creator cannot publish another's book", async () => {
+  const fresh = await post("/me/books", creator, {
+    title: "Not yours",
+    formatSlug: "pb-6x9-bw",
+    pageCount: 70,
+  }).then((r) => r.json());
+
+  const res = await post(`/me/books/${fresh.publicId}/publish`, other, {});
+  assert.equal(res.statusCode, 404);
+});
+
+// ---- who is let in at all ----
+
+test("somebody who was never invited cannot make a book", async () => {
+  // Distribution is invitation only. An ordinary account, signed in and
+  // verified, is simply not in the studio, and gets the same 404 the admin
+  // gives rather than a refusal that says the feature is there.
+  const stranger = await signUp("stranger@vantaorigin.test", "astranger");
+  await db.update(schema.users).set({ emailVerifiedAt: new Date() });
+
+  const made = await post("/me/books", stranger, {
+    title: "Uninvited",
+    formatSlug: "pb-6x9-bw",
+    pageCount: 60,
+  });
+  assert.equal(made.statusCode, 404);
+
+  const list = await app.inject({ method: "GET", url: "/me/books", headers: { cookie: stranger } });
+  assert.equal(list.statusCode, 404);
 });

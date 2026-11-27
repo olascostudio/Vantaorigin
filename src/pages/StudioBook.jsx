@@ -18,11 +18,13 @@ import {
   deleteBook,
   fromMinor,
   loadBook,
+  buyLink,
   money,
   priceBook,
+  publishBook,
   quoteBook,
-  saveBook,
   toMinor,
+  unpublishBook,
 } from "../data/books";
 import logoMark from "../assets/landing/hero/logo-mark.svg";
 
@@ -209,6 +211,7 @@ export default function StudioBook() {
   const [quote, setQuote] = useState(null);
   const [problem, setProblem] = useState("");
   const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   usePrivatePage();
 
@@ -231,6 +234,20 @@ export default function StudioBook() {
       cancelled = true;
     };
   }, [publicId]);
+
+  // Publish and unpublish differ only in which call they make, and both
+  // can be refused by the server for a reason worth showing as written.
+  const move = async (call) => {
+    setBusy(true);
+    setProblem("");
+    try {
+      setBook(await call(publicId));
+    } catch (error) {
+      setProblem(error.message || "That did not save.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const sign = async () => {
     setBusy(true);
@@ -354,6 +371,73 @@ export default function StudioBook() {
                 className="mt-5 min-h-[44px] rounded-full bg-[#a855f7] px-6 font-ui text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
               >
                 {busy ? "Saving..." : "This work is mine to sell"}
+              </button>
+            </>
+          )}
+        </section>
+
+        {/* On sale, and the link to send people.
+
+            The end of the creator's flow, and the step that was missing:
+            a book could be made, priced and signed for and then had
+            nowhere to go, because nothing moved it out of draft. The only
+            book on sale anywhere got there by hand in SQL. */}
+        <section className={`${CARD} mt-6`} aria-label="On sale">
+          <h2 className="font-ui text-xl font-bold text-white">
+            {book.status === "on_sale" ? "On sale" : "Put it on sale"}
+          </h2>
+
+          {book.status === "on_sale" ? (
+            <>
+              <p className="mt-2 font-ui text-base leading-relaxed text-neutral-300">
+                This is the link to send people. It is the page where they buy a printed copy.
+              </p>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <code className="min-w-0 flex-1 break-all rounded-lg bg-[#1b2233] px-3 py-2 font-mono text-xs text-[#9fd0ff]">
+                  {buyLink(book.publicId)}
+                </code>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(buyLink(book.publicId));
+                      setCopied(true);
+                    } catch {
+                      setCopied(false);
+                    }
+                  }}
+                  className="min-h-[40px] shrink-0 rounded-full bg-white px-5 font-ui text-sm font-bold text-black"
+                >
+                  {copied ? "Copied" : "Copy"}
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => move(unpublishBook)}
+                disabled={busy}
+                className="mt-5 font-ui text-sm text-neutral-400 hover:text-white disabled:opacity-40"
+              >
+                Take it off sale
+              </button>
+              <p className="mt-1.5 font-ui text-xs text-neutral-500">
+                Stops the next sale, not the last one. Anybody who has already bought it still
+                gets their copy.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="mt-2 font-ui text-base leading-relaxed text-neutral-300">
+                It needs a price that covers its costs and your word that the work is yours.
+                Both are checked again when you press this, because a printer's quote can move
+                after a price is set.
+              </p>
+              <button
+                type="button"
+                onClick={() => move(publishBook)}
+                disabled={busy}
+                className="mt-5 min-h-[48px] rounded-full bg-[#a855f7] px-7 font-ui text-base font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+              >
+                {busy ? "Checking..." : "Put it on sale"}
               </button>
             </>
           )}
