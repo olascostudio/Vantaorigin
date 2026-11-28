@@ -130,3 +130,31 @@ if (!parsed.success) {
 
 export const config = parsed.data;
 export const isProduction = config.NODE_ENV === "production";
+
+// Settings that are optional to the schema and not optional in practice.
+//
+// These have defaults so that a laptop and the test suite can run without
+// them, which is right. In production the default is a silent failure, and
+// RESEND_WEBHOOK_SECRET is the one that proved it: unset, the webhook route
+// refuses every event, correctly, because it has no way to tell a real one
+// from a forgery. Resend retries, keeps getting 401, and after ten days
+// disables the endpoint. Not one line in our own logs said so. The first we
+// heard was Resend's email telling us it had stopped.
+//
+// Warned about here rather than fatally, because the rest of the service is
+// fine and refusing to boot over a webhook is a worse outage than the one it
+// prevents. Said at import, which is before anything else can throw.
+export const SILENTLY_IMPORTANT = [
+  [
+    "RESEND_WEBHOOK_SECRET",
+    "the Resend webhook refuses every event, so bounces and complaints go unrecorded and the suppression list stops growing",
+  ],
+  ["API_PUBLIC_URL", "keep-awake cannot knock on our own door, so the host will sleep the service"],
+];
+
+export const missingInProduction = () =>
+  isProduction ? SILENTLY_IMPORTANT.filter(([name]) => !config[name]) : [];
+
+for (const [name, consequence] of missingInProduction()) {
+  console.warn(`[config] ${name} is not set: ${consequence}.`);
+}
