@@ -75,3 +75,15 @@ services:
         sync: false
       - key: EMAIL_FROM
         sync: false
+
+      # Signs the webhook Resend sends back: bounces, complaints, deliveries.
+      # From resend.com/webhooks, on the endpoint itself, beginning whsec_.
+      #
+      # This was missing from this file, so Render never asked for it when
+      # the blueprint ran and nobody knew to add it by hand. Without it the
+      # webhook route refuses every event, correctly, since it cannot tell a
+      # real one from a forgery, and Resend disabled the endpoint after ten
+      # days of 401s. Nothing of ours said a word; their email was the first
+      # anybody heard. The service now warns at boot when this is unset.
+      - key: RESEND_WEBHOOK_SECRET
+        sync: false

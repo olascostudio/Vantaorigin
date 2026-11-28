@@ -56,6 +56,22 @@ the API restarts. Don't skip it.
 2. Until a domain is verified, only `onboarding@resend.dev` can send, and only
    to your own address. So set `EMAIL_FROM=VantaOrigin <onboarding@resend.dev>`
    to begin with, and verify `vantaorigin.com` when you're ready for real users.
+3. **The webhook, which is easy to skip and expensive to skip.** At
+   [resend.com/webhooks](https://resend.com/webhooks), add an endpoint
+   pointing at `https://api.vantaorigin.com/webhooks/resend` and subscribe it
+   to the delivery, bounce and complaint events. Resend shows a signing
+   secret beginning `whsec_`: that is `RESEND_WEBHOOK_SECRET`, and it goes in
+   Render before you enable the endpoint.
+
+   Without it the route refuses every event, which is correct, because it has
+   no way to tell a real event from a forgery. Resend then retries, keeps
+   getting 401, and disables the endpoint. That happened: ten days with no
+   bounces or complaints recorded, so the suppression list stopped growing
+   and nothing in our own logs mentioned it. The API now warns at boot if the
+   variable is unset, and `render.yaml` declares it so Render asks.
+
+   After setting it: redeploy, send a test event from the Resend dashboard,
+   confirm a 200, and only then re-enable delivery.
 
 ---
 
