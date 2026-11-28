@@ -491,6 +491,62 @@ test("priced and signed for, it goes on sale and can be taken off again", async 
   assert.equal(gone.statusCode, 404, "off sale means a reader cannot reach it");
 });
 
+// The hole publish had: it asked whether the price covered the costs, and
+// never whether we knew the costs. A work could go on sale against a guess,
+// and the link the creator then shared turned every buyer away, because the
+// checkout does ask. Publish and checkout have to agree about this or the
+// creator is the last to find out.
+test("a work whose costs are still a guess cannot go on sale", async () => {
+  const fresh = await post("/me/books", creator, {
+    title: "Priced against a guess",
+    formatSlug: "pb-6x9-bw",
+    pageCount: 100,
+  }).then((r) => r.json());
+
+  const quoted = await app
+    .inject({ method: "GET", url: `/me/books/${fresh.publicId}/quote`, headers: { cookie: creator } })
+    .then((r) => r.json());
+  const ng = quoted.countries.find((c) => c.countryCode === "NG");
+
+  await app.inject({
+    method: "PUT",
+    url: `/me/books/${fresh.publicId}/price`,
+    headers: { cookie: creator },
+    payload: { countryCode: "NG", retailMinor: String(ng.floorMinor + 200000) },
+  });
+  await post(`/me/books/${fresh.publicId}/rights`, creator, {
+    accepted: true,
+    version: RIGHTS_WARRANTY_VERSION,
+  });
+
+  // Everything above is in order. The one thing wrong is that the delivery
+  // rate underneath it is no longer confirmed.
+  await db.update(schema.deliveryRates).set({ isPlaceholder: true });
+
+  const res = await post(`/me/books/${fresh.publicId}/publish`, creator, {});
+  assert.equal(res.statusCode, 409);
+  assert.match(res.json().error, /delivery rate/, "the refusal should name what is still a guess");
+
+  const [row] = await db
+    .select()
+    .from(schema.books)
+    .where(eq(schema.books.publicId, fresh.publicId));
+  assert.notEqual(row.status, "on_sale", "and it is not quietly on sale anyway");
+
+  // The reader's side is the proof the two now agree: before this check
+  // existed, publish said yes here and the public page said no.
+  await db.update(schema.deliveryRates).set({ isPlaceholder: false });
+  const now = await post(`/me/books/${fresh.publicId}/publish`, creator, {});
+  assert.equal(now.statusCode, 200, "and it goes on sale once the rate is confirmed");
+
+  const seen = await app.inject({ method: "GET", url: `/public/books/${fresh.publicId}` });
+  assert.equal(seen.statusCode, 200);
+  assert.ok(
+    seen.json().countries.some((row) => row.available),
+    "a reader can actually buy what publish just said was on sale"
+  );
+});
+
 test("one creator cannot publish another's book", async () => {
   const fresh = await post("/me/books", creator, {
     title: "Not yours",

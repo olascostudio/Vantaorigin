@@ -347,6 +347,14 @@ export default async function distributionAdminRoutes(app) {
           .code(409)
           .send({ error: `Add a delivery rate for ${place.name} before opening it for selling.` });
       }
+      // And a real one. A guessed rate passes the engine's own trustworthy
+      // check nowhere, so opening on one hands a creator a country they can
+      // price into and publish into and never sell a single copy in.
+      if (!rates.some((rate) => !rate.isPlaceholder)) {
+        return reply.code(409).send({
+          error: `Every delivery rate for ${place.name} is still a guess. Confirm one before opening it for selling.`,
+        });
+      }
     }
 
     const [updated] = await db

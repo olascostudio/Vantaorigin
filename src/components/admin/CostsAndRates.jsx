@@ -17,6 +17,7 @@ import {
   addDeliveryRate,
   addPrinter,
   loadDistributionRates,
+  setCountryOpen,
   previewPrice,
   saveDeliveryRate,
   saveDistributionSettings,
@@ -137,8 +138,13 @@ export default function CostsAndRates() {
       await work();
       setSaying(said);
       await refresh();
+      return null;
     } catch (error) {
       setProblem(error.message);
+      // Handed back as well as banner'd. The banner sits at the top of a
+      // long screen, so a control far down it needs to say its own refusal
+      // where the person is looking, or the click appears to do nothing.
+      return error.message;
     }
   };
 
@@ -307,6 +313,7 @@ export default function CostsAndRates() {
 
       <PrinterCosts data={data} run={run} currencyOf={currencyOf} />
       <DeliveryRates data={data} run={run} currencyOf={currencyOf} />
+      <Countries data={data} run={run} />
       <OurCut data={data} run={run} />
     </div>
   );
@@ -618,6 +625,81 @@ function DeliveryRates({ data, run, currencyOf }) {
         </label>
         <button type="submit" className={BTN} disabled={!toMinor(adding.parcel)}>Save rate</button>
       </form>
+    </section>
+  );
+}
+
+// Which countries we actually sell into.
+//
+// They ship closed, which is the right default: a creator pricing into
+// somewhere we cannot deliver to is being set up to fail. But until now the
+// only way to open one was a hand written UPDATE, so the step existed in the
+// database and nowhere a person could reach.
+function Countries({ data, run }) {
+  const [refused, setRefused] = useState({});
+
+  return (
+    <section className={`${CARD} mt-6 p-6`} aria-label="Where we sell">
+      <h2 className={`font-ui text-base font-semibold ${INK}`}>Where we sell</h2>
+      <p className={`mt-1 font-ui text-sm ${MUTED}`}>
+        A country has to have a confirmed delivery rate before it can be opened, not merely a
+        guessed one: a work priced against a guess cannot be bought even once it is on sale.
+        Closing one is always allowed, and stops the next sale rather than the last one.
+      </p>
+
+      <ul className="mt-5 flex flex-col gap-2">
+        {data.countries.map((place) => {
+          const rates = data.deliveryRates.filter((rate) => rate.countryCode === place.code);
+          const deliverable = rates.some((rate) => !rate.isPlaceholder);
+          const why = !rates.length
+            ? "closed, no delivery rate"
+            : deliverable
+              ? "closed"
+              : "closed, delivery rate is still a guess";
+          return (
+            <li
+              key={place.code}
+              className="flex flex-wrap items-center justify-between gap-3 border-t border-[#e6e8ec] pt-3 first:border-t-0 first:pt-0"
+            >
+              <span className="min-w-0">
+                <span className={`font-ui text-sm font-bold ${INK}`}>{place.name}</span>
+                <span className={`ml-2 font-ui text-sm ${MUTED}`}>
+                  {place.enabled ? "open" : why}
+                </span>
+                {refused[place.code] && (
+                  <span
+                    role="alert"
+                    className="mt-1 block font-ui text-sm font-medium text-[#9b1c44]"
+                  >
+                    {refused[place.code]}
+                  </span>
+                )}
+              </span>
+              <button
+                type="button"
+                disabled={!place.enabled && !deliverable}
+                aria-label={
+                  place.enabled
+                    ? `Close ${place.name} for selling`
+                    : `Open ${place.name} for selling`
+                }
+                onClick={async () => {
+                  const problem = await run(
+                    () => setCountryOpen(place.code, !place.enabled),
+                    place.enabled
+                      ? `${place.name} is closed for selling.`
+                      : `${place.name} is open for selling.`
+                  );
+                  setRefused((was) => ({ ...was, [place.code]: problem }));
+                }}
+                className={place.enabled ? BTN_QUIET : BTN}
+              >
+                {place.enabled ? "Close it" : "Open for selling"}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
     </section>
   );
 }

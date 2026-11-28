@@ -24,6 +24,7 @@ import BlogPanel from"../components/BlogPanel.jsx";
 import SuppressionPanel from"../components/SuppressionPanel";
 import AdminShell from"../components/AdminShell";
 import CostsAndRates from"../components/admin/CostsAndRates";
+import Flows from"../components/admin/Flows";
 import AnnouncementsPanel from"../components/AnnouncementsPanel";
 import { usePrivatePage } from"../data/pageMeta";
 
@@ -833,6 +834,7 @@ export default function Admin() {
     Newsletter:"Who is on the list, and how they got there.",
     Blocked:"Addresses nothing is sent to, and whether the sender is telling us anything.",
     "Costs and rates":"What printing and delivery cost, and what a book can therefore be sold for.",
+    Flows:"What a creator, a printer and you each have to do, and which of those steps exist yet.",
   };
 
   return (
@@ -853,6 +855,8 @@ export default function Admin() {
       )}
 
       {tab ==="Costs and rates" && <CostsAndRates />}
+
+      {tab ==="Flows" && <Flows />}
 
       {tab ==="Overview" && (
         <section>

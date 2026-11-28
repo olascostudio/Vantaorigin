@@ -409,6 +409,21 @@ export default async function bookRoutes(app) {
         if (!place) return { code: price.countryCode, problem: "not open for selling" };
         const priced = await priceFor({ book, place, retailMinor: price.retailMinor });
         if (priced.unavailable) return { code: place.code, problem: priced.unavailable };
+        // Asked before the floor, because a floor computed from a guessed
+        // cost is itself a guess, and "it does not cover costs" is the wrong
+        // complaint when we do not know the costs. The checkout refuses an
+        // untrustworthy price already; publish did not, so a creator could
+        // put a work on sale, share the link, and have every buyer turned
+        // away by a page saying it was not on sale.
+        if (!priced.trustworthy) {
+          const waiting = priced.placeholders ?? [];
+          return {
+            code: place.code,
+            problem: waiting.length
+              ? `still waiting on a real ${waiting.join(" and ")}`
+              : "still waiting on a confirmed cost",
+          };
+        }
         if (priced.belowFloor || priced.losesMoney) {
           return { code: place.code, problem: "no longer covers what the book costs" };
         }

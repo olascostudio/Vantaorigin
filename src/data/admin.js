@@ -111,3 +111,8 @@ export const saveDeliveryRate = (id, body) =>
   api.patch(`/admin/distribution/delivery-rates/${id}`, body);
 
 export const saveDistributionSettings = (body) => api.patch("/admin/distribution/settings", body);
+
+// Opening a country for selling, or closing it. Countries ship closed so
+// nobody prices into somewhere we cannot deliver to.
+export const setCountryOpen = (code, enabled) =>
+  api.patch(`/admin/distribution/countries/${encodeURIComponent(code)}`, { enabled });

@@ -462,6 +462,33 @@ test("a country cannot be opened before we can deliver there", async () => {
   assert.match(res.json().error, /delivery rate/);
 });
 
+// A rate that is only a guess is not a rate. The engine will not call a
+// price built on one sellable, so opening a country on one hands a creator
+// somewhere they can price into, publish into, and never sell a copy in.
+test("a country cannot be opened on a guessed rate either", async () => {
+  await db.update(schema.deliveryRates).set({ isPlaceholder: true });
+
+  try {
+    const res = await app.inject({
+      method: "PATCH",
+      url: "/admin/distribution/countries/NG",
+      headers: { cookie: admin },
+      payload: { enabled: true },
+    });
+
+    assert.equal(res.statusCode, 409);
+    assert.match(res.json().error, /still a guess/);
+
+    const places = await db.select().from(schema.countries);
+    const ng = places.find((row) => row.code === "NG");
+    assert.equal(ng.enabled, false, "and it did not quietly open anyway");
+  } finally {
+    // Unconditional: every test after this one prices against these rates,
+    // so leaving them guessed would fail them for the wrong reason.
+    await db.update(schema.deliveryRates).set({ isPlaceholder: false });
+  }
+});
+
 test("with a rate in place a country opens, and can be closed again", async () => {
   // NG got its rate earlier in this file.
   const open = await app.inject({
