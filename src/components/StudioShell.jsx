@@ -19,7 +19,7 @@ import logoMark from "../assets/landing/hero/logo-mark.svg";
 const GROUPS = [
   {
     name: "Overview",
-    items: [{ to: "/studio/dashboard", label: "Dashboard", icon: "grid", soon: true }],
+    items: [{ to: "/studio/dashboard", label: "Dashboard", icon: "grid" }],
   },
   {
     name: "Books",
@@ -37,7 +37,7 @@ const GROUPS = [
   },
   {
     name: "Money",
-    items: [{ to: "/studio/orders", label: "Orders", icon: "bag", soon: true }],
+    items: [{ to: "/studio/orders", label: "Orders", icon: "bag" }],
   },
 ];
 

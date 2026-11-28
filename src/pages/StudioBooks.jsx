@@ -72,7 +72,9 @@ function standing(book) {
   return { tone: "draft", say: "Priced and signed, ready to go on sale", cta: "Put it on sale" };
 }
 
-function BookCard({ book, formats }) {
+// formats defaults to empty: a missing catalogue should cost the card its
+// readable format name, not take the whole page down with it.
+function BookCard({ book, formats = [] }) {
   const state = standing(book);
   // The API returns the slug, which is a key and not a thing to read. The
   // catalogue is already loaded for the add form, so the readable name is

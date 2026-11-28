@@ -29,6 +29,8 @@ import Studio from "./pages/Studio";
 import StudioBooks from "./pages/StudioBooks";
 import StudioBook from "./pages/StudioBook";
 import StudioPricing from "./pages/StudioPricing";
+import StudioDashboard from "./pages/StudioDashboard";
+import StudioOrders from "./pages/StudioOrders";
 import StudioInvite from "./pages/StudioInvite";
 import RequireStudio from "./components/RequireStudio.jsx";
 import CreatorPage from "./pages/CreatorPage";
@@ -121,6 +123,8 @@ export default function App() {
         <Route path="/studio/invite/:token" element={<StudioInvite />} />
         <Route path="/studio" element={<RequireAdmin><Studio /></RequireAdmin>} />
         <Route path="/studio/books" element={<RequireAuth><RequireStudio><StudioBooks /></RequireStudio></RequireAuth>} />
+        <Route path="/studio/dashboard" element={<RequireAuth><RequireStudio><StudioDashboard /></RequireStudio></RequireAuth>} />
+        <Route path="/studio/orders" element={<RequireAuth><RequireStudio><StudioOrders /></RequireStudio></RequireAuth>} />
         <Route path="/studio/pricing" element={<RequireAuth><RequireStudio><StudioPricing /></RequireStudio></RequireAuth>} />
         <Route
           path="/studio/pricing/:publicId"

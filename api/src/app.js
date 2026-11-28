@@ -10,6 +10,7 @@ import { config, isProduction, placeholders } from "./config.js";
 import adminRoutes from "./routes/admin.js";
 import distributionAdminRoutes from "./routes/distribution-admin.js";
 import bookRoutes from "./routes/books.js";
+import creatorSalesRoutes from "./routes/creator-sales.js";
 import authRoutes from "./routes/auth.js";
 import checkoutRoutes from "./routes/checkout.js";
 import printerRoutes from "./routes/printer.js";
@@ -269,6 +270,7 @@ export async function buildApp() {
   await app.register(newsletterAdminRoutes);
   await app.register(distributionAdminRoutes);
   await app.register(bookRoutes);
+  await app.register(creatorSalesRoutes);
   await app.register(checkoutRoutes);
   await app.register(printerRoutes);
   await app.register(studioRoutes);
