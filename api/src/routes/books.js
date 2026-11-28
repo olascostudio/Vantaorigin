@@ -95,6 +95,9 @@ async function priceFor({ book, place, retailMinor = null }) {
   if (!bands.length || !rate) {
     return {
       countryCode: place.code,
+      // The name, because a pricing screen says "Nigeria" and not "NG". A
+      // country code is a key; it was never meant to be read by a creator.
+      name: place.name,
       currency: place.currency,
       unavailable: !bands.length
         ? `No printer has quoted for ${book.formatSlug} yet`
@@ -105,6 +108,12 @@ async function priceFor({ book, place, retailMinor = null }) {
   try {
     return {
       countryCode: place.code,
+      name: place.name,
+      // How long the parcel takes, which belongs beside the price: a
+      // reader waiting three weeks is a different offer to one waiting two
+      // days, and the creator setting the price should see which it is.
+      estDaysMin: rate.estDaysMin,
+      estDaysMax: rate.estDaysMax,
       ...quote({
         bands,
         rate,

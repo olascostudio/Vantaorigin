@@ -861,7 +861,11 @@ export default function Admin() {
       {tab ==="Overview" && (
         <section>
           <div className="grid grid-cols-2 gap-x-10 gap-y-7 rounded-xl border border-[#e6e8ec] bg-white p-6 md:grid-cols-3">
-            {overview ? (
+            {/* Guarded on the nested object, not the outer one. Every figure
+                below reads overview.creators.something, so an overview that
+                arrives without it took the whole admin down rather than
+                showing a placeholder. */}
+            {overview?.creators ? (
               <>
                 <Figure
                   label="Creators"

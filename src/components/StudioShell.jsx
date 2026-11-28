@@ -10,6 +10,7 @@
 // in here for an hour at a time, and the marketing site's black is not a
 // surface to work on.
 import { Link, useLocation } from "react-router-dom";
+import logoMark from "../assets/landing/hero/logo-mark.svg";
 
 // The nav the mockup draws, in its order. `soon` marks a screen the design
 // has and the build does not: shown, because leaving it out would hide how
@@ -30,7 +31,7 @@ const GROUPS = [
   {
     name: "Selling",
     items: [
-      { to: "/studio/pricing", label: "Regional pricing", icon: "coin", soon: true },
+      { to: "/studio/pricing", label: "Regional pricing", icon: "coin" },
       { to: "/studio/embed", label: "Embed code", icon: "code", soon: true },
     ],
   },
@@ -120,25 +121,16 @@ export default function StudioShell({ title, lead, action, children }) {
   return (
     <div className="flex min-h-screen flex-wrap items-stretch bg-studio-paper font-ui text-studio-body">
       <aside className="box-border w-full shrink-0 border-studio-line bg-studio-card px-3.5 pb-7 pt-[22px] lg:w-[272px] lg:border-r">
+        {/* The mockup drew a placeholder mark here. This is the real one:
+            VantaOrigin's own, at its own colour, because a studio inside
+            somebody's product should say whose product it is. */}
         <Link to="/studio/dashboard" className="flex items-center gap-2.5 px-2.5 pb-1">
-          <span className="flex size-[30px] items-center justify-center rounded-lg bg-studio-brand text-white">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M4 4v13a3 3 0 0 0 3 3h13" />
-              <path d="M8 4h9a3 3 0 0 1 3 3v9" />
-            </svg>
-          </span>
-          <span className="font-studio text-[17px] font-bold tracking-[-0.01em] text-studio-ink">
-            Creator Studio
+          <img src={logoMark} alt="" className="h-[30px] w-auto" aria-hidden="true" />
+          <span className="font-studio text-[17px] font-bold leading-tight tracking-[-0.01em] text-studio-ink">
+            VantaOrigin
+            <span className="block font-ui text-[11px] font-semibold uppercase tracking-[0.07em] text-studio-brand">
+              Creator Studio
+            </span>
           </span>
         </Link>
 

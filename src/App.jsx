@@ -28,6 +28,7 @@ import PrintPortal from "./pages/PrintPortal";
 import Studio from "./pages/Studio";
 import StudioBooks from "./pages/StudioBooks";
 import StudioBook from "./pages/StudioBook";
+import StudioPricing from "./pages/StudioPricing";
 import StudioInvite from "./pages/StudioInvite";
 import RequireStudio from "./components/RequireStudio.jsx";
 import CreatorPage from "./pages/CreatorPage";
@@ -120,6 +121,11 @@ export default function App() {
         <Route path="/studio/invite/:token" element={<StudioInvite />} />
         <Route path="/studio" element={<RequireAdmin><Studio /></RequireAdmin>} />
         <Route path="/studio/books" element={<RequireAuth><RequireStudio><StudioBooks /></RequireStudio></RequireAuth>} />
+        <Route path="/studio/pricing" element={<RequireAuth><RequireStudio><StudioPricing /></RequireStudio></RequireAuth>} />
+        <Route
+          path="/studio/pricing/:publicId"
+          element={<RequireAuth><RequireStudio><StudioPricing /></RequireStudio></RequireAuth>}
+        />
         <Route
           path="/studio/books/:publicId"
           element={<RequireAuth><RequireStudio><StudioBook /></RequireStudio></RequireAuth>}
