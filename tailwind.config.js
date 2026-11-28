@@ -13,12 +13,32 @@ export default {
         accent: "#bd7132", // world card author labels
         plum: "#1c1224", // featured creators panel
         "auth-bg": "#111827", // auth screens
+        // Creator Studio, measured from the mockup canvas. Warm paper and a
+        // purple primary, deliberately its own light world: a creator works
+        // in here, and the dark marketing site is not a working surface.
+        studio: {
+          paper: "#f4f4f0",
+          card: "#ffffff",
+          line: "#e5e3dc",
+          ink: "#1c1a17",
+          body: "#3d3933",
+          muted: "#6b6459",
+          edge: "#908a7e", // the only border dark enough for a control
+          brand: "#6a28a8",
+          "brand-dark": "#51207f",
+          "brand-soft": "#f1ebf8", // the active nav item
+          shelf: "#efece4", // a cover with no artwork yet
+          warn: "#92400e",
+          info: "#1d4ed8",
+          good: "#15803d",
+        },
       },
       fontFamily: {
         display: ["'Spicy Rice'", "cursive"],
         body: ["'Comic Neue'", "sans-serif"],
         ui: ["Inter", "sans-serif"],
         pill: ["'Instrument Sans'", "Inter", "sans-serif"],
+        studio: ["'Bricolage Grotesque'", "Inter", "sans-serif"], // Studio display
       },
       keyframes: {
         marquee: {

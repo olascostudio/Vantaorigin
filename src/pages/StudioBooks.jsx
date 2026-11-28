@@ -1,70 +1,129 @@
-// A creator's books.
+// A creator's books, built to the mockup canvas.
 //
-// The one part of Distribution a creator was expected to use and the only
-// one with no screen: a book could be made with curl and in no other way.
+// One card per book: cover, what it is, what it is waiting for, what it
+// sells for, and the one action that moves it forward. The status line is
+// a sentence rather than a word, because "draft" tells nobody what to do
+// and "Needs a price before it can sell" does.
 //
-// The list says what each book is waiting for, in the order it is waiting,
-// because "draft" on its own tells nobody what to do next. A book needs a
-// price that covers its costs and a signed warranty before it can be sold,
-// and either of those missing is a sentence rather than a status.
+// Adding a book is its own screen in the design. It is not built yet, so
+// the form opens here in the same visual language rather than sending
+// somebody to a route that does not exist.
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { usePrivatePage } from "../data/pageMeta";
 import { Skeleton } from "../components/Loading.jsx";
 import { createBook, listBooks, loadFormats, money } from "../data/books";
-import logoMark from "../assets/landing/hero/logo-mark.svg";
+import StudioShell, { BTN, BTN_QUIET, CARD, FIELD, LABEL } from "../components/StudioShell.jsx";
 
-const CARD = "rounded-2xl border border-white/10 bg-[#222b3c] p-5 sm:p-6";
-const FIELD =
-  "w-full box-border min-h-[44px] rounded-xl border border-white/20 bg-[#1b2233] px-4 font-ui text-sm text-white outline-none placeholder:text-neutral-500 focus:border-[#a855f7]";
-const LABEL = "mb-1.5 block font-ui text-sm font-bold text-white";
-
-// What is between this book and being sold, said as a thing to do.
-function waitingOn(book) {
-  if (!book.prices.length) return "No price yet";
-  if (!book.rightsAccepted) return "Rights warranty not signed";
-  if (book.status === "draft") return "Ready to publish";
-  return null;
-}
-
-function BookRow({ book }) {
-  const todo = waitingOn(book);
-
+// A tick, a warning or a down arrow, matching the three states a book can
+// be in. Colour alone never carries it: each has its own glyph and its own
+// sentence.
+function StatusMark({ tone }) {
+  const common = {
+    width: 14,
+    height: 14,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 2,
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    "aria-hidden": "true",
+  };
+  if (tone === "good")
+    return (
+      <svg {...common}>
+        <path d="m4 12 5 5L20 7" />
+      </svg>
+    );
+  if (tone === "warn")
+    return (
+      <svg {...common}>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 8v5" />
+        <path d="M12 16.5v.01" />
+      </svg>
+    );
   return (
-    <Link
-      to={`/studio/books/${book.publicId}`}
-      className="flex flex-wrap items-center gap-4 border-t border-white/10 py-4 transition-colors first:border-t-0 hover:bg-white/[0.03]"
-    >
-      <div className="min-w-0 flex-1">
-        <p className="font-ui text-base font-bold text-white">{book.title}</p>
-        <p className="mt-0.5 font-ui text-sm text-neutral-400">
-          {book.formatSlug} · {book.pageCount} pages
-        </p>
-      </div>
-
-      {book.prices.length > 0 && (
-        <span className="font-ui text-sm tabular-nums text-neutral-300">
-          {book.prices.map((price) => money(price.retailMinor, price.currency)).join(" · ")}
-        </span>
-      )}
-
-      <span
-        className={`shrink-0 rounded-full px-3 py-1 font-ui text-xs font-bold ${
-          todo === "Ready to publish"
-            ? "bg-[#1d4030] text-[#5fdc8a]"
-            : todo
-              ? "bg-[#3a3320] text-[#f5af32]"
-              : "bg-[#1d4030] text-[#5fdc8a]"
-        }`}
-      >
-        {todo ?? "On sale"}
-      </span>
-    </Link>
+    <svg {...common}>
+      <path d="M12 3v12" />
+      <path d="m8 11 4 4 4-4" />
+      <path d="M4 19h16" />
+    </svg>
   );
 }
 
-function NewBook({ formats, onMade }) {
-  const [open, setOpen] = useState(false);
+// What stands between this book and a reader, said as the next thing to do.
+function standing(book) {
+  if (book.status === "on_sale") {
+    const where = book.prices.length;
+    return {
+      tone: "good",
+      say: `On sale in ${where} ${where === 1 ? "country" : "countries"}`,
+      cta: null,
+    };
+  }
+  if (!book.prices.length) {
+    return { tone: "warn", say: "Needs a price before it can sell", cta: "Set a price" };
+  }
+  if (!book.rightsAccepted) {
+    return { tone: "warn", say: "Needs the rights warranty signed", cta: "Sign it" };
+  }
+  return { tone: "draft", say: "Priced and signed, ready to go on sale", cta: "Put it on sale" };
+}
+
+function BookCard({ book, formats }) {
+  const state = standing(book);
+  // The API returns the slug, which is a key and not a thing to read. The
+  // catalogue is already loaded for the add form, so the readable name is
+  // one lookup away: "6 x 9in B&W paperback", not "pb-6x9-bw".
+  const format = formats.find((row) => row.slug === book.formatSlug);
+  const tone =
+    state.tone === "good"
+      ? "text-studio-good"
+      : state.tone === "warn"
+        ? "text-studio-warn"
+        : "text-studio-muted";
+
+  return (
+    <article className={`${CARD} flex flex-wrap items-center gap-[18px] p-[18px]`}>
+      <div
+        className="h-20 w-[58px] shrink-0 rounded-md border border-studio-line bg-studio-shelf"
+        aria-hidden="true"
+      />
+
+      <div className="min-w-0 flex-[999_1_240px]">
+        <h2 className="font-ui text-base font-semibold text-studio-ink">{book.title}</h2>
+        <p className="mt-[5px] font-ui text-[13px] text-studio-muted">
+          {format?.name ?? book.formatSlug} &middot; {book.pageCount} pages
+        </p>
+        <p className={`mt-2 flex items-center gap-1.5 font-ui text-[13px] font-medium ${tone}`}>
+          <StatusMark tone={state.tone} />
+          {state.say}
+        </p>
+      </div>
+
+      <div className="shrink-0 text-right">
+        <p className="font-ui text-xs text-studio-muted">Retail</p>
+        {book.prices.length ? (
+          <p className="mt-1 font-ui text-lg font-semibold tabular-nums text-studio-ink">
+            {money(book.prices[0].retailMinor, book.prices[0].currency)}
+          </p>
+        ) : (
+          <p className="mt-1 font-ui text-lg font-semibold text-studio-muted">Not set</p>
+        )}
+      </div>
+
+      <div className="flex shrink-0 gap-2">
+        <Link to={`/studio/books/${book.publicId}`} className={state.cta ? BTN : BTN_QUIET}>
+          {state.cta ?? "Open"}
+        </Link>
+      </div>
+    </article>
+  );
+}
+
+function NewBook({ formats, onMade, onClose }) {
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState("");
   const [form, setForm] = useState({ title: "", formatSlug: "", pageCount: "" });
@@ -86,35 +145,22 @@ function NewBook({ formats, onMade }) {
         formatSlug: form.formatSlug,
         pageCount: Number(form.pageCount),
       });
-      setForm({ title: "", formatSlug: formats[0]?.slug ?? "", pageCount: "" });
-      setOpen(false);
       onMade(made);
+      onClose();
     } catch (error) {
       // The server knows the real rule: a comic stops at 64 pages, a saddle
-      // stitched book folds in fours. Its sentence is better than anything
-      // guessed here, so it is shown as written.
+      // stitched book folds in fours. Its sentence beats anything guessed
+      // here, so it is shown as written.
       setProblem(error.message || "That did not save.");
     } finally {
       setBusy(false);
     }
   };
 
-  if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="min-h-[48px] rounded-full bg-[#a855f7] px-7 font-ui text-base font-bold text-white transition-opacity hover:opacity-90"
-      >
-        Add a book
-      </button>
-    );
-  }
-
   return (
-    <form onSubmit={send} className={CARD}>
-      <h2 className="font-ui text-lg font-bold text-white">A new book</h2>
-      <p className="mt-1 font-ui text-sm text-neutral-400">
+    <form onSubmit={send} className={`${CARD} p-5`}>
+      <h2 className="font-ui text-base font-semibold text-studio-ink">A new book</h2>
+      <p className="mt-1 font-ui text-[13px] text-studio-muted">
         A title, a format and a page count. Everything else can wait.
       </p>
 
@@ -164,9 +210,8 @@ function NewBook({ formats, onMade }) {
         </div>
       </div>
 
-      {/* The rule, before they break it rather than after. */}
       {chosen && (
-        <p className="mt-3 font-ui text-xs text-neutral-500">
+        <p className="mt-3 font-ui text-xs text-studio-muted">
           {chosen.name} takes {chosen.minPages} to {chosen.maxPages} pages
           {chosen.binding === "saddle" && ", in multiples of four, because it folds down the middle"}
           .
@@ -174,27 +219,19 @@ function NewBook({ formats, onMade }) {
       )}
 
       {problem && (
-        <p role="alert" className="mt-4 font-ui text-sm text-[#ffb4c4]">
+        <p
+          role="alert"
+          className="mt-4 rounded-[10px] border border-studio-warn/30 bg-[#fdf3e3] px-4 py-3 font-ui text-sm text-studio-warn"
+        >
           {problem}
         </p>
       )}
 
       <div className="mt-5 flex flex-wrap items-center gap-3">
-        <button
-          type="submit"
-          disabled={busy}
-          className="min-h-[44px] rounded-full bg-[#a855f7] px-6 font-ui text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
-        >
+        <button type="submit" disabled={busy} className={BTN}>
           {busy ? "Saving..." : "Make it"}
         </button>
-        <button
-          type="button"
-          onClick={() => {
-            setOpen(false);
-            setProblem("");
-          }}
-          className="font-ui text-sm text-neutral-400 hover:text-white"
-        >
+        <button type="button" onClick={onClose} className={BTN_QUIET}>
           Cancel
         </button>
       </div>
@@ -206,6 +243,7 @@ export default function StudioBooks() {
   const [books, setBooks] = useState(null);
   const [formats, setFormats] = useState([]);
   const [problem, setProblem] = useState("");
+  const [adding, setAdding] = useState(false);
 
   usePrivatePage();
 
@@ -224,59 +262,73 @@ export default function StudioBooks() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-white/10 px-5 py-4 sm:px-8">
-        <Link to="/studio" className="flex items-center gap-2.5">
-          <img src={logoMark} alt="" className="h-7 w-auto" aria-hidden="true" />
-          <span className="font-ui text-base font-bold text-white">
-            VantaOrigin <span className="text-neutral-400">Creator Studio</span>
-          </span>
-        </Link>
-      </header>
-
-      <main className="mx-auto max-w-[820px] px-5 pb-24 pt-10 sm:px-8">
-        <h1 className="font-ui text-3xl font-bold text-white sm:text-[40px]">Your books</h1>
-        <p className="mt-3 font-ui text-base leading-relaxed text-neutral-300">
-          Printed copies, made to order. A book needs a price that covers what it costs and a
-          signed warranty that the work is yours before anybody can buy it.
+    <StudioShell
+      title="Your books"
+      lead="Everything you have listed, and where each one stands."
+      action={
+        !adding && (
+          <button type="button" onClick={() => setAdding(true)} className={BTN}>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Add a book
+          </button>
+        )
+      }
+    >
+      {problem && (
+        <p
+          role="alert"
+          className="mt-6 rounded-[10px] border border-studio-warn/30 bg-[#fdf3e3] px-4 py-3 font-ui text-sm text-studio-warn"
+        >
+          {problem}
         </p>
+      )}
 
-        {problem && (
-          <p role="alert" className="mt-6 font-ui text-sm text-[#ffb4c4]">
-            {problem}
+      {adding && (
+        <div className="mt-[26px]">
+          <NewBook
+            formats={formats}
+            onMade={(made) => setBooks((current) => [made, ...(current ?? [])])}
+            onClose={() => setAdding(false)}
+          />
+        </div>
+      )}
+
+      {books === null ? (
+        <div className="mt-[26px] flex flex-col gap-3.5">
+          <Skeleton className="h-28 w-full rounded-xl" />
+          <Skeleton className="h-28 w-full rounded-xl" />
+        </div>
+      ) : books.length === 0 && !adding ? (
+        <div
+          className={`${CARD} mt-[26px] border-dashed px-6 py-14 text-center`}
+        >
+          <p className="font-ui text-base text-studio-body">Nothing here yet.</p>
+          <p className="mx-auto mt-1.5 max-w-[380px] font-ui text-sm text-studio-muted">
+            Add a book and we will work out what it costs to print and deliver, and what you would
+            keep at any price.
           </p>
-        )}
-
-        {books === null ? (
-          <div className="mt-8 flex flex-col gap-3">
-            <Skeleton className="h-16 w-full rounded-xl" />
-            <Skeleton className="h-16 w-full rounded-xl" />
-          </div>
-        ) : (
-          <>
-            {books.length > 0 && (
-              <section className={`${CARD} mt-8`} aria-label="Your books">
-                {books.map((book) => (
-                  <BookRow key={book.publicId} book={book} />
-                ))}
-              </section>
-            )}
-
-            {books.length === 0 && (
-              <p className="mt-8 rounded-2xl border border-dashed border-white/15 px-6 py-12 text-center font-ui text-base text-neutral-400">
-                No books yet.
-              </p>
-            )}
-
-            <div className="mt-6">
-              <NewBook
-                formats={formats}
-                onMade={(made) => setBooks((current) => [made, ...current])}
-              />
-            </div>
-          </>
-        )}
-      </main>
-    </div>
+          <button type="button" onClick={() => setAdding(true)} className={`${BTN} mt-5`}>
+            Add your first book
+          </button>
+        </div>
+      ) : (
+        <section aria-label="Books" className="mt-[26px] flex flex-col gap-3.5">
+          {books.map((book) => (
+            <BookCard key={book.publicId} book={book} formats={formats} />
+          ))}
+        </section>
+      )}
+    </StudioShell>
   );
 }

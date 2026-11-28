@@ -62,6 +62,16 @@ function StudioHome() {
   return onStudio ? <Navigate to={`/marketplace${search}`} replace /> : <Landing />;
 }
 
+// The marketing footer belongs on marketing pages. Creator Studio and the
+// print portal are places somebody works for an hour at a time, and a
+// newsletter signup under a pricing table is noise in the way. The mockup
+// has no footer on any Studio screen.
+function SiteFooter() {
+  const { pathname } = useLocation();
+  const working = pathname.startsWith("/studio") || pathname.startsWith("/print");
+  return working ? null : <Footer />;
+}
+
 export default function App() {
   return (
     <div className="min-h-screen overflow-x-hidden bg-background">
@@ -156,8 +166,8 @@ export default function App() {
         />
         <Route path="/forgot-password/reset" element={<ResetPassword />} />
       </Routes>
-      {/* Shared across every route so it stays consistent site-wide */}
-      <Footer />
+      {/* Shared across every route except the working surfaces */}
+      <SiteFooter />
 
       {/* Outside Routes, because the walk crosses pages: it navigates
           itself from the hub to the subscribers page to settings, and a
